@@ -16,10 +16,14 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Icon
-import com.hermen.ass1.NavItem
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 
+data class NavItem(
+    val label: String,
+    val vectorIcon: ImageVector?,
+    val imageRes:Int?
+)
 
 @Composable
 fun MainScreen(modifier: Modifier = Modifier) {
