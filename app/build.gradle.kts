@@ -6,7 +6,7 @@ plugins {
 
 android {
     namespace = "com.hermen.ass1"
-    compileSdk = 35
+    compileSdk = 28
 
     defaultConfig {
         applicationId = "com.hermen.ass1"
