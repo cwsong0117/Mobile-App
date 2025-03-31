@@ -52,12 +52,6 @@ enum class AppScreen() {
     Attendance,
 }
 
-data class NavItem(
-    val label: String,
-    val vectorIcon: ImageVector?,
-    val imageRes:Int?
-)
-
 @Composable
 fun MainScreen(modifier: Modifier = Modifier) {
 
