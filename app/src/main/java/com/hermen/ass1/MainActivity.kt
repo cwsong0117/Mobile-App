@@ -19,7 +19,8 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             Ass1Theme {
-                MeetingRoomApply()
+                MainScreen(
+                )
             }
         }
     }
