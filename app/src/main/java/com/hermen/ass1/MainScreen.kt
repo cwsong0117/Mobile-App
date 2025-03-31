@@ -9,6 +9,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.vectorResource
+import androidx.compose.material3.*
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.foundation.Image
@@ -19,8 +20,11 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
 import androidx.compose.material3.Button
 import androidx.compose.material3.NavigationBarItem
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
@@ -37,6 +41,11 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.compose.material.icons.filled.LightMode
+import androidx.compose.material.icons.filled.DarkMode
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+
 
 enum class AppScreen() {
     Home,
@@ -58,6 +67,13 @@ fun MainScreen(modifier: Modifier = Modifier) {
         NavItem("Calendar", null, R.drawable._59592), // PNG Image
         NavItem("Profile", ImageVector.vectorResource(id = R.drawable.baseline_account_circle_24), null) // PNG Image
     )
+
+    Box(
+        modifier = Modifier.fillMaxSize()
+    ) {
+        // Main Content
+        ContentScreen(modifier = Modifier.fillMaxSize())
+    }
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
@@ -96,12 +112,22 @@ fun MainScreen(modifier: Modifier = Modifier) {
 
 @Composable
 fun ContentScreen(modifier: Modifier = Modifier) {
+    var isDarkTheme by remember { mutableStateOf(false) }
+    val icon = if (isDarkTheme) Icons.Filled.LightMode else Icons.Filled.DarkMode
     val navController = rememberNavController()
     Box(
         modifier = modifier
             .fillMaxSize()
             .padding(16.dp)
     ){
+        IconButton(
+            onClick = { isDarkTheme = !isDarkTheme },
+            modifier = Modifier
+                .align(Alignment.TopEnd) // Aligns to the top-right
+                .padding(8.dp) // Adds spacing from edges
+        ) {
+            Icon(imageVector = icon, contentDescription = "Toggle Theme")
+        }
         Column (
             horizontalAlignment = Alignment.CenterHorizontally,
             modifier = modifier.fillMaxSize()
