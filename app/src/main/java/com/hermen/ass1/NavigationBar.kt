@@ -2,6 +2,9 @@ package com.hermen.ass1
 
 // no modification in this page unless navigation purpose !!!!
 
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
@@ -13,6 +16,13 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.height
+import androidx.compose.material3.IconButton
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 
 data class NavItem(
     val label: String,
@@ -70,9 +80,4 @@ fun BottomNavigationBar(modifier: Modifier = Modifier) {
             )
         }
     }
-}
-
-@Composable
-fun BackButton() {
-
 }
