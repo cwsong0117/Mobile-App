@@ -14,13 +14,17 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material3.Button
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.runtime.mutableStateOf
@@ -53,7 +57,7 @@ enum class AppScreen() {
 }
 
 @Composable
-fun MainScreen(modifier: Modifier = Modifier) {
+fun MainScreen(navController: NavController, modifier: Modifier = Modifier) {
 
     val navItemList = listOf(
         NavItem("Home", ImageVector.vectorResource(id = R.drawable.baseline_home_24), null),
@@ -122,12 +126,15 @@ fun ContentScreen(modifier: Modifier = Modifier) {
         ) {
             Icon(imageVector = icon, contentDescription = "Toggle Theme")
         }
-        Column (
+        Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             modifier = modifier.fillMaxSize()
-        ){
+        ) {
             AppLogo(modifier = Modifier.size(200.dp))
-            //AttendanceOverview(navController)
+
+            Spacer(modifier = Modifier.height(16.dp)) // Space between logo and application section
+
+            ApplicationSection(navController = navController)
         }
     }
 }
@@ -158,6 +165,59 @@ fun AppLogo(modifier: Modifier = Modifier) {
             fontWeight = FontWeight.Bold,
             modifier = Modifier.align(Alignment.CenterHorizontally)
         )
+    }
+}
+
+data class AppItem(val name: String, val icon: Int, val route: String)
+
+@Composable
+fun ApplicationSection(navController: NavController) {
+    val apps = listOf(
+        AppItem("Meeting Room", R.drawable.meeting_room, "meeting_room_screen"),
+        AppItem("Leave", R.drawable.leave, "leave_screen"),
+        AppItem("Attendance Panel", R.drawable.attendance, "attendance_screen")
+    )
+
+    Column {
+        Text(
+            text = "Application",
+            fontSize = 18.sp,
+            fontWeight = FontWeight.Bold
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Row(
+            horizontalArrangement = Arrangement.SpaceEvenly,
+            modifier = Modifier.fillMaxSize()
+        ) {
+            apps.forEach { app ->
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier.clickable { navController.navigate(app.route) }
+                ) {
+                    Image(
+                        painter = painterResource(id = app.icon),
+                        contentDescription = app.name,
+                        modifier = Modifier
+                            .size(60.dp)
+                            .clip(RoundedCornerShape(50)) // Rounded icon
+                    )
+                    Text(text = app.name, fontSize = 14.sp)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun AppNavigation() {
+    val navController = rememberNavController()
+    NavHost(navController, startDestination = "home") {
+        composable("home") { MainScreen(navController = navController) }
+//        composable("meeting_room_screen") { MeetingRoomScreen() }
+//        composable("leave_screen") { LeaveScreen() }
+//        composable("attendance_screen") { AttendanceScreen() }
     }
 }
 

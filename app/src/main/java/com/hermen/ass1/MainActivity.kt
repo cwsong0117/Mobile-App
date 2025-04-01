@@ -11,6 +11,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.navigation.compose.rememberNavController
 import com.hermen.ass1.ui.theme.Ass1Theme
 
 class MainActivity : ComponentActivity() {
@@ -19,7 +20,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             Ass1Theme {
-                MeetingRoomApply()
+                AppNavigation() // Use AppNavigation instead of MainScreen
             }
         }
     }
@@ -28,7 +29,8 @@ class MainActivity : ComponentActivity() {
 @Preview(showBackground = true)
 @Composable
 fun GreetingPreview() {
+    val navController = rememberNavController()
     Ass1Theme {
-        MainScreen()
+        MainScreen(navController = navController)
     }
 }
