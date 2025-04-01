@@ -18,10 +18,16 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowForward
@@ -135,6 +141,10 @@ fun ContentScreen(modifier: Modifier = Modifier) {
             Spacer(modifier = Modifier.height(16.dp)) // Space between logo and application section
 
             ApplicationSection(navController = navController)
+
+            Spacer(modifier = Modifier.height(16.dp)) // Space between application and notification section
+
+            NotificationSection(navController = navController)
         }
     }
 }
@@ -189,20 +199,28 @@ fun ApplicationSection(navController: NavController) {
 
         Row(
             horizontalArrangement = Arrangement.SpaceEvenly,
-            modifier = Modifier.fillMaxSize()
+            modifier = Modifier.fillMaxWidth()
         ) {
             apps.forEach { app ->
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier.clickable { navController.navigate(app.route) }
+                    modifier = Modifier
+                        .wrapContentHeight()
+                        .clickable { navController.navigate(app.route) }
+                        .align(Alignment.CenterVertically)
                 ) {
-                    Image(
-                        painter = painterResource(id = app.icon),
-                        contentDescription = app.name,
+                    Box(
                         modifier = Modifier
-                            .size(60.dp)
-                            .clip(RoundedCornerShape(50)) // Rounded icon
-                    )
+                            .size(70.dp)
+                            .clip(CircleShape)
+                    ) {
+                        Image(
+                            painter = painterResource(id = app.icon),
+                            contentDescription = app.name,
+                            modifier = Modifier.fillMaxSize(),
+                            contentScale = ContentScale.Crop
+                        )
+                    }
                     Text(text = app.name, fontSize = 14.sp)
                 }
             }
@@ -220,6 +238,69 @@ fun AppNavigation() {
 //        composable("attendance_screen") { AttendanceScreen() }
     }
 }
+
+@Composable
+fun NotificationSection(navController: NavController) {
+    val notifications = listOf(
+        "New Message", "System Alert", "Upcoming Event", "New Comment"
+        // Add more notifications as needed
+    )
+
+    Column(
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Text(
+            text = "Notifications",
+            fontSize = 18.sp,
+            fontWeight = FontWeight.Bold
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        LazyRow(
+            modifier = Modifier.fillMaxWidth(),
+            contentPadding = PaddingValues(start = 16.dp, end = 16.dp)
+        ) {
+            items(notifications.size) { index -> // Using the index instead of the notification directly
+                val notification = notifications[index]
+                NotificationCard(
+                    title = notification,
+                    onClick = {
+                        // Navigate to Notification Detail (TODO)
+                        navController.navigate("notification_detail_screen") // This can be a placeholder
+                    }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun NotificationCard(title: String, onClick: () -> Unit) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier
+            .padding(5.dp)
+            .clickable(onClick = onClick) // Handle navigation on click
+    ) {
+        Box(
+            modifier = Modifier
+                .size(100.dp)
+                .background(Color.Gray) // Placeholder empty icon
+        ) {
+            // You can replace the Color.Gray with an actual image/icon later
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Text(
+            text = title,
+            fontSize = 14.sp,
+            modifier = Modifier.align(Alignment.CenterHorizontally)
+        )
+    }
+}
+
 
 //@Composable
 //fun AttendanceOverview(
