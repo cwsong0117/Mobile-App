@@ -1,5 +1,6 @@
 package com.hermen.ass1
 
+import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.filled.Home
@@ -56,10 +57,10 @@ import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 
-
-enum class AppScreen() {
-    Home,
-    Attendance,
+enum class AppScreen(@StringRes val title: Int) {
+    Home(title = R.string.app_name),
+    Attendance(title = R.string.attendance),
+    ClockIn(title = R.string.clock_in)
 }
 
 @Composable
@@ -115,36 +116,104 @@ fun MainScreen(navController: NavController, modifier: Modifier = Modifier) {
 }
 
 @Composable
-fun ContentScreen(modifier: Modifier = Modifier) {
+fun ContentScreen(
+    modifier: Modifier = Modifier,
+) {
+    val navController = rememberNavController()
+
+    NavHost(
+        navController = navController,
+        startDestination = AppScreen.Home.name,
+    ) {
+        composable(route = AppScreen.Home.name) {
+            Home(navController = navController, modifier = modifier)
+        }
+        composable(route = AppScreen.Attendance.name) {
+            AttendanceOverview(
+                onNextButtonClicked = {
+                    navController.navigate(AppScreen.ClockIn.name)
+                },
+                onBackButtonClicked = {
+                    navController.popBackStack()
+                },
+                modifier = Modifier
+            )
+        }
+        composable(route = AppScreen.ClockIn.name) {
+            ClockIn(
+                onBackButtonClicked = {
+                    navController.popBackStack()
+                },
+                onBackToHomeClicked = {
+                    navController.navigate(AppScreen.Home.name) {
+                        popUpTo(AppScreen.Home.name) { inclusive = false } // 🔹 Clears all screens above Home
+                    }
+                },
+                modifier = Modifier
+            )
+        }
+    }
+}
+
+@Composable
+fun GotoAttendanceOverview(
+    navController: NavController // 🔹 Use NavController instead of NavHostController
+) {
+    TextButton(
+        onClick = {
+            navController.navigate(AppScreen.Attendance.name) // 🔹 Navigate to AttendanceOverview
+        }
+    ) {
+
+        Spacer(modifier = Modifier.width(30.dp))
+        Text(
+            text = "Attendance Overview >>",
+            color = colorResource(id = R.color.teal_200),
+            fontSize = 30.sp,
+            fontWeight = FontWeight.Bold
+        )
+    }
+}
+
+
+@Composable
+fun Home(
+    navController: NavController,
+    modifier: Modifier
+) {
     var isDarkTheme by remember { mutableStateOf(false) }
     val icon = if (isDarkTheme) Icons.Filled.LightMode else Icons.Filled.DarkMode
-    val navController = rememberNavController()
+
     Box(
-        modifier = modifier
+        modifier = Modifier
             .fillMaxSize()
             .padding(16.dp)
-    ){
+    ) {
+        // 🔹 Theme Toggle Button
         IconButton(
             onClick = { isDarkTheme = !isDarkTheme },
             modifier = Modifier
-                .align(Alignment.TopEnd) // Aligns to the top-right
-                .padding(8.dp) // Adds spacing from edges
+                .align(Alignment.TopEnd)
+                .padding(8.dp)
         ) {
             Icon(imageVector = icon, contentDescription = "Toggle Theme")
         }
+
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = modifier.fillMaxSize()
+            modifier = Modifier.fillMaxSize()
         ) {
             AppLogo(modifier = Modifier.size(200.dp))
 
-            Spacer(modifier = Modifier.height(16.dp)) // Space between logo and application section
+            Spacer(modifier = Modifier.height(16.dp))
 
             ApplicationSection(navController = navController)
 
-            Spacer(modifier = Modifier.height(16.dp)) // Space between application and notification section
+            Spacer(modifier = Modifier.height(16.dp))
 
             NotificationSection(navController = navController)
+
+            GotoAttendanceOverview(navController = navController)
         }
     }
 }
@@ -301,60 +370,5 @@ fun NotificationCard(title: String, onClick: () -> Unit) {
     }
 }
 
-
-//@Composable
-//fun AttendanceOverview(
-//    navController: NavHostController
-//) {
-//    NavHost(
-//        navController = navController,
-//        startDestination = AttendanceOverviewScreen.Start.route
-//    ) {
-//        composable(route = AttendanceOverviewScreen.Start.route) {
-//            //AttendanceOverviewContent(navController)
-//        }
-//    }
-//}
-//
-//fun composable(route: Any, function: @Composable () -> Unit) {
-
-//}
-
-//@Composable
-//fun AttendanceOverviewContent(navController: NavHostController) {
-//    Box(
-//        modifier = Modifier
-//            .fillMaxSize()
-//            .padding(16.dp)
-//    ) {
-//        Column {
-//            // Back button to navigate to previous screen
-//            Button(
-//                onClick = { navController.navigateUp() },
-//            ) {
-//                Text("← Back")
-//            }
-//
-//            Spacer(modifier = Modifier.height(16.dp))
-//
-//            Text(
-//                text = "Attendance Overview",
-//                color = colorResource(id = R.color.teal_200),
-//            )
-//
-//            // Add your attendance overview content here
-//            Box(
-//                modifier = Modifier
-//                    .padding(16.dp)
-//                    .background(Color.LightGray)
-//            ) {
-//                Text(
-//                    text = "Your attendance data will appear here",
-//                    modifier = Modifier.padding(16.dp),
-//                )
-//            }
-//        }
-//    }
-//}
 
 
