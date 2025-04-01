@@ -1,8 +1,8 @@
 package com.hermen.ass1
 
+import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.filled.Home
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
@@ -12,15 +12,14 @@ import androidx.compose.ui.res.vectorResource
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
 import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.TextButton
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
@@ -29,7 +28,6 @@ import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
@@ -38,9 +36,10 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 
-enum class AppScreen() {
-    Home,
-    Attendance,
+enum class AppScreen(@StringRes val title: Int) {
+    Home(title = R.string.app_name),
+    Attendance(title = R.string.attendance),
+    ClockIn(title = R.string.clock_in)
 }
 
 data class NavItem(
@@ -95,19 +94,60 @@ fun MainScreen(modifier: Modifier = Modifier) {
 }
 
 @Composable
-fun ContentScreen(modifier: Modifier = Modifier) {
+fun ContentScreen(
+    modifier: Modifier = Modifier,
+                  ) {
     val navController = rememberNavController()
+
+    NavHost(
+        navController = navController,
+        startDestination = AppScreen.Home.name,
+    ) {
+        composable(route = AppScreen.Home.name) {
+            Home(navController = navController, modifier = modifier)
+        }
+        composable(route = AppScreen.Attendance.name) {
+            AttendanceOverview(
+                onNextButtonClicked = {
+                    navController.navigate(AppScreen.ClockIn.name)
+                },
+                onBackButtonClicked = {
+                    navController.popBackStack()
+                },
+                modifier = Modifier
+            )
+        }
+        composable(route = AppScreen.ClockIn.name) {
+            ClockIn(
+                onBackButtonClicked = {
+                    navController.popBackStack()
+                },
+                onBackToHomeClicked = {
+                    navController.navigate(AppScreen.Home.name) {
+                        popUpTo(AppScreen.Home.name) { inclusive = false } // 🔹 Clears all screens above Home
+                    }
+                },
+                modifier = Modifier
+            )
+        }
+    }
+}
+
+@Composable
+fun Home(
+    navController: NavController,
+    modifier: Modifier){
     Box(
         modifier = modifier
             .fillMaxSize()
             .padding(16.dp)
-    ){
-        Column (
+    ) {
+        Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             modifier = modifier.fillMaxSize()
-        ){
+        ) {
             AppLogo(modifier = Modifier.size(200.dp))
-            //AttendanceOverview(navController)
+            GotoAttendanceOverview(navController = navController)
         }
     }
 }
@@ -141,59 +181,24 @@ fun AppLogo(modifier: Modifier = Modifier) {
     }
 }
 
-//@Composable
-//fun AttendanceOverview(
-//    navController: NavHostController
-//) {
-//    NavHost(
-//        navController = navController,
-//        startDestination = AttendanceOverviewScreen.Start.route
-//    ) {
-//        composable(route = AttendanceOverviewScreen.Start.route) {
-//            //AttendanceOverviewContent(navController)
-//        }
-//    }
-//}
-//
-//fun composable(route: Any, function: @Composable () -> Unit) {
+@Composable
+fun GotoAttendanceOverview(
+    navController: NavController // 🔹 Use NavController instead of NavHostController
+) {
+    TextButton(
+        onClick = {
+            navController.navigate(AppScreen.Attendance.name) // 🔹 Navigate to AttendanceOverview
+        }
+    ) {
 
-//}
-
-//@Composable
-//fun AttendanceOverviewContent(navController: NavHostController) {
-//    Box(
-//        modifier = Modifier
-//            .fillMaxSize()
-//            .padding(16.dp)
-//    ) {
-//        Column {
-//            // Back button to navigate to previous screen
-//            Button(
-//                onClick = { navController.navigateUp() },
-//            ) {
-//                Text("← Back")
-//            }
-//
-//            Spacer(modifier = Modifier.height(16.dp))
-//
-//            Text(
-//                text = "Attendance Overview",
-//                color = colorResource(id = R.color.teal_200),
-//            )
-//
-//            // Add your attendance overview content here
-//            Box(
-//                modifier = Modifier
-//                    .padding(16.dp)
-//                    .background(Color.LightGray)
-//            ) {
-//                Text(
-//                    text = "Your attendance data will appear here",
-//                    modifier = Modifier.padding(16.dp),
-//                )
-//            }
-//        }
-//    }
-//}
+        Spacer(modifier = Modifier.width(30.dp))
+        Text(
+            text = "Attendance Overview >>",
+            color = colorResource(id = R.color.teal_200),
+            fontSize = 30.sp,
+            fontWeight = FontWeight.Bold
+        )
+    }
+}
 
 

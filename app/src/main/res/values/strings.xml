@@ -1,5 +1,8 @@
 <resources>
     <string name="app_name">Tap2Work</string>
+    <string name="home">Home</string>
+    <string name="attendance">Attendance</string>
+    <string name="clock_in">Clock In</string>
     <string name="meetingRoom1">Huddle Room</string>"
     <string name="meetingRoom2">Phone Booth Room</string>"
     <string name="meetingRoom3">Conference Room</string>"
