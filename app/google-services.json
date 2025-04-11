@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "498065064412",
+    "project_id": "assignment-hr-system",
+    "storage_bucket": "assignment-hr-system.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:498065064412:android:e5d08cfbdb3b156e6d4f19",
+        "android_client_info": {
+          "package_name": "com.hermen.ass1"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDG42R7IbvoiVmYME97zkiMuDdEYksakQA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
