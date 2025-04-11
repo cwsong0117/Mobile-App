@@ -34,7 +34,7 @@ fun RoomDetail(navController: NavController, meetingRoomId : String?) {
             BackButton(navController = navController, title = "Huddle Room")
         },
         bottomBar = {
-            BottomNavigationBar()
+            BottomNavigationBar(navController = navController)
         }
     ) {
         innerPadding ->
