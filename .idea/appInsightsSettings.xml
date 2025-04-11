@@ -8,10 +8,10 @@
             <InsightsFilterSettings>
               <option name="connection">
                 <ConnectionSetting>
-                  <option name="appId" value="PLACEHOLDER" />
-                  <option name="mobileSdkAppId" value="" />
-                  <option name="projectId" value="" />
-                  <option name="projectNumber" value="" />
+                  <option name="appId" value="com.hermen.ass1" />
+                  <option name="mobileSdkAppId" value="1:498065064412:android:e5d08cfbdb3b156e6d4f19" />
+                  <option name="projectId" value="assignment-hr-system" />
+                  <option name="projectNumber" value="498065064412" />
                 </ConnectionSetting>
               </option>
               <option name="signal" value="SIGNAL_UNSPECIFIED" />

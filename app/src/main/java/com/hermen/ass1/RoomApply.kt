@@ -2,11 +2,11 @@ package com.hermen.ass1
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.Card
@@ -40,13 +40,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.NavController
+import androidx.navigation.compose.rememberNavController
 import com.hermen.ass1.ui.theme.Ass1Theme
 
 @Composable
 fun MeetingRoomApply(navController: NavController) {
     Scaffold(
         topBar = {
-            BackButton(navController = navController)
+            BackButton(navController = navController, title = "Meeting Room")
         },
         bottomBar = {
             BottomNavigationBar(navController = navController)
@@ -66,12 +67,14 @@ fun MeetingRoomApply(navController: NavController) {
 @Composable
 fun MeetingRoomList(meetingRoomsList: List<MeetingRoom>) {
     LazyColumn(
-        modifier = Modifier
+        modifier = Modifier,
+
     ) {
         items(meetingRoomsList) { meetingRoom ->
             MeetingRoomCard(
                 meetingRoom = meetingRoom,
-                modifier = Modifier.padding(8.dp)
+                navController = rememberNavController(),
+                modifier = Modifier .padding(8.dp)
             )
         }
     }
@@ -80,11 +83,15 @@ fun MeetingRoomList(meetingRoomsList: List<MeetingRoom>) {
 @Composable
 fun MeetingRoomCard(
     meetingRoom: MeetingRoom,
+    navController: NavController,
     modifier: Modifier = Modifier) {
 
     Card(
         modifier = modifier
             .padding(horizontal = 10.dp, vertical = 8.dp)
+            .clickable {
+                navController.navigate("DetailScreen/${meetingRoom.meetingRoomStringResourceId}")
+            }
     ) {
         Box(
             modifier = Modifier
@@ -98,7 +105,6 @@ fun MeetingRoomCard(
                    )
                    .fillMaxWidth()
                    .height(200.dp),
-
                contentScale = ContentScale.Crop
            )
             // Gradient Overlay for Center-left Transparency
@@ -145,7 +151,7 @@ fun MeetingRoomCard(
 }
 
 @Composable
-fun BackButton(navController: NavController) {
+fun BackButton(navController: NavController, title: String) {
     Surface(
         modifier = Modifier
             .fillMaxWidth()
@@ -165,21 +171,21 @@ fun BackButton(navController: NavController) {
                     modifier = Modifier.size(24.dp)
                 )
             }
-//        Text(
-//            text = "Meeting Room",
-//            fontSize = 20.dp,
-//            fontWeight = FontWeight.Bold,
-//            modifier = Modifier.padding(start = 8.dp)
-//        )
+            Text(
+                text = title,
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(start = 8.dp),
+                color = Color.Black
+            )
         }
     }
-
 }
 
-//@Preview(showBackground = true)
-//@Composable
-//fun MeetingRoomApplyPreview() {
-//    Ass1Theme {
-//        MeetingRoomApply()
-//    }
-//}
+@Preview(showBackground = true)
+@Composable
+fun MeetingRoomApplyPreview() {
+    Ass1Theme {
+        MeetingRoomApply(navController = rememberNavController())
+    }
+}
