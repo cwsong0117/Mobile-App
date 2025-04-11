@@ -49,7 +49,7 @@ fun MeetingRoomApply(navController: NavController) {
             BackButton(navController = navController)
         },
         bottomBar = {
-            BottomNavigationBar()
+            BottomNavigationBar(navController = navController)
         }
     ) {
         innerPadding ->

@@ -66,124 +66,144 @@ enum class AppScreen(@StringRes val title: Int) {
 
 @Composable
 fun MainScreen(
-    navController: NavController,
     isDarkTheme: Boolean,
     onToggleTheme: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val navItemList = listOf(
-        NavItem("Home", ImageVector.vectorResource(id = R.drawable.baseline_home_24), null),
-        NavItem("Clock", ImageVector.vectorResource(id = R.drawable.baseline_access_time_24), null),
-        NavItem("Calendar", null, R.drawable._59592),
-        NavItem("Profile", ImageVector.vectorResource(id = R.drawable.baseline_account_circle_24), null)
-    )
+
+    val navController = rememberNavController()
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         bottomBar = {
-            NavigationBar {
-                navItemList.forEach { navItem ->
-                    NavigationBarItem(
-                        selected = false,
-                        onClick = { /* Handle nav change */ },
-                        label = { Text(text = navItem.label) },
-                        icon = {
-                            when {
-                                navItem.vectorIcon != null -> {
-                                    Icon(
-                                        imageVector = navItem.vectorIcon,
-                                        contentDescription = navItem.label,
-                                        modifier = Modifier.size(24.dp)
-                                    )
-                                }
-
-                                navItem.imageRes != null -> {
-                                    Icon(
-                                        painter = painterResource(id = navItem.imageRes),
-                                        contentDescription = navItem.label,
-                                        modifier = Modifier.size(24.dp)
-                                    )
-                                }
-                            }
-                        }
-                    )
-                }
-            }
+            BottomNavigationBar(navController = navController)
         }
     ) { innerPadding ->
-        ContentScreen(
-            modifier = Modifier.padding(innerPadding),
-            isDarkTheme = isDarkTheme,
-            onToggleTheme = onToggleTheme
-        )
+        NavHost(
+            navController = navController,
+            startDestination = AppScreen.Home.name,
+            modifier = modifier.padding(innerPadding)
+        ) {
+            composable(route = AppScreen.Home.name) {
+                Home(
+                    navController = navController,
+                    modifier = modifier,
+                    isDarkTheme = isDarkTheme,
+                    onToggleTheme = onToggleTheme
+                )
+            }
+
+            composable(route = AppScreen.Attendance.name) {
+                AttendanceOverview(
+                    gotoClockInScreen = {
+                        navController.navigate(AppScreen.ClockIn.name)
+                    },
+                    gotoClockOutScreen = {
+                        navController.navigate(AppScreen.ClockOut.name)
+                    },
+                    onBackButtonClicked = {
+                        navController.popBackStack()
+                    },
+                    modifier = modifier
+                )
+            }
+
+            composable(route = AppScreen.ClockIn.name) {
+                ClockIn(
+                    onBackButtonClicked = {
+                        navController.popBackStack()
+                    },
+                    onBackToHomeClicked = {
+                        navController.navigate(AppScreen.Home.name) {
+                            popUpTo(AppScreen.Home.name) { inclusive = false }
+                        }
+                    },
+                    modifier = modifier
+                )
+            }
+            composable(route = AppScreen.ClockOut.name) {
+                ClockOut(
+                    onBackButtonClicked = {
+                        navController.popBackStack()
+                    },
+                    onBackToHomeClicked = {
+                        navController.navigate(AppScreen.Home.name) {
+                            popUpTo(AppScreen.Home.name) { inclusive = false }
+                        }
+                    },
+                    modifier = modifier
+                )
+            }
+        }
+
     }
 }
 
-@Composable
-fun ContentScreen(
-    modifier: Modifier = Modifier,
-    isDarkTheme: Boolean,
-    onToggleTheme: () -> Unit
-) {
-    val navController = rememberNavController()
-
-    NavHost(
-        navController = navController,
-        startDestination = AppScreen.Home.name,
-        modifier = modifier
-    ) {
-        composable(route = AppScreen.Home.name) {
-            Home(
-                navController = navController,
-                modifier = modifier,
-                isDarkTheme = isDarkTheme,
-                onToggleTheme = onToggleTheme
-            )
-        }
-
-        composable(route = AppScreen.Attendance.name) {
-            AttendanceOverview(
-                gotoClockInScreen = {
-                    navController.navigate(AppScreen.ClockIn.name)
-                },
-                gotoClockOutScreen = {
-                    navController.navigate(AppScreen.ClockOut.name)
-                },
-                onBackButtonClicked = {
-                    navController.popBackStack()
-                },
-                modifier = modifier
-            )
-        }
-
-        composable(route = AppScreen.ClockIn.name) {
-            ClockIn(
-                onBackButtonClicked = {
-                    navController.popBackStack()
-                },
-                onBackToHomeClicked = {
-                    navController.navigate(AppScreen.Home.name) {
-                        popUpTo(AppScreen.Home.name) { inclusive = false }
-                    }
-                },
-                modifier = modifier
-            )
-        }
-        composable(route = AppScreen.ClockOut.name) {
-            ClockOut(
-                onBackButtonClicked = {
-                    navController.popBackStack()
-                },
-                onBackToHomeClicked = {
-                    navController.navigate(AppScreen.Home.name) {
-                        popUpTo(AppScreen.Home.name) { inclusive = false }
-                    }
-                },
-                modifier = modifier
-            )
-        }
-    }
-}
+//@Composable
+//fun ContentScreen(
+//    modifier: Modifier = Modifier,
+//    isDarkTheme: Boolean,
+//    onToggleTheme: () -> Unit,
+//    navController: NavController
+//) {
+//
+//    NavHost(
+//        navController = navController,
+//        startDestination = AppScreen.Home.name,
+//        modifier = modifier
+//    ) {
+//        composable(route = AppScreen.Home.name) {
+//            Home(
+//                navController = navController,
+//                modifier = modifier,
+//                isDarkTheme = isDarkTheme,
+//                onToggleTheme = onToggleTheme
+//            )
+//        }
+//
+//        composable(route = AppScreen.Attendance.name) {
+//            AttendanceOverview(
+//                gotoClockInScreen = {
+//                    navController.navigate(AppScreen.ClockIn.name)
+//                },
+//                gotoClockOutScreen = {
+//                    navController.navigate(AppScreen.ClockOut.name)
+//                },
+//                onBackButtonClicked = {
+//                    navController.popBackStack()
+//                },
+//                modifier = modifier
+//            )
+//        }
+//
+//        composable(route = AppScreen.ClockIn.name) {
+//            ClockIn(
+//                onBackButtonClicked = {
+//                    navController.popBackStack()
+//                },
+//                onBackToHomeClicked = {
+//                    navController.navigate(AppScreen.Home.name) {
+//                        popUpTo(AppScreen.Home.name) { inclusive = false }
+//                    }
+//                },
+//                modifier = modifier
+//            )
+//        }
+//        composable(route = AppScreen.ClockOut.name) {
+//            ClockOut(
+//                onBackButtonClicked = {
+//                    navController.popBackStack()
+//                },
+//                onBackToHomeClicked = {
+//                    navController.navigate(AppScreen.Home.name) {
+//                        popUpTo(AppScreen.Home.name) { inclusive = false }
+//                    }
+//                },
+//                modifier = modifier
+//            )
+//        }
+//    }
+//}
 
 @Composable
 fun GotoAttendanceOverview(
@@ -332,20 +352,24 @@ fun AppNavigation(
     isDarkTheme: Boolean,
     onToggleTheme: () -> Unit
 ) {
-    val navController = rememberNavController()
-    NavHost(navController, startDestination = "home") {
-        composable("home") {
-            MainScreen(
-                navController = navController,
-                isDarkTheme = isDarkTheme,
-                onToggleTheme = onToggleTheme
-            )
-        }
+    MainScreen(
+        isDarkTheme = isDarkTheme,
+        onToggleTheme = onToggleTheme
+    )
+
+//    val navController = rememberNavController()
+//    NavHost(navController, startDestination = "home") {
+//        composable("home") {
+//            MainScreen(
+//                isDarkTheme = isDarkTheme,
+//                onToggleTheme = onToggleTheme
+//            )
+//        }
 //        composable("meeting_room_screen") { MeetingRoomScreen() }
 //        composable("leave_screen") { LeaveScreen() }
 //        composable("attendance_screen") { AttendanceScreen() }
     }
-}
+
 
 @Composable
 fun NotificationSection(navController: NavController) {

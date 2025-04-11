@@ -40,12 +40,10 @@ class MainActivity : ComponentActivity() {
 @Preview(showBackground = true)
 @Composable
 fun GreetingPreview() {
-    val navController = rememberNavController()
     val isDarkTheme = false // or true to preview dark mode
 
     Ass1Theme(darkTheme = isDarkTheme) {
         MainScreen(
-            navController = navController,
             isDarkTheme = isDarkTheme,
             onToggleTheme = {} // No-op for preview
         )
