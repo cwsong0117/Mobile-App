@@ -23,6 +23,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.navigation.NavController
 
 data class NavItem(
     val label: String,
@@ -31,7 +32,7 @@ data class NavItem(
 )
 
 @Composable
-fun BottomNavigationBar(modifier: Modifier = Modifier) {
+fun BottomNavigationBar(modifier: Modifier = Modifier, navController: NavController) {
 
     val navItemList = listOf(
         NavItem(
@@ -40,7 +41,7 @@ fun BottomNavigationBar(modifier: Modifier = Modifier) {
             null
         ),
         NavItem(
-            "Clock", ImageVector.vectorResource(id = R.drawable.baseline_access_time_24),
+            "Attendance", ImageVector.vectorResource(id = R.drawable.baseline_access_time_24),
             null
         ),
         NavItem(
@@ -58,7 +59,9 @@ fun BottomNavigationBar(modifier: Modifier = Modifier) {
         navItemList.forEach { navItem ->
             NavigationBarItem(
                 selected = false, // Set `selected` properly
-                onClick = { /*TODO*/ },
+                onClick = {
+                    navController.navigate(navItem.label)
+                },
                 label = { Text(text = navItem.label) },
                 icon = {
                     when {
