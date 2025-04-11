@@ -79,6 +79,7 @@ fun ClockOut(
                     modifier = Modifier.align(Alignment.Center) // Add padding here (change value as needed)
                 )
             }
+            //test
 
             Text(
                 text = ":",
