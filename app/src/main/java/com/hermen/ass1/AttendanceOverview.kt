@@ -19,7 +19,8 @@ import androidx.compose.ui.unit.sp
 
 @Composable
 fun AttendanceOverview(
-    onNextButtonClicked: () -> Unit, // 🔹 Function to go back
+    gotoClockInScreen: () -> Unit,
+    gotoClockOutScreen: () -> Unit,
     onBackButtonClicked: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -28,7 +29,7 @@ fun AttendanceOverview(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         TextButton(
-            onClick = onNextButtonClicked // 🔹 Now it correctly goes back
+            onClick = gotoClockInScreen // 🔹 Now it correctly goes back
         ) {
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally
@@ -39,8 +40,19 @@ fun AttendanceOverview(
                     fontSize = 30.sp,
                     fontWeight = FontWeight.Bold
                 )
+            }
+        }
+        Spacer(modifier = Modifier.height(40.dp))
+
+
+        TextButton(
+            onClick = gotoClockOutScreen // 🔹 Now it correctly goes back
+        ) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
                 Text(
-                    text = "test1",
+                    text = "Go to Clock Out screen",
                     color = Color.Black,
                     fontSize = 30.sp,
                     fontWeight = FontWeight.Bold

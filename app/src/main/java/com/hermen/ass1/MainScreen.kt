@@ -60,7 +60,8 @@ import androidx.compose.runtime.setValue
 enum class AppScreen(@StringRes val title: Int) {
     Home(title = R.string.app_name),
     Attendance(title = R.string.attendance),
-    ClockIn(title = R.string.clock_in)
+    ClockIn(title = R.string.clock_in),
+    ClockOut(title = R.string.clock_out)
 }
 
 @Composable
@@ -142,8 +143,11 @@ fun ContentScreen(
 
         composable(route = AppScreen.Attendance.name) {
             AttendanceOverview(
-                onNextButtonClicked = {
+                gotoClockInScreen = {
                     navController.navigate(AppScreen.ClockIn.name)
+                },
+                gotoClockOutScreen = {
+                    navController.navigate(AppScreen.ClockOut.name)
                 },
                 onBackButtonClicked = {
                     navController.popBackStack()
@@ -154,6 +158,19 @@ fun ContentScreen(
 
         composable(route = AppScreen.ClockIn.name) {
             ClockIn(
+                onBackButtonClicked = {
+                    navController.popBackStack()
+                },
+                onBackToHomeClicked = {
+                    navController.navigate(AppScreen.Home.name) {
+                        popUpTo(AppScreen.Home.name) { inclusive = false }
+                    }
+                },
+                modifier = modifier
+            )
+        }
+        composable(route = AppScreen.ClockOut.name) {
+            ClockOut(
                 onBackButtonClicked = {
                     navController.popBackStack()
                 },
