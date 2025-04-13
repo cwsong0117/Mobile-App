@@ -19,7 +19,7 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             Ass1Theme(darkTheme = viewModel.isDarkTheme.value) {
-                AppNavigation(
+                MainScreen(
                     isDarkTheme = viewModel.isDarkTheme.value,
                     onToggleTheme = viewModel::toggleTheme
                 )

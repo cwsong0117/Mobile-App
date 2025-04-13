@@ -17,14 +17,23 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
+import com.hermen.ass1.ThemeViewModel
 import kotlinx.serialization.json.Json
 import java.net.URLDecoder
 
 @Composable
-fun AnnouncementDetailScreen(json: String, navController: NavHostController) {
+fun AnnouncementDetailScreen(
+    json: String,
+    navController: NavHostController,
+    themeViewModel: ThemeViewModel
+) {
     val announcement = remember {
         Json.decodeFromString<Announcement>(URLDecoder.decode(json, "UTF-8"))
     }
+
+    val isDarkTheme = themeViewModel.isDarkTheme.value
+    val textColor = if (isDarkTheme) MaterialTheme.colorScheme.onBackground else MaterialTheme.colorScheme.onSurface
+
 
     Column(
         modifier = Modifier
@@ -34,14 +43,16 @@ fun AnnouncementDetailScreen(json: String, navController: NavHostController) {
         Text(
             text = announcement.title,
             style = MaterialTheme.typography.headlineMedium,
-            fontWeight = FontWeight.Bold
+            fontWeight = FontWeight.Bold,
+            color = textColor
         )
 
         Spacer(modifier = Modifier.height(16.dp))
 
         Text(
             text = announcement.content,
-            style = MaterialTheme.typography.bodyLarge
+            style = MaterialTheme.typography.bodyLarge,
+            color = textColor
         )
 
         Spacer(modifier = Modifier.weight(1f))

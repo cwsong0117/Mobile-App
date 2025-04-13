@@ -1,43 +1,21 @@
 package com.hermen.ass1
 
 import androidx.annotation.StringRes
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.Scaffold
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.res.vectorResource
-import androidx.compose.material3.*
-import androidx.compose.material3.Icon
-import androidx.compose.material3.Text
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowForward
-import androidx.compose.material3.Button
-import androidx.compose.material3.NavigationBarItem
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.material.icons.filled.DarkMode
+import androidx.compose.material.icons.filled.LightMode
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
@@ -45,27 +23,18 @@ import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import androidx.compose.material.icons.filled.LightMode
-import androidx.compose.material.icons.filled.DarkMode
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.text.style.TextOverflow
-import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.NavType
 import androidx.navigation.navArgument
-import com.hermen.ass1.Announcement.Announcement
-import com.hermen.ass1.Announcement.AnnouncementDetailScreen
-import com.hermen.ass1.Announcement.AnnouncementOverview
-import com.hermen.ass1.Announcement.AnnouncementViewModel
+import com.hermen.ass1.Announcement.*
+import com.hermen.ass1.User.UserProfileScreen
 
 enum class AppScreen(@StringRes val title: Int) {
     Home(title = R.string.app_name),
@@ -73,8 +42,10 @@ enum class AppScreen(@StringRes val title: Int) {
     ClockIn(title = R.string.clock_in),
     ClockOut(title = R.string.clock_out),
     AnnouncementOverview(title = R.string.announcement_overview),
-    AnnouncementDetail(title = R.string.announcement_detail)
+    AnnouncementDetail(title = R.string.announcement_detail),
+    UserProfile(title = R.string.user_profile)
 }
+
 @Composable
 fun MainScreen(
     isDarkTheme: Boolean,
@@ -82,6 +53,7 @@ fun MainScreen(
     modifier: Modifier = Modifier
 ) {
     val navController = rememberNavController()
+    val themeViewModel: ThemeViewModel = viewModel()
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
@@ -155,98 +127,23 @@ fun MainScreen(
                 arguments = listOf(navArgument("announcementJson") { type = NavType.StringType })
             ) { backStackEntry ->
                 val json = backStackEntry.arguments?.getString("announcementJson") ?: ""
-                AnnouncementDetailScreen(json = json, navController = navController)
+                AnnouncementDetailScreen(
+                    json = json,
+                    navController = navController,
+                    themeViewModel = themeViewModel
+                )
+            }
+
+            composable(route = AppScreen.UserProfile.name) {
+                UserProfileScreen(
+                    userId = "1",
+                    navController = navController,
+                    themeViewModel = themeViewModel
+                )
             }
         }
     }
 }
-
-//@Composable
-//fun ContentScreen(
-//    modifier: Modifier = Modifier,
-//    isDarkTheme: Boolean,
-//    onToggleTheme: () -> Unit,
-//    navController: NavController
-//) {
-//
-//    NavHost(
-//        navController = navController,
-//        startDestination = AppScreen.Home.name,
-//        modifier = modifier
-//    ) {
-//        composable(route = AppScreen.Home.name) {
-//            Home(
-//                navController = navController,
-//                modifier = modifier,
-//                isDarkTheme = isDarkTheme,
-//                onToggleTheme = onToggleTheme
-//            )
-//        }
-//
-//        composable(route = AppScreen.Attendance.name) {
-//            AttendanceOverview(
-//                gotoClockInScreen = {
-//                    navController.navigate(AppScreen.ClockIn.name)
-//                },
-//                gotoClockOutScreen = {
-//                    navController.navigate(AppScreen.ClockOut.name)
-//                },
-//                onBackButtonClicked = {
-//                    navController.popBackStack()
-//                },
-//                modifier = modifier
-//            )
-//        }
-//
-//        composable(route = AppScreen.ClockIn.name) {
-//            ClockIn(
-//                onBackButtonClicked = {
-//                    navController.popBackStack()
-//                },
-//                onBackToHomeClicked = {
-//                    navController.navigate(AppScreen.Home.name) {
-//                        popUpTo(AppScreen.Home.name) { inclusive = false }
-//                    }
-//                },
-//                modifier = modifier
-//            )
-//        }
-//        composable(route = AppScreen.ClockOut.name) {
-//            ClockOut(
-//                onBackButtonClicked = {
-//                    navController.popBackStack()
-//                },
-//                onBackToHomeClicked = {
-//                    navController.navigate(AppScreen.Home.name) {
-//                        popUpTo(AppScreen.Home.name) { inclusive = false }
-//                    }
-//                },
-//                modifier = modifier
-//            )
-//        }
-//    }
-//}
-
-@Composable
-fun GotoAttendanceOverview(
-    navController: NavController // 🔹 Use NavController instead of NavHostController
-) {
-    TextButton(
-        onClick = {
-            navController.navigate(AppScreen.Attendance.name) // 🔹 Navigate to AttendanceOverview
-        }
-    ) {
-
-        Spacer(modifier = Modifier.width(30.dp))
-        Text(
-            text = "Attendance Overview >>",
-            color = colorResource(id = R.color.teal_200),
-            fontSize = 30.sp,
-            fontWeight = FontWeight.Bold
-        )
-    }
-}
-
 
 @Composable
 fun Home(
@@ -276,15 +173,10 @@ fun Home(
             modifier = Modifier.fillMaxSize()
         ) {
             AppLogo(modifier = Modifier.size(200.dp))
-
             Spacer(modifier = Modifier.height(16.dp))
-
             ApplicationSection(navController = navController)
-
             Spacer(modifier = Modifier.height(16.dp))
-
             AnnouncementSection(navController = navController)
-
             GotoAttendanceOverview(navController = navController)
         }
     }
@@ -292,26 +184,24 @@ fun Home(
 
 @Composable
 fun AppLogo(modifier: Modifier = Modifier) {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally // Centers both Box & Text
-    ) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Box(
             modifier = modifier
                 .padding(top = 16.dp)
-                .size(300.dp) // Square Box
-                .clip(RoundedCornerShape(12.dp)) // Ensures shape consistency
+                .size(300.dp)
+                .clip(RoundedCornerShape(12.dp))
         ) {
             Image(
-                painter = painterResource(id = R.drawable.app_logo), // Load from drawable
+                painter = painterResource(id = R.drawable.app_logo),
                 contentDescription = "App Logo",
                 contentScale = ContentScale.Fit,
-                modifier = Modifier.fillMaxSize() // Make image fill the entire Box
+                modifier = Modifier.fillMaxSize()
             )
         }
 
         Text(
             text = stringResource(R.string.app_name),
-            color = Color.Black,
+            color = MaterialTheme.colorScheme.onBackground,
             fontSize = 30.sp,
             fontWeight = FontWeight.Bold,
             modifier = Modifier.align(Alignment.CenterHorizontally)
@@ -335,9 +225,7 @@ fun ApplicationSection(navController: NavController) {
             fontSize = 18.sp,
             fontWeight = FontWeight.Bold
         )
-
         Spacer(modifier = Modifier.height(8.dp))
-
         Row(
             horizontalArrangement = Arrangement.SpaceEvenly,
             modifier = Modifier.fillMaxWidth()
@@ -370,27 +258,19 @@ fun ApplicationSection(navController: NavController) {
 }
 
 @Composable
-fun AppNavigation(
-    isDarkTheme: Boolean,
-    onToggleTheme: () -> Unit
-) {
-    MainScreen(
-        isDarkTheme = isDarkTheme,
-        onToggleTheme = onToggleTheme
-    )
-
-//    val navController = rememberNavController()
-//    NavHost(navController, startDestination = "home") {
-//        composable("home") {
-//            MainScreen(
-//                isDarkTheme = isDarkTheme,
-//                onToggleTheme = onToggleTheme
-//            )
-//        }
-//        composable("meeting_room_screen") { MeetingRoomScreen() }
-//        composable("leave_screen") { LeaveScreen() }
-//        composable("attendance_screen") { AttendanceScreen() }
+fun GotoAttendanceOverview(navController: NavController) {
+    TextButton(
+        onClick = { navController.navigate(AppScreen.Attendance.name) }
+    ) {
+        Spacer(modifier = Modifier.width(30.dp))
+        Text(
+            text = "Attendance Overview >>",
+            color = colorResource(id = R.color.teal_200),
+            fontSize = 30.sp,
+            fontWeight = FontWeight.Bold
+        )
     }
+}
 
 @Composable
 fun AnnouncementSection(
@@ -406,9 +286,7 @@ fun AnnouncementSection(
             fontWeight = FontWeight.Bold,
             modifier = Modifier.padding(horizontal = 16.dp)
         )
-
         Spacer(modifier = Modifier.height(8.dp))
-
         if (announcements.isEmpty()) {
             Text(
                 text = "No announcements available.",
@@ -438,7 +316,7 @@ fun AnnouncementCard(title: String, onClick: () -> Unit) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
-            .width(120.dp) // Fixed width for consistent layout
+            .width(120.dp)
             .padding(5.dp)
             .clickable(onClick = onClick)
     ) {
@@ -447,9 +325,7 @@ fun AnnouncementCard(title: String, onClick: () -> Unit) {
                 .size(100.dp)
                 .background(Color.Gray)
         )
-
         Spacer(modifier = Modifier.height(8.dp))
-
         Text(
             text = title,
             fontSize = 14.sp,

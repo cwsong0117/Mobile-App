@@ -24,43 +24,57 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.NavController
+import androidx.navigation.compose.currentBackStackEntryAsState
 
 data class NavItem(
     val label: String,
     val vectorIcon: ImageVector?,
-    val imageRes:Int?
+    val imageRes:Int?,
+    val route: String
 )
 
 @Composable
 fun BottomNavigationBar(modifier: Modifier = Modifier, navController: NavController) {
 
+    val currentRoute = navController.currentBackStackEntryAsState().value?.destination?.route
+
     val navItemList = listOf(
         NavItem(
             "Home",
             ImageVector.vectorResource(id = R.drawable.baseline_home_24),
-            null
+            null,
+            AppScreen.Home.name // Route to navigate
         ),
         NavItem(
-            "Attendance", ImageVector.vectorResource(id = R.drawable.baseline_access_time_24),
-            null
+            "Attendance",
+            ImageVector.vectorResource(id = R.drawable.baseline_access_time_24),
+            null,
+            AppScreen.Attendance.name
         ),
         NavItem(
             "Calendar",
             null,
-            R.drawable._59592
-        ), // PNG Image
+            R.drawable._59592, // PNG Image
+            AppScreen.AnnouncementOverview.name
+        ),
         NavItem(
             "Profile",
             ImageVector.vectorResource(id = R.drawable.baseline_account_circle_24),
-            null
-        ) // PNG Image
+            null,
+            AppScreen.UserProfile.name // Profile route to navigate
+        )
     )
-    NavigationBar {
+
+    NavigationBar(modifier = modifier) {
         navItemList.forEach { navItem ->
             NavigationBarItem(
-                selected = false, // Set `selected` properly
+                selected = currentRoute == navItem.route, // Mark selected item
                 onClick = {
-                    navController.navigate(navItem.label)
+                    navController.navigate(navItem.route) {
+                        // Handle popBackStack if necessary to avoid building up the navigation stack
+                        launchSingleTop = true
+                        restoreState = true
+                    }
                 },
                 label = { Text(text = navItem.label) },
                 icon = {
