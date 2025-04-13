@@ -12,8 +12,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -28,29 +26,14 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import androidx.navigation.compose.rememberNavController
-import androidx.navigation.compose.composable
-import androidx.navigation.compose.NavHost
-import com.hermen.ass1.ui.theme.Screen
+
 
 @Composable
-fun Navigation() {
-    val navController = rememberNavController()
-
-    NavHost(navController = navController, startDestination = Screen.InitialPage.route) {
-        composable(Screen.InitialPage.route) { InitialPage(navController) }
-        composable(Screen.Signup.route) { SignupScreen(navController) }
-        composable(Screen.Login.route) { LoginScreen(navController) }
-    }
-}
-
-@Composable
-fun InitialPage(navController: NavController) {
-
+fun SignupScreen(navController: NavController) {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.White),
+            .background(color = Color.White),
         contentAlignment = Alignment.TopCenter
     ) {
         Column(
@@ -94,7 +77,7 @@ fun InitialPage(navController: NavController) {
             // 图标部分
             Box(
                 modifier = Modifier
-                    .size(200.dp) // 方形 Box
+                    .size(200 .dp) // 方形 Box
                     .clip(RoundedCornerShape(12.dp))
             ) {
                 Image(
@@ -116,47 +99,17 @@ fun InitialPage(navController: NavController) {
             // 在图标和按钮之间增加间距
             Spacer(modifier = Modifier.height(50.dp))
 
-            // 按钮部分
-            // 按钮部分
             Box(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .height(200.dp), // 设置 Box 高度
-                contentAlignment = Alignment.Center // 让 Box 内部内容居中
-            ) {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Button(
-                        onClick = { navController.navigate(Screen.Signup.route) },
-                        modifier = Modifier
-                            .fillMaxWidth(0.7f) // 按钮宽度 70% 屏幕宽度
-                            .height(50.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = Color.Blue)
-                    ) {
-                        Text(text = "Sign In", fontSize = 18.sp)
-                    }
+            )
 
-                    Spacer(modifier = Modifier.height(20.dp)) // 按钮间距
-
-                    Button(
-                        onClick = { navController.navigate("login") },
-                        modifier = Modifier
-                            .fillMaxWidth(0.7f)
-                            .height(50.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = Color.Gray)
-                    ) {
-                        Text(text = "Login", fontSize = 18.sp)
-                    }
-                }
-            }
         }
     }
 }
 
 @Preview(showBackground = true)
 @Composable
-fun InitialPagePreview(){
-    val fakeNavController = rememberNavController()
-    InitialPage(navController = fakeNavController)
+fun SignupPreview() {
+    val navController = androidx.navigation.compose.rememberNavController()
+    SignupScreen(navController)
 }
