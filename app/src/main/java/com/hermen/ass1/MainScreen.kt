@@ -189,7 +189,7 @@ fun Home(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .padding(16.dp)
+            .background(Color(0xffe5ffff))
     ) {
         IconButton(
             onClick = { onToggleTheme() },
@@ -202,7 +202,7 @@ fun Home(
 
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.fillMaxSize()
+            modifier = Modifier.fillMaxSize().padding(16.dp)
         ) {
             AppLogo(modifier = Modifier.size(200.dp))
             Spacer(modifier = Modifier.height(16.dp))
