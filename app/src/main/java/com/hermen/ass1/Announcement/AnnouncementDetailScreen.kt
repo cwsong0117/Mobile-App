@@ -16,6 +16,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import com.hermen.ass1.ThemeViewModel
 import kotlinx.serialization.json.Json
@@ -24,7 +25,7 @@ import java.net.URLDecoder
 @Composable
 fun AnnouncementDetailScreen(
     json: String,
-    navController: NavHostController,
+    navController: NavController,
     themeViewModel: ThemeViewModel
 ) {
     val announcement = remember {

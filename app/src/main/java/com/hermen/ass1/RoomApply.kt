@@ -1,5 +1,6 @@
 package com.hermen.ass1
 
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -7,6 +8,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.Card
@@ -29,51 +31,72 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Tab
+import androidx.compose.material3.TabRow
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
+import com.hermen.ass1.ApplicationStatusModel.ApplicationStatus
 import com.hermen.ass1.ui.theme.Ass1Theme
 
 @Composable
 fun MeetingRoomApply(navController: NavController) {
+    var selectedTabIndex by remember { mutableIntStateOf(0) }
+    val topBarTitle = if (selectedTabIndex == 0) "Meeting Room" else "Application Status"
+
     Scaffold(
         topBar = {
-            BackButton(navController = navController, title = "Meeting Room")
+            BackButton(navController = navController, title = topBarTitle)
         },
         bottomBar = {
             BottomNavigationBar(navController = navController)
         }
     ) {
         innerPadding ->
-        Box(
-            modifier = Modifier.padding(innerPadding)
+        Column(
+            modifier = Modifier
+                .padding(innerPadding)
+                .background(Color(0xFFe5ffff))
+                .fillMaxSize()
         ) {
-          MeetingRoomList(
-              meetingRoomsList = MeetingRoomResource().loadMeetingRooms()
-          )
+            MeetingRoomTabs(selectedTabIndex) { selectedTabIndex = it }
+
+            when (selectedTabIndex) {
+                0 -> ApplyTabContent(navController)
+                1 -> StatusTabContent(navController)
+            }
         }
+
     }
 }
 
 @Composable
-fun MeetingRoomList(meetingRoomsList: List<MeetingRoom>) {
+fun MeetingRoomList(meetingRoomsList: List<MeetingRoom>, navController: NavController) {
+
     LazyColumn(
-        modifier = Modifier,
+        modifier = Modifier
+            .padding(top = 10.dp),
 
     ) {
         items(meetingRoomsList) { meetingRoom ->
             MeetingRoomCard(
                 meetingRoom = meetingRoom,
-                navController = rememberNavController(),
+                navController = navController,
                 modifier = Modifier .padding(8.dp)
             )
         }
@@ -85,13 +108,11 @@ fun MeetingRoomCard(
     meetingRoom: MeetingRoom,
     navController: NavController,
     modifier: Modifier = Modifier) {
+    val context = LocalContext.current
 
     Card(
         modifier = modifier
             .padding(horizontal = 10.dp, vertical = 8.dp)
-            .clickable {
-                navController.navigate("DetailScreen/${meetingRoom.meetingRoomStringResourceId}")
-            }
     ) {
         Box(
             modifier = Modifier
@@ -104,9 +125,17 @@ fun MeetingRoomCard(
                        color = Color.White.copy(alpha = 0.8f),
                    )
                    .fillMaxWidth()
-                   .height(200.dp),
+                   .height(200.dp)
+                   .clickable {
+                       val rawName = context.getString(meetingRoom.meetingRoomStringResourceId)
+                       navController.navigate("roomDetail/$rawName")
+                   },
                contentScale = ContentScale.Crop
+
            )
+
+            Log.d("DEBUG", "Room ID : ${context.getString(meetingRoom.meetingRoomStringResourceId)}")
+
             // Gradient Overlay for Center-left Transparency
         Box(
             modifier = Modifier
@@ -182,10 +211,204 @@ fun BackButton(navController: NavController, title: String) {
     }
 }
 
-@Preview(showBackground = true)
 @Composable
-fun MeetingRoomApplyPreview() {
-    Ass1Theme {
-        MeetingRoomApply(navController = rememberNavController())
+fun MeetingRoomTabs(selectedIndex: Int, onTabSelected: (Int) -> Unit) {
+    val tabTitles = listOf("Apply", "Status")
+
+    TabRow(selectedTabIndex = selectedIndex) {
+        tabTitles.forEachIndexed { index, title ->
+            Tab(
+                selected = selectedIndex == index,
+                onClick = { onTabSelected(index) },
+                text = {
+                    Text(
+                        title,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 20.sp
+                    )
+                }
+            )
+        }
     }
 }
+
+@Composable
+fun ApplyTabContent(navController: NavController) {
+    val meetingRoomsList = MeetingRoomResource().loadMeetingRooms()
+    MeetingRoomList(meetingRoomsList = meetingRoomsList, navController = navController)
+}
+
+@Composable
+fun StatusTabContent(navController: NavController) {
+    Status(navController = navController)
+}
+
+@Composable
+fun Status(navController: NavController) {
+    StatusScreen(navController)
+}
+
+//sharable function that easy for apply
+fun getRequestList(): List<ApplicationStatus> {
+    return listOf(
+        ApplicationStatus(
+            applyId = "AP001",
+            name = "blablabla",
+            date = "12-04-2025",
+            startTime = "10:00",
+            endTime = "12:00",
+            purpose = "meeting",
+            roomType = "Huddle Room",
+            status = "approved"
+        ),
+        ApplicationStatus(
+            applyId = "AP002",
+            name = "hahahaha",
+            date = "18-04-2025",
+            startTime = "10:00",
+            endTime = "12:00",
+            purpose = "phone call",
+            roomType = "Phone Booth Room",
+            status = "Pending"
+        )
+    )
+}
+
+@Composable
+fun StatusScreen(navController: NavController) {
+    val requestList = getRequestList()
+
+    Column {
+        LazyColumn {
+            items(requestList.size) { index ->
+                ApplicationStatusCard(navController, requestList[index])
+            }
+        }
+    }
+}
+
+@Composable
+fun ApplicationStatusCard(navController: NavController, request: ApplicationStatus) {
+    Spacer(modifier = Modifier.height(24.dp))
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 24.dp)
+            .height(115.dp)
+            .clickable {
+                Log.d("DEBUG", "ApplicationStatusCard clicked")
+                navController.navigate("status_details/${request.applyId}")
+            },
+        colors = CardDefaults.cardColors(containerColor = Color.LightGray) //change color later
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp),
+        ) {
+            Row(modifier = Modifier
+                .fillMaxWidth()){
+                Text(text = "Request: ${request.roomType}",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 22.sp,
+                    fontFamily = FontFamily.Serif
+                )
+            }
+            Row {
+                Text(text = "From: ${request.name}",
+                    fontSize = 18.sp)
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(
+                    text = "..."
+                )
+
+                Spacer(modifier = Modifier.weight(1f))
+
+                Text(
+                    text = "Status: ${request.status}",
+                    color = when (request.status.lowercase()) {
+                        "pending" -> Color.Yellow
+                        "approved" -> Color.Green
+                        "rejected" -> Color.Red
+                        else -> Color.Black
+                    }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun StatusDetails(navController: NavController, applyId: String) {
+
+    val requestList = getRequestList()
+    val selectedRequest = requestList.find { it.applyId == applyId }
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color(0xFFe5ffff)) // Background color for the entire screen
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+        ) {
+            // Top Bar
+            BackButton(navController = navController, title = "Request From: ${selectedRequest?.name}")
+
+            // Content Area
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+                    .padding(16.dp)
+            ) {
+                // TODO: Put your actual content here
+                selectedRequest?.let {
+                    Column {
+                        Text(text = "Request For: ${it.roomType}")
+                        Text(text = "From: ${it.name}")
+                        Text(text = "Date: ${it.date}")
+                        Text(text = "From: ${it.startTime}")
+                        Text(text = "To: ${it.endTime}")
+                        Text(text = "Purpose: ${it.purpose}")
+                        Row {
+                            Text(text = "Status: ")
+                            Text(text = it.status,
+                                color = when (it.status.lowercase()) {
+                                    "pending" -> Color(0xFFD59B00)
+                                    "approved" -> Color(0xFF00A900)
+                                    "rejected" -> Color(0xFFFF0000)
+                                    else -> Color.Black
+                                })
+                        }
+
+                    }
+                }
+            }
+
+            // Bottom Bar
+            BottomNavigationBar(navController = navController)
+        }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun StatusPreview() {
+    StatusDetails(navController = rememberNavController(), applyId = "AP001")
+}
+
+//@Preview(showBackground = true)
+//@Composable
+//fun MeetingRoomApplyPreview() {
+//    Ass1Theme {
+//        MeetingRoomApply(navController = rememberNavController())
+//    }
+//}

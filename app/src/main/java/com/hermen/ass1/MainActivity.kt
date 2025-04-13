@@ -1,13 +1,15 @@
+
 package com.hermen.ass1
 
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.navigation.compose.rememberNavController
+import androidx.navigation.NavType
 import com.hermen.ass1.ui.theme.Ass1Theme
 
 class MainActivity : ComponentActivity() {
@@ -23,9 +25,6 @@ class MainActivity : ComponentActivity() {
                     isDarkTheme = viewModel.isDarkTheme.value,
                     onToggleTheme = viewModel::toggleTheme
                 )
-//                MeetingRoomApply(
-//                    navController = rememberNavController()
-//                )
             }
         }
     }
@@ -43,3 +42,4 @@ fun GreetingPreview() {
         )
     }
 }
+

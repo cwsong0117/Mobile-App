@@ -2,9 +2,7 @@ package com.hermen.ass1
 
 // no modification in this page unless navigation purpose !!!!
 
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
@@ -12,17 +10,11 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.unit.dp
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.height
-import androidx.compose.material3.IconButton
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
 
@@ -34,7 +26,7 @@ data class NavItem(
 )
 
 @Composable
-fun BottomNavigationBar(modifier: Modifier = Modifier, navController: NavController) {
+fun BottomNavigationBar(navController: NavController) {
 
     val currentRoute = navController.currentBackStackEntryAsState().value?.destination?.route
 
@@ -65,7 +57,7 @@ fun BottomNavigationBar(modifier: Modifier = Modifier, navController: NavControl
         )
     )
 
-    NavigationBar(modifier = modifier) {
+    NavigationBar {
         navItemList.forEach { navItem ->
             NavigationBarItem(
                 selected = currentRoute == navItem.route, // Mark selected item
