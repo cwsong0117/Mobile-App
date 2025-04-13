@@ -19,13 +19,13 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             Ass1Theme(darkTheme = viewModel.isDarkTheme.value) {
-//                AppNavigation(
-//                    isDarkTheme = viewModel.isDarkTheme.value,
-//                    onToggleTheme = viewModel::toggleTheme
-//                )
-                MeetingRoomApply(
-                    navController = rememberNavController()
+                AppNavigation(
+                    isDarkTheme = viewModel.isDarkTheme.value,
+                    onToggleTheme = viewModel::toggleTheme
                 )
+//                MeetingRoomApply(
+//                    navController = rememberNavController()
+//                )
             }
         }
     }

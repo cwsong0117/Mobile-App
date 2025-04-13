@@ -28,6 +28,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -54,23 +55,32 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material.icons.filled.DarkMode
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavType
+import androidx.navigation.navArgument
+import com.hermen.ass1.Announcement.Announcement
+import com.hermen.ass1.Announcement.AnnouncementDetailScreen
+import com.hermen.ass1.Announcement.AnnouncementOverview
+import com.hermen.ass1.Announcement.AnnouncementViewModel
 
 enum class AppScreen(@StringRes val title: Int) {
     Home(title = R.string.app_name),
     Attendance(title = R.string.attendance),
     ClockIn(title = R.string.clock_in),
-    ClockOut(title = R.string.clock_out)
+    ClockOut(title = R.string.clock_out),
+    AnnouncementOverview(title = R.string.announcement_overview),
+    AnnouncementDetail(title = R.string.announcement_detail)
 }
-
 @Composable
 fun MainScreen(
     isDarkTheme: Boolean,
     onToggleTheme: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-
     val navController = rememberNavController()
 
     Scaffold(
@@ -121,6 +131,7 @@ fun MainScreen(
                     modifier = modifier
                 )
             }
+
             composable(route = AppScreen.ClockOut.name) {
                 ClockOut(
                     onBackButtonClicked = {
@@ -134,8 +145,19 @@ fun MainScreen(
                     modifier = modifier
                 )
             }
-        }
 
+            composable(route = AppScreen.AnnouncementOverview.name) {
+                AnnouncementOverview(navController = navController)
+            }
+
+            composable(
+                route = "${AppScreen.AnnouncementDetail.name}/{announcementJson}",
+                arguments = listOf(navArgument("announcementJson") { type = NavType.StringType })
+            ) { backStackEntry ->
+                val json = backStackEntry.arguments?.getString("announcementJson") ?: ""
+                AnnouncementDetailScreen(json = json, navController = navController)
+            }
+        }
     }
 }
 
@@ -261,7 +283,7 @@ fun Home(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            NotificationSection(navController = navController)
+            AnnouncementSection(navController = navController)
 
             GotoAttendanceOverview(navController = navController)
         }
@@ -370,68 +392,72 @@ fun AppNavigation(
 //        composable("attendance_screen") { AttendanceScreen() }
     }
 
-
 @Composable
-fun NotificationSection(navController: NavController) {
-    val notifications = listOf(
-        "New Message", "System Alert", "Upcoming Event", "New Comment"
-        // Add more notifications as needed
-    )
+fun AnnouncementSection(
+    navController: NavController,
+    viewModel: AnnouncementViewModel = viewModel()
+) {
+    val announcements by viewModel.announcements.collectAsState()
 
-    Column(
-        modifier = Modifier.fillMaxWidth()
-    ) {
+    Column(modifier = Modifier.fillMaxWidth()) {
         Text(
             text = "Notifications",
             fontSize = 18.sp,
-            fontWeight = FontWeight.Bold
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(horizontal = 16.dp)
         )
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        LazyRow(
-            modifier = Modifier.fillMaxWidth(),
-            contentPadding = PaddingValues(start = 16.dp, end = 16.dp)
-        ) {
-            items(notifications.size) { index -> // Using the index instead of the notification directly
-                val notification = notifications[index]
-                NotificationCard(
-                    title = notification,
-                    onClick = {
-                        // Navigate to Notification Detail (TODO)
-                        navController.navigate("notification_detail_screen") // This can be a placeholder
-                    }
-                )
+        if (announcements.isEmpty()) {
+            Text(
+                text = "No announcements available.",
+                modifier = Modifier.padding(horizontal = 16.dp),
+                fontSize = 14.sp
+            )
+        } else {
+            LazyRow(
+                modifier = Modifier.fillMaxWidth(),
+                contentPadding = PaddingValues(start = 16.dp, end = 16.dp)
+            ) {
+                items(announcements) { announcement ->
+                    AnnouncementCard(
+                        title = announcement.title,
+                        onClick = {
+                            navController.navigate(AppScreen.AnnouncementOverview.name)
+                        }
+                    )
+                }
             }
         }
     }
 }
 
 @Composable
-fun NotificationCard(title: String, onClick: () -> Unit) {
+fun AnnouncementCard(title: String, onClick: () -> Unit) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
+            .width(120.dp) // Fixed width for consistent layout
             .padding(5.dp)
-            .clickable(onClick = onClick) // Handle navigation on click
+            .clickable(onClick = onClick)
     ) {
         Box(
             modifier = Modifier
                 .size(100.dp)
-                .background(Color.Gray) // Placeholder empty icon
-        ) {
-            // You can replace the Color.Gray with an actual image/icon later
-        }
+                .background(Color.Gray)
+        )
 
         Spacer(modifier = Modifier.height(8.dp))
 
         Text(
             text = title,
             fontSize = 14.sp,
-            modifier = Modifier.align(Alignment.CenterHorizontally)
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 4.dp)
         )
     }
 }
-
-
-
