@@ -47,6 +47,12 @@ enum class AppScreen(@StringRes val title: Int) {
     UserProfile(title = R.string.user_profile)
 }
 
+data class AppItem(
+    val name: String,
+    val icon: Int,
+    val route: String
+)
+
 @Composable
 fun MainScreen(
     isDarkTheme: Boolean,
@@ -240,8 +246,6 @@ fun AppLogo(modifier: Modifier = Modifier) {
         )
     }
 }
-
-data class AppItem(val name: String, val icon: Int, val route: String)
 
 @Composable
 fun ApplicationSection(navController: NavController) {

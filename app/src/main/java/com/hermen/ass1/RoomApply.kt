@@ -1,5 +1,6 @@
 package com.hermen.ass1
 
+import android.graphics.Bitmap
 import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -17,7 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import com.hermen.ass1.MeetingRoomModel.MeetingRoom
+import com.hermen.ass1.MeetingRoom.MeetingRoom
 import com.hermen.ass1.MeetingRoom.MeetingRoomResource
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -31,58 +32,54 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.Button
+import androidx.compose.material.Divider
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
+import com.google.zxing.BarcodeFormat
+import com.google.zxing.MultiFormatWriter
+import com.google.zxing.common.BitMatrix
 import com.hermen.ass1.ApplicationStatusModel.ApplicationStatus
-import com.hermen.ass1.ui.theme.Ass1Theme
+import android.graphics.Color.BLACK
+import android.graphics.Color.WHITE
 
 @Composable
 fun MeetingRoomApply(navController: NavController) {
     var selectedTabIndex by remember { mutableIntStateOf(0) }
     val topBarTitle = if (selectedTabIndex == 0) "Meeting Room" else "Application Status"
 
-    Scaffold(
-        topBar = {
-            BackButton(navController = navController, title = topBarTitle)
-        },
-        bottomBar = {
-            BottomNavigationBar(navController = navController)
-        }
+    Column(
+        modifier = Modifier
+            .background(Color(0xFFe5ffff))
+            .fillMaxSize()
     ) {
-        innerPadding ->
-        Column(
-            modifier = Modifier
-                .padding(innerPadding)
-                .background(Color(0xFFe5ffff))
-                .fillMaxSize()
-        ) {
-            MeetingRoomTabs(selectedTabIndex) { selectedTabIndex = it }
+        BackButton(navController = navController, title = topBarTitle)
+        MeetingRoomTabs(selectedTabIndex) { selectedTabIndex = it }
 
-            when (selectedTabIndex) {
-                0 -> ApplyTabContent(navController)
-                1 -> StatusTabContent(navController)
-            }
+        when (selectedTabIndex) {
+            0 -> ApplyTabContent(navController)
+            1 -> StatusTabContent(navController)
         }
-
     }
+
 }
 
 @Composable
@@ -184,11 +181,9 @@ fun BackButton(navController: NavController, title: String) {
     Surface(
         modifier = Modifier
             .fillMaxWidth()
-            .shadow(elevation = 4.dp)
     ) {
         Row(
             modifier = Modifier
-                .padding(top = 20.dp)
                 .height(46.dp)
                 .fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
@@ -214,6 +209,10 @@ fun BackButton(navController: NavController, title: String) {
 @Composable
 fun MeetingRoomTabs(selectedIndex: Int, onTabSelected: (Int) -> Unit) {
     val tabTitles = listOf("Apply", "Status")
+    Divider(
+        color = Color.LightGray,
+        thickness = 1.dp
+    )
 
     TabRow(selectedTabIndex = selectedIndex) {
         tabTitles.forEachIndexed { index, title ->
@@ -240,7 +239,7 @@ fun ApplyTabContent(navController: NavController) {
 
 @Composable
 fun StatusTabContent(navController: NavController) {
-    Status(navController = navController)
+    Status(navController)
 }
 
 @Composable
@@ -310,7 +309,7 @@ fun ApplicationStatusCard(navController: NavController, request: ApplicationStat
                 .fillMaxWidth()){
                 Text(text = "Request: ${request.roomType}",
                     fontWeight = FontWeight.Bold,
-                    fontSize = 22.sp,
+                    fontSize = 20.sp,
                     fontFamily = FontFamily.Serif
                 )
             }
@@ -346,58 +345,109 @@ fun ApplicationStatusCard(navController: NavController, request: ApplicationStat
 
 @Composable
 fun StatusDetails(navController: NavController, applyId: String) {
-
     val requestList = getRequestList()
     val selectedRequest = requestList.find { it.applyId == applyId }
+    var qrBitmap by remember { mutableStateOf<Bitmap?>(null) }
 
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFFe5ffff)) // Background color for the entire screen
+            .background(Color(0xFFe5ffff))
     ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
         ) {
-            // Top Bar
-            BackButton(navController = navController, title = "Request From: ${selectedRequest?.name}")
+            BackButton(navController = navController, title = "Request From: ${selectedRequest?.name ?: "Unknown"}")
 
-            // Content Area
             Box(
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxWidth()
                     .padding(16.dp)
             ) {
-                // TODO: Put your actual content here
                 selectedRequest?.let {
                     Column {
                         Text(text = "Request For: ${it.roomType}")
                         Text(text = "From: ${it.name}")
                         Text(text = "Date: ${it.date}")
-                        Text(text = "From: ${it.startTime}")
-                        Text(text = "To: ${it.endTime}")
+                        Text(text = "Time: ${it.startTime} - ${it.endTime}")
                         Text(text = "Purpose: ${it.purpose}")
                         Row {
                             Text(text = "Status: ")
-                            Text(text = it.status,
+                            Text(
+                                text = it.status,
                                 color = when (it.status.lowercase()) {
                                     "pending" -> Color(0xFFD59B00)
                                     "approved" -> Color(0xFF00A900)
                                     "rejected" -> Color(0xFFFF0000)
                                     else -> Color.Black
-                                })
+                                }
+                            )
                         }
 
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        if (it.status.lowercase() == "approved") {
+                            Button(onClick = {
+                                val qrText = """
+                                Room: ${it.roomType}
+                                Name: ${it.name}
+                                Date: ${it.date}
+                                Time: ${it.startTime} - ${it.endTime}
+                                Purpose: ${it.purpose}
+                                Status: ${it.status}
+                            """.trimIndent()
+                                qrBitmap = generateQRCode(qrText)
+                            }) {
+                                Text("Generate QR Code")
+                            }
+
+                            qrBitmap?.let { bitmap ->
+                                Spacer(modifier = Modifier.height(16.dp))
+                                Image(
+                                    bitmap = bitmap.asImageBitmap(),
+                                    contentDescription = "QR Code",
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(300.dp)
+                                        .padding(8.dp)
+                                )
+                            }
+                        } else {
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Text(
+                                text = "Your application has not been approved yet. QR Code is unavailable.",
+                                color = Color.Red,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier.padding(8.dp)
+                            )
+                        }
                     }
                 }
             }
-
-            // Bottom Bar
-            BottomNavigationBar(navController = navController)
         }
     }
 }
+
+fun generateQRCode(text: String, size: Int = 512): Bitmap? {
+    return try {
+        val bitMatrix: BitMatrix = MultiFormatWriter().encode(text, BarcodeFormat.QR_CODE, size, size)
+        val width = bitMatrix.width
+        val height = bitMatrix.height
+        val bmp = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565)
+        for (x in 0 until width) {
+            for (y in 0 until height) {
+                bmp.setPixel(x, y, if (bitMatrix.get(x, y)) BLACK else WHITE)
+            }
+        }
+        bmp
+    } catch (e: Exception) {
+        e.printStackTrace()
+        null
+    }
+}
+
 
 @Preview(showBackground = true)
 @Composable

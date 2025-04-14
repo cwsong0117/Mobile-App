@@ -14,13 +14,13 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import android.app.DatePickerDialog
+import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
@@ -34,6 +34,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.navigation.NavController
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.google.firebase.Firebase
+import com.google.firebase.firestore.firestore
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
@@ -52,27 +54,19 @@ fun RoomDetail(navController: NavController, roomName: String) {
         modifier = Modifier
             .fillMaxSize()
     ) {
-        Scaffold(
-            topBar = {
-                BackButton(navController, title = roomName)
-            },
-            bottomBar = {
-                BottomNavigationBar(navController)
-            }
-        ) { innerPadding ->
-            Box(
-                modifier = Modifier
-                    .padding(innerPadding)
-                    .background(Color(0xFFe5ffff))
-            ) {
-                ApplyDetails(
-                    name = name.value, onNameChange = { name.value = it },
-                    date = date.value, onDateChange = { date.value = it },
-                    startTime = startTime.value, onStartTimeChange = { startTime.value = it },
-                    endTime = endTime.value, onEndTimeChange = { endTime.value = it },
-                    purpose = purpose.value, onPurposeChange = { purpose.value = it }
-                )
-            }
+
+        Column(
+            modifier = Modifier
+                .background(Color(0xFFe5ffff))
+        ) {
+            BackButton(navController, title = roomName)
+            ApplyDetails(
+                name = name.value, onNameChange = { name.value = it },
+                date = date.value, onDateChange = { date.value = it },
+                startTime = startTime.value, onStartTimeChange = { startTime.value = it },
+                endTime = endTime.value, onEndTimeChange = { endTime.value = it },
+                purpose = purpose.value, onPurposeChange = { purpose.value = it }
+            )
         }
     }
 }
@@ -87,7 +81,7 @@ fun ApplyDetails(name:String, onNameChange: (String) -> Unit,
     val cyanInTitle = Color(0xFF00cccc)
     val cyanInButton = Color(0xFF0099cc)
     val scrollState = rememberScrollState()
-
+    val db = Firebase.firestore
 
     Column(
         modifier = Modifier
@@ -207,15 +201,34 @@ fun ApplyDetails(name:String, onNameChange: (String) -> Unit,
                 Button(
                     modifier = Modifier
                         .padding(top = 50.dp, bottom = 20.dp, end = 40.dp),
-                    onClick = { /*TODO*/ },
+                    onClick = {
+                        val Room = hashMapOf(
+                            "applyId" to "AP003",
+                            "firstName" to "Muhammad",
+                            "name" to name,
+                            "date" to date,
+                            "startTime" to startTime,
+                            "endTime" to endTime,
+                            "purpose" to purpose,
+                            "status" to "pending",
+                            "type" to "Conference Room"
+                        )
+
+                        db.collection("Room")
+                            .add(Room)
+                            .addOnSuccessListener { documentReference ->
+                                Log.d("Firestore", "Document added with ID: ${documentReference.id}")
+                            }
+                            .addOnFailureListener { e ->
+                                Log.w("Firestore", "Error adding document", e)
+                            }
+                    },
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = cyanInButton, // Button background color
-                        contentColor = Color.White           // Text/icon color
+                        containerColor = cyanInButton,
+                        contentColor = Color.White
                     )
                 ) {
-                    Text("Submit",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 18.sp)
+                    Text("Submit", fontWeight = FontWeight.Bold, fontSize = 18.sp)
                 }
             }
         }

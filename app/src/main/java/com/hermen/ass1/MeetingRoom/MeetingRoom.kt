@@ -1,4 +1,4 @@
-package com.hermen.ass1.MeetingRoomModel
+package com.hermen.ass1.MeetingRoom
 
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes

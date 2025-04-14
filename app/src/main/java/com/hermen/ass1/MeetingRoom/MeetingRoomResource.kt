@@ -1,6 +1,6 @@
 package com.hermen.ass1.MeetingRoom
 
-import com.hermen.ass1.MeetingRoomModel.MeetingRoom
+import com.hermen.ass1.MeetingRoom.MeetingRoom
 import com.hermen.ass1.R
 
 class MeetingRoomResource {

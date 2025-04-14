@@ -14,9 +14,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.vectorResource
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.compose.rememberNavController
 
 data class NavItem(
     val label: String,
@@ -89,4 +91,10 @@ fun BottomNavigationBar(navController: NavController) {
             )
         }
     }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun navBarPreview() {
+    BottomNavigationBar(navController = rememberNavController())
 }
