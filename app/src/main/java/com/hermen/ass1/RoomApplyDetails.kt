@@ -34,8 +34,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.navigation.NavController
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.google.firebase.Firebase
-import com.google.firebase.firestore.firestore
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.hermen.ass1.MeetingRoom.MeetingRoomViewModel
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
@@ -65,7 +65,8 @@ fun RoomDetail(navController: NavController, roomName: String) {
                 date = date.value, onDateChange = { date.value = it },
                 startTime = startTime.value, onStartTimeChange = { startTime.value = it },
                 endTime = endTime.value, onEndTimeChange = { endTime.value = it },
-                purpose = purpose.value, onPurposeChange = { purpose.value = it }
+                purpose = purpose.value, onPurposeChange = { purpose.value = it },
+                roomName = roomName
             )
         }
     }
@@ -76,12 +77,13 @@ fun ApplyDetails(name:String, onNameChange: (String) -> Unit,
                  date:String, onDateChange:(String) -> Unit,
                  startTime:String, onStartTimeChange: (String) -> Unit,
                  endTime:String, onEndTimeChange: (String) -> Unit,
-                 purpose:String, onPurposeChange: (String) -> Unit) {
+                 purpose:String, onPurposeChange: (String) -> Unit,
+                 roomName: String) {
 
     val cyanInTitle = Color(0xFF00cccc)
     val cyanInButton = Color(0xFF0099cc)
     val scrollState = rememberScrollState()
-    val db = Firebase.firestore
+    val viewModel: MeetingRoomViewModel = viewModel()
 
     Column(
         modifier = Modifier
@@ -202,26 +204,16 @@ fun ApplyDetails(name:String, onNameChange: (String) -> Unit,
                     modifier = Modifier
                         .padding(top = 50.dp, bottom = 20.dp, end = 40.dp),
                     onClick = {
-                        val Room = hashMapOf(
-                            "applyId" to "AP003",
-                            "firstName" to "Muhammad",
-                            "name" to name,
-                            "date" to date,
-                            "startTime" to startTime,
-                            "endTime" to endTime,
-                            "purpose" to purpose,
-                            "status" to "pending",
-                            "type" to "Conference Room"
+                        viewModel.submitApplication(
+                            name = name,
+                            date = date,
+                            startTime = startTime,
+                            endTime = endTime,
+                            purpose = purpose,
+                            type = roomName,
+                            onSuccess = { /*TODO*/ },
+                            onError = { e -> Log.e("Submit", "Error submitting application", e)}
                         )
-
-                        db.collection("Room")
-                            .add(Room)
-                            .addOnSuccessListener { documentReference ->
-                                Log.d("Firestore", "Document added with ID: ${documentReference.id}")
-                            }
-                            .addOnFailureListener { e ->
-                                Log.w("Firestore", "Error adding document", e)
-                            }
                     },
                     colors = ButtonDefaults.buttonColors(
                         containerColor = cyanInButton,
