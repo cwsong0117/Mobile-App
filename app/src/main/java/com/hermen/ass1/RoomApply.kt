@@ -43,7 +43,7 @@ import androidx.compose.material3.TabRow
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.*
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Brush
@@ -60,6 +60,10 @@ import com.google.zxing.common.BitMatrix
 import com.hermen.ass1.ApplicationStatusModel.ApplicationStatus
 import android.graphics.Color.BLACK
 import android.graphics.Color.WHITE
+import androidx.compose.material.ButtonDefaults
+import androidx.compose.runtime.LaunchedEffect
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.hermen.ass1.MeetingRoom.RoomViewModel
 
 @Composable
 fun MeetingRoomApply(navController: NavController) {
@@ -244,43 +248,38 @@ fun StatusTabContent(navController: NavController) {
 
 @Composable
 fun Status(navController: NavController) {
-    StatusScreen(navController)
-}
-
-//sharable function that easy for apply
-fun getRequestList(): List<ApplicationStatus> {
-    return listOf(
-        ApplicationStatus(
-            applyId = "AP001",
-            name = "blablabla",
-            date = "12-04-2025",
-            startTime = "10:00",
-            endTime = "12:00",
-            purpose = "meeting",
-            roomType = "Huddle Room",
-            status = "approved"
-        ),
-        ApplicationStatus(
-            applyId = "AP002",
-            name = "hahahaha",
-            date = "18-04-2025",
-            startTime = "10:00",
-            endTime = "12:00",
-            purpose = "phone call",
-            roomType = "Phone Booth Room",
-            status = "Pending"
-        )
-    )
+    StatusScreen(navController, viewModel())
 }
 
 @Composable
-fun StatusScreen(navController: NavController) {
-    val requestList = getRequestList()
+fun StatusScreen(navController: NavController, viewModel: RoomViewModel = viewModel()) {
+    val requestList by viewModel.requestList.collectAsState()
 
-    Column {
-        LazyColumn {
-            items(requestList.size) { index ->
-                ApplicationStatusCard(navController, requestList[index])
+    // You can add a loading state if needed
+    var isLoading by remember { mutableStateOf(true) }
+
+    LaunchedEffect(Unit) {
+        viewModel.fetchRequestList()
+        isLoading = false
+    }
+
+    if (isLoading) {
+        // Show loading indicator
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            // Add your loading indicator here
+            Text("Loading...")
+        }
+    } else {
+        if (requestList.isEmpty()) {
+            // Show empty state
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Text("No requests found")
+            }
+        } else {
+            LazyColumn {
+                items(requestList) { request ->
+                    ApplicationStatusCard(navController, request)
+                }
             }
         }
     }
@@ -344,10 +343,11 @@ fun ApplicationStatusCard(navController: NavController, request: ApplicationStat
 }
 
 @Composable
-fun StatusDetails(navController: NavController, applyId: String) {
-    val requestList = getRequestList()
-    val selectedRequest = requestList.find { it.applyId == applyId }
+fun StatusDetails(navController: NavController, applyId: String, viewModel: RoomViewModel = viewModel()) {
+    val requestList = viewModel.requestList.collectAsState()
+    val selectedRequest = requestList.value.firstOrNull { it.applyId == applyId }
     var qrBitmap by remember { mutableStateOf<Bitmap?>(null) }
+    val cyanInButton = Color(0xFF0099cc)
 
     Box(
         modifier = Modifier
@@ -358,7 +358,7 @@ fun StatusDetails(navController: NavController, applyId: String) {
             modifier = Modifier
                 .fillMaxSize()
         ) {
-            BackButton(navController = navController, title = "Request From: ${selectedRequest?.name ?: "Unknown"}")
+            BackButton(navController = navController, title = "Request From: ${selectedRequest?.name ?: "Unknown!"}")
 
             Box(
                 modifier = Modifier
@@ -368,13 +368,34 @@ fun StatusDetails(navController: NavController, applyId: String) {
             ) {
                 selectedRequest?.let {
                     Column {
-                        Text(text = "Request For: ${it.roomType}")
-                        Text(text = "From: ${it.name}")
-                        Text(text = "Date: ${it.date}")
-                        Text(text = "Time: ${it.startTime} - ${it.endTime}")
-                        Text(text = "Purpose: ${it.purpose}")
+                        Row{
+                            Text(text = "Request For: ",
+                                fontSize = 24.sp)
+                            Text(it.roomType,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 24.sp,)
+                        }
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        Text(text = "Applicants: ${it.name}",
+                            fontSize = 24.sp)
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Text(text = "Applicants: ${it.applyId}",
+                            fontSize = 24.sp)
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Text(text = "Date: ${it.date}",
+                            fontSize = 24.sp)
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Text(text = "Time: ${it.startTime} - ${it.endTime}",
+                            fontSize = 24.sp)
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Text(text = "Purpose: ${it.purpose}",
+                            fontSize = 24.sp)
+                        Spacer(modifier = Modifier.height(12.dp))
                         Row {
-                            Text(text = "Status: ")
+                            Text(text = "Status: ",
+                                fontSize = 24.sp)
                             Text(
                                 text = it.status,
                                 color = when (it.status.lowercase()) {
@@ -382,15 +403,24 @@ fun StatusDetails(navController: NavController, applyId: String) {
                                     "approved" -> Color(0xFF00A900)
                                     "rejected" -> Color(0xFFFF0000)
                                     else -> Color.Black
-                                }
+                                },
+                                fontSize = 24.sp
                             )
                         }
 
-                        Spacer(modifier = Modifier.height(16.dp))
+                        Spacer(modifier = Modifier.height(24.dp))
 
-                        if (it.status.lowercase() == "approved") {
-                            Button(onClick = {
-                                val qrText = """
+                        Column(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            if (it.status.lowercase() == "approved") {
+                                Button(colors = ButtonDefaults.buttonColors(
+                                    backgroundColor = cyanInButton,
+                                    contentColor = Color.White
+                                ),
+                                    onClick = {
+                                    val qrText = """
                                 Room: ${it.roomType}
                                 Name: ${it.name}
                                 Date: ${it.date}
@@ -398,30 +428,32 @@ fun StatusDetails(navController: NavController, applyId: String) {
                                 Purpose: ${it.purpose}
                                 Status: ${it.status}
                             """.trimIndent()
-                                qrBitmap = generateQRCode(qrText)
-                            }) {
-                                Text("Generate QR Code")
-                            }
-
-                            qrBitmap?.let { bitmap ->
+                                    qrBitmap = generateQRCode(qrText)
+                                },
+                                ) {
+                                    Text("Generate QR Code", color = Color.White)
+                                }
                                 Spacer(modifier = Modifier.height(16.dp))
-                                Image(
-                                    bitmap = bitmap.asImageBitmap(),
-                                    contentDescription = "QR Code",
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .height(300.dp)
-                                        .padding(8.dp)
+                                qrBitmap?.let { bitmap ->
+                                    Spacer(modifier = Modifier.height(40.dp))
+                                    Image(
+                                        bitmap = bitmap.asImageBitmap(),
+                                        contentDescription = "QR Code",
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .height(300.dp)
+                                            .padding(8.dp)
+                                    )
+                                }
+                            } else {
+                                Spacer(modifier = Modifier.height(16.dp))
+                                Text(
+                                    text = "Your application has not been approved yet. QR Code is unavailable.",
+                                    color = Color.Red,
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.padding(8.dp)
                                 )
                             }
-                        } else {
-                            Spacer(modifier = Modifier.height(16.dp))
-                            Text(
-                                text = "Your application has not been approved yet. QR Code is unavailable.",
-                                color = Color.Red,
-                                fontWeight = FontWeight.Bold,
-                                modifier = Modifier.padding(8.dp)
-                            )
                         }
                     }
                 }
@@ -454,11 +486,3 @@ fun generateQRCode(text: String, size: Int = 512): Bitmap? {
 fun StatusPreview() {
     StatusDetails(navController = rememberNavController(), applyId = "AP001")
 }
-
-//@Preview(showBackground = true)
-//@Composable
-//fun MeetingRoomApplyPreview() {
-//    Ass1Theme {
-//        MeetingRoomApply(navController = rememberNavController())
-//    }
-//}

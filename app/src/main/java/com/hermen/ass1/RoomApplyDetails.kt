@@ -15,6 +15,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import android.app.DatePickerDialog
 import android.util.Log
+import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.width
@@ -49,6 +50,7 @@ fun RoomDetail(navController: NavController, roomName: String) {
     val endTime = remember { mutableStateOf("") }
     val purpose = remember { mutableStateOf("") }
 
+    val context = LocalContext.current
     // Show the room details of the meeting room based on the meetingRoomId
     Box(
         modifier = Modifier
@@ -66,7 +68,16 @@ fun RoomDetail(navController: NavController, roomName: String) {
                 startTime = startTime.value, onStartTimeChange = { startTime.value = it },
                 endTime = endTime.value, onEndTimeChange = { endTime.value = it },
                 purpose = purpose.value, onPurposeChange = { purpose.value = it },
-                roomName = roomName
+                status = "Pending", roomName = roomName, onSuccess = {
+                    // Clear all input fields after successful submission
+                    name.value = ""
+                    date.value = ""
+                    startTime.value = ""
+                    endTime.value = ""
+                    purpose.value = ""
+
+                    Toast.makeText(context, "Application submitted successfully!", Toast.LENGTH_SHORT).show()
+                }
             )
         }
     }
@@ -78,12 +89,13 @@ fun ApplyDetails(name:String, onNameChange: (String) -> Unit,
                  startTime:String, onStartTimeChange: (String) -> Unit,
                  endTime:String, onEndTimeChange: (String) -> Unit,
                  purpose:String, onPurposeChange: (String) -> Unit,
-                 roomName: String) {
+                 roomName: String, onSuccess: () -> Unit, status: String) {
 
     val cyanInTitle = Color(0xFF00cccc)
     val cyanInButton = Color(0xFF0099cc)
     val scrollState = rememberScrollState()
     val viewModel: MeetingRoomViewModel = viewModel()
+    val context = LocalContext.current
 
     Column(
         modifier = Modifier
@@ -204,6 +216,10 @@ fun ApplyDetails(name:String, onNameChange: (String) -> Unit,
                     modifier = Modifier
                         .padding(top = 50.dp, bottom = 20.dp, end = 40.dp),
                     onClick = {
+                        if (name.isBlank() || date.isBlank() || startTime.isBlank() || endTime.isBlank() || purpose.isBlank()) {
+                            Toast.makeText(context, "Please fill in all fields", Toast.LENGTH_SHORT).show()
+                            return@Button
+                        }
                         viewModel.submitApplication(
                             name = name,
                             date = date,
@@ -211,7 +227,8 @@ fun ApplyDetails(name:String, onNameChange: (String) -> Unit,
                             endTime = endTime,
                             purpose = purpose,
                             type = roomName,
-                            onSuccess = { /*TODO*/ },
+                            status = status,
+                            onSuccess = onSuccess,
                             onError = { e -> Log.e("Submit", "Error submitting application", e)}
                         )
                     },
@@ -326,12 +343,12 @@ fun DateInput(date:String, onDateChange: (String) -> Unit) {
 fun StartTimeInput(startTime: String, onStartTimeChange:(String) -> Unit) {
     val context = LocalContext.current
     val calendar = Calendar.getInstance()
-    val currentTime = SimpleDateFormat("HH:mm", Locale.getDefault()).format(calendar.time)
+    val currentTime = SimpleDateFormat("HH : mm", Locale.getDefault()).format(calendar.time)
 
     val timePickerDialog = TimePickerDialog(
         context,
         { _, hourOfDay, minute ->
-            val formattedTime = String.format("%02d:%02d", hourOfDay, minute)
+            val formattedTime = String.format("%02d : %02d", hourOfDay, minute)
             onStartTimeChange(formattedTime)
             // Handle the selected time here
         },
@@ -358,7 +375,7 @@ fun StartTimeInput(startTime: String, onStartTimeChange:(String) -> Unit) {
                     .padding(start = 10.dp)
             ) {
                 if (startTime.isEmpty()) {
-                    Text(currentTime, color = Color.Gray)/* TODO */
+                    Text(currentTime, color = Color.Gray)
                 } else {
                     innerTextField()
                 }
@@ -374,21 +391,22 @@ fun StartTimeInput(startTime: String, onStartTimeChange:(String) -> Unit) {
 }
 
 @Composable
-fun EndTimeInput(endTime:String, onEndTimeChange: (String) -> Unit) {
+fun EndTimeInput(endTime: String, onEndTimeChange: (String) -> Unit) {
     val context = LocalContext.current
     val calendar = Calendar.getInstance()
-    val currentTime = SimpleDateFormat("HH:mm", Locale.getDefault()).format(calendar.time)
+    val currentTime = SimpleDateFormat("HH : mm", Locale.getDefault()).format(calendar.time)
+
     val timePickerDialog = TimePickerDialog(
         context,
         { _, hourOfDay, minute ->
-            val formattedTime = String.format("%02d:%02d", hourOfDay, minute)
+            val formattedTime = String.format("%02d : %02d", hourOfDay, minute)
             onEndTimeChange(formattedTime)
-            // Handle the selected time here
         },
         calendar.get(Calendar.HOUR_OF_DAY),
         calendar.get(Calendar.MINUTE),
         true
     )
+
     BasicTextField(
         value = endTime,
         onValueChange = { },
@@ -408,14 +426,14 @@ fun EndTimeInput(endTime:String, onEndTimeChange: (String) -> Unit) {
                     .padding(start = 10.dp)
             ) {
                 if (endTime.isEmpty()) {
-                    Text(currentTime, color = Color.Gray)/* TODO */
+                    Text(currentTime, color = Color.Gray)
                 } else {
                     innerTextField()
                 }
-                IconButton(onClick = {timePickerDialog.show() }) {
+                IconButton(onClick = { timePickerDialog.show() }) {
                     Icon(
                         painter = painterResource(id = R.drawable.baseline_timer_24),
-                        contentDescription = "Select Start Time"
+                        contentDescription = "Select End Time"
                     )
                 }
             }
@@ -423,12 +441,12 @@ fun EndTimeInput(endTime:String, onEndTimeChange: (String) -> Unit) {
     )
 }
 
+
 @Composable
 fun PurposeInput(purpose:String, onPurposeChange: (String) -> Unit) {
     BasicTextField( /* Create a drop window to let the user select in a range TODO*/
         value = purpose,
         onValueChange = onPurposeChange,
-        readOnly = true,
         modifier = Modifier
             .width(380.dp)
             .padding(10.dp)

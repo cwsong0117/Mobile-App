@@ -35,6 +35,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.hermen.ass1.Announcement.*
+import com.hermen.ass1.MeetingRoom.RoomViewModel
 import com.hermen.ass1.User.UserProfileScreen
 
 enum class AppScreen(@StringRes val title: Int) {
@@ -177,7 +178,8 @@ fun MainScreen(
             )) {
                 backStackEntry ->
                 val applyId = backStackEntry.arguments?.getString("applyId") ?: ""
-                StatusDetails(navController = navController, applyId = applyId)
+                val viewModel: RoomViewModel = viewModel()
+                StatusDetails(navController = navController, applyId = applyId, viewModel = viewModel)
             }
         }
     }
