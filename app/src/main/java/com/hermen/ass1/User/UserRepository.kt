@@ -3,6 +3,7 @@ package com.hermen.ass1.User
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import kotlinx.coroutines.tasks.await
+import com.google.firebase.firestore.DocumentSnapshot
 
 object UserRepository {
 
@@ -26,4 +27,6 @@ object UserRepository {
             null
         }
     }
+
 }
+

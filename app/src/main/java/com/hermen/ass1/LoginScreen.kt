@@ -37,14 +37,24 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.material3.Text
 import androidx.compose.foundation.clickable
 import androidx.compose.material3.TextField
-
-
-
+import androidx.compose.material3.Button
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.launch
+import com.hermen.ass1.User.UserRepository // or wherever your UserRepository is
+import com.hermen.ass1.User.User
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.rememberScrollState
+import com.google.firebase.ktx.Firebase
+import com.google.firebase.firestore.ktx.firestore
 
 @Composable
 fun LoginScreen(navController: NavController) {
     val username = remember { mutableStateOf("") }
     val password = remember { mutableStateOf("") }
+    val scope = rememberCoroutineScope()
+    val loginResult = remember { mutableStateOf("") }
+    val userList = remember { mutableStateOf<List<User>>(emptyList()) }
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -54,7 +64,8 @@ fun LoginScreen(navController: NavController) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 32.dp),
+                .padding(horizontal = 32.dp)
+                .verticalScroll(rememberScrollState()), // 添加 verticalScroll
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Top
         ) {
@@ -86,7 +97,7 @@ fun LoginScreen(navController: NavController) {
             // 图标部分
             Box(
                 modifier = Modifier
-                    .size(200 .dp) // 方形 Box
+                    .size(200.dp) // 方形 Box
                     .clip(RoundedCornerShape(12.dp))
             ) {
                 Image(
@@ -143,12 +154,54 @@ fun LoginScreen(navController: NavController) {
                     value = password.value,
                     onValueChange = { password.value = it },
                     placeholder = { Text("ex: ******") },
+                    visualTransformation = PasswordVisualTransformation(),
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(50.dp)),
                     singleLine = true
                 )
             }
+            Spacer(modifier = Modifier.height(30.dp))
+
+            Button(onClick = {
+                scope.launch {
+                    val users = UserRepository.getUsers()
+                    userList.value = users
+
+                    // Find if there's a user with matching name and password
+                    val matchedUser = users.find {
+                        it.name == username.value && it.password == password.value
+                    }
+
+                    loginResult.value = if (matchedUser != null) "✅ Correct" else "❌ Invalid"
+                }
+            }) {
+                Text(text = "Confirm")
+            }
+
+            Spacer(modifier = Modifier.height(30.dp))
+
+            Text(
+                text = "User Collection Data:",
+                fontWeight = FontWeight.Bold,
+                fontSize = 20.sp
+            )
+            userList.value.forEach { user ->
+                Text(text = user.toString()) // 或者更优雅地格式化
+
+            }
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            Text(
+                text = loginResult.value,
+                fontSize = 18.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = if (loginResult.value == "✅ Correct") Color.Green else Color.Red,
+                modifier = Modifier.align(Alignment.CenterHorizontally)
+            )
+
+
             Text(text = "Username: ${username.value}")
             Text(text = "Password: ${password.value}")
 

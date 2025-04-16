@@ -117,7 +117,6 @@ fun InitialPage(navController: NavController) {
             Spacer(modifier = Modifier.height(50.dp))
 
             // 按钮部分
-            // 按钮部分
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
