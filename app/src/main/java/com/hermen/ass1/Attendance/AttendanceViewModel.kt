@@ -6,8 +6,10 @@ import androidx.lifecycle.ViewModel
 import com.google.firebase.Firebase
 import com.google.firebase.firestore.firestore
 import com.google.firebase.Timestamp
+import com.google.firebase.firestore.Query
 
 data class Attendance(
+    val attendanceID: String = "",
     val clockOutTime: Timestamp? = null,
     val clockInTime: Timestamp? = null,
     val employeeID: String = "",
@@ -33,5 +35,47 @@ class AttendanceViewModel : ViewModel() {
                 onComplete()
             }
     }
+
+    fun addAttendance(attendance: Attendance) {
+        db.collection("Attendance")
+            .add(attendance)
+            .addOnSuccessListener { documentRef ->
+                Log.d("Firestore", "DocumentSnapshot written with ID: ${documentRef.id}")
+            }
+            .addOnFailureListener { e ->
+                Log.w("Firestore", "Error adding document", e)
+            }
+    }
+
+    fun clockOut(
+        employeeID: String,
+        onSuccess: () -> Unit = {},
+        onError: (Exception) -> Unit = {}
+    ) {
+        db.collection("Attendance")
+            .whereEqualTo("employeeID", employeeID)
+            .whereEqualTo("clockOutTime", null)
+            .orderBy("clockInTime", Query.Direction.DESCENDING)
+            .limit(1)
+            .get()
+            .addOnSuccessListener { result ->
+                if (!result.isEmpty) {
+                    val document = result.documents.first()
+                    db.collection("Attendance").document(document.id)
+                        .update(
+                            mapOf(
+                                "clockOutTime" to Timestamp.now(),
+                                "status" to "OUT"
+                            )
+                        )
+                        .addOnSuccessListener { onSuccess() }
+                        .addOnFailureListener { onError(it) }
+                } else {
+                    onError(Exception("No active clock-in record found."))
+                }
+            }
+            .addOnFailureListener { onError(it) }
+    }
+
 
 }

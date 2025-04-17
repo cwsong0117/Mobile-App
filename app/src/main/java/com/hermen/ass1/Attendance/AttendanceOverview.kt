@@ -112,6 +112,7 @@ fun AttendanceScreen(viewModel: AttendanceViewModel = viewModel()) {
             LazyColumn {
                 items(attendanceList) { item ->
                     Column(modifier = Modifier.padding(8.dp)) {
+                        Text(text = "Attendance ID: ${item.attendanceID}")
                         Text(text = "Employee ID: ${item.employeeID}")
                         Text(text = "Clock In: ${item.clockInTime?.toDate()}")
                         Text(text = "Clock Out: ${item.clockOutTime?.toDate()}")

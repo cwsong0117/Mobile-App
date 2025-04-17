@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.Button
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -31,6 +32,7 @@ import androidx.compose.ui.unit.sp
 import com.hermen.ass1.R
 import kotlinx.coroutines.delay
 import java.util.*
+import androidx.lifecycle.viewmodel.compose.viewModel
 
 @Composable
 fun ClockOut(
@@ -119,8 +121,7 @@ fun ClockOut(
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
         )
 
-        Spacer(modifier = Modifier.height(50.dp))
-
+        Spacer(modifier = Modifier.height(25.dp))
 
 
         Text(
@@ -131,7 +132,7 @@ fun ClockOut(
             text = "Your clock-out time: $clockOutTime",
         )
 
-        Spacer(modifier = Modifier.height(50.dp))
+        Spacer(modifier = Modifier.height(20.dp))
 
         TextButton(
             onClick = onBackButtonClicked // 🔹 Now it correctly goes back
@@ -148,7 +149,7 @@ fun ClockOut(
             }
         }
 
-        Spacer(modifier = Modifier.height(40.dp))
+        Spacer(modifier = Modifier.height(10.dp))
 
         TextButton(
             onClick = onBackToHomeClicked // 🔹 Now it correctly goes back
@@ -164,5 +165,42 @@ fun ClockOut(
                 )
             }
         }
+
+        ClockOutScreen(employeeID = "S123")
     }
 }
+
+@Composable
+fun ClockOutScreen(
+    employeeID: String,
+    viewModel: AttendanceViewModel = viewModel()
+) {
+    var message by remember { mutableStateOf("") }
+
+    Column(modifier = Modifier.padding(16.dp)) {
+        Text(text = "Clock Out", fontSize = 24.sp, fontWeight = FontWeight.Bold)
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Button(onClick = {
+            viewModel.clockOut(
+                employeeID = employeeID,
+                onSuccess = {
+                    message = "Clocked out successfully"
+                },
+                onError = {
+                    message = "Error: ${it.message}"
+                }
+            )
+        }) {
+            Text("Clock Out")
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        if (message.isNotEmpty()) {
+            Text(text = message, color = Color.Red)
+        }
+    }
+}
+

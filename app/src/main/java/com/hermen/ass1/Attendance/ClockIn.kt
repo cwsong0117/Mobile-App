@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.Button
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -31,6 +32,8 @@ import androidx.compose.ui.unit.sp
 import com.hermen.ass1.R
 import kotlinx.coroutines.delay
 import java.util.*
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.google.firebase.Timestamp
 
 @Composable
 fun ClockIn(
@@ -104,7 +107,7 @@ fun ClockIn(
             }
         }
 
-        Spacer(modifier = Modifier.height(80.dp))
+        Spacer(modifier = Modifier.height(30.dp))
 
         TextField(
             value = name,
@@ -135,10 +138,10 @@ fun ClockIn(
         )
 
         Text(
-            text = "Your clock-out time: $clockOutTime",
+            text = "Your expected clock-out time: $clockOutTime",
         )
 
-        Spacer(modifier = Modifier.height(50.dp))
+        Spacer(modifier = Modifier.height(30.dp))
 
         TextButton(
             onClick = onBackButtonClicked // 🔹 Now it correctly goes back
@@ -155,7 +158,7 @@ fun ClockIn(
             }
         }
 
-        Spacer(modifier = Modifier.height(40.dp))
+        Spacer(modifier = Modifier.height(10.dp))
 
         TextButton(
             onClick = onBackToHomeClicked // 🔹 Now it correctly goes back
@@ -171,5 +174,28 @@ fun ClockIn(
                 )
             }
         }
+
+        Spacer(modifier = Modifier.height(10.dp))
+
+        AddAttendanceScreen()
     }
 }
+
+@Composable
+fun AddAttendanceScreen(viewModel: AttendanceViewModel = viewModel()) {
+    Column(modifier = Modifier.padding(16.dp)) {
+        Button(onClick = {
+            val newAttendance = Attendance(
+                attendanceID = "ATD180425-123",
+                clockInTime = Timestamp.now(),
+                clockOutTime = null,
+                employeeID = "S123",
+                status = "Clocked In"
+            )
+            viewModel.addAttendance(newAttendance)
+        }) {
+            Text("Add Attendance")
+        }
+    }
+}
+
