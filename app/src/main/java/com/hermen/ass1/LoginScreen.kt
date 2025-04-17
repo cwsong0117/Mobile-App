@@ -47,6 +47,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.rememberScrollState
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.firestore.ktx.firestore
+import com.hermen.ass1.User.SessionManager
 
 @Composable
 fun LoginScreen(navController: NavController) {
@@ -55,6 +56,8 @@ fun LoginScreen(navController: NavController) {
     val scope = rememberCoroutineScope()
     val loginResult = remember { mutableStateOf("") }
     val userList = remember { mutableStateOf<List<User>>(emptyList()) }
+    val user = SessionManager.currentUser
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -173,7 +176,12 @@ fun LoginScreen(navController: NavController) {
                         it.name == username.value && it.password == password.value
                     }
 
-                    loginResult.value = if (matchedUser != null) "✅ Correct" else "❌ Invalid"
+                    if (matchedUser != null) {
+                        SessionManager.currentUser = matchedUser // ✅ 存进去！
+                        loginResult.value = "✅ Correct"
+                    } else {
+                        loginResult.value = "❌ Invalid"
+                    }
                 }
             }) {
                 Text(text = "Confirm")
@@ -188,7 +196,7 @@ fun LoginScreen(navController: NavController) {
             )
             userList.value.forEach { user ->
                 Text(text = user.toString()) // 或者更优雅地格式化
-
+                Text(text = "ID: ${user.id}, Name: ${user.name}, Password: ${user.password}")
             }
 
             Spacer(modifier = Modifier.height(10.dp))
@@ -204,6 +212,12 @@ fun LoginScreen(navController: NavController) {
 
             Text(text = "Username: ${username.value}")
             Text(text = "Password: ${password.value}")
+            Text(text = "Welcome ${user?.name}")
+            Text(text = " ${user?.id}")
+            Text(text = " ${user?.age}")
+            Text(text = " ${user?.contactNo}")
+            Text(text = " ${user?.department}")
+            Text(text = " ${user?.position}")
 
             Spacer(modifier = Modifier.height(50.dp))
 

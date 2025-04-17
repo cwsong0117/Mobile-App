@@ -5,6 +5,7 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class User(
+    val id: String = "",
     val age: Int = 0,
     val contactNo: String = "",
     val department: String = "",
@@ -26,6 +27,7 @@ fun DocumentSnapshot.toUser(): User {
     val password = getString("password") ?: "" // 💥 Extract password from Firestore
 
     return User(
+        id = this.id,
         age = age,
         contactNo = formattedContact,
         department = department,

@@ -20,12 +20,7 @@ class MainActivity : ComponentActivity() {
         val viewModel: ThemeViewModel by viewModels()
 
         setContent {
-            Ass1Theme(darkTheme = viewModel.isDarkTheme.value) {
-                MainScreen(
-                    isDarkTheme = viewModel.isDarkTheme.value,
-                    onToggleTheme = viewModel::toggleTheme
-                )
-            }
+            Navigation()
         }
     }
 }
