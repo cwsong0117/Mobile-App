@@ -51,18 +51,19 @@ import com.hermen.ass1.User.SessionManager
 import com.hermen.ass1.ui.theme.Screen
 
 @Composable
-fun LoginScreen(navController: NavController) {
+fun LoginScreen(navController: NavController, isDarkTheme: Boolean) {
     val username = remember { mutableStateOf("") }
     val password = remember { mutableStateOf("") }
     val scope = rememberCoroutineScope()
     val loginResult = remember { mutableStateOf("") }
     val userList = remember { mutableStateOf<List<User>>(emptyList()) }
     val user = SessionManager.currentUser
+    val backgroundColor = if (isDarkTheme) Color.Transparent else Color(0xFFE5FFFF)
 
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(color = Color.White),
+            .background(backgroundColor),
         contentAlignment = Alignment.TopCenter
     ) {
         Column(
@@ -242,5 +243,5 @@ fun LoginScreen(navController: NavController) {
 @Composable
 fun LoginPreview() {
     val navController = androidx.navigation.compose.rememberNavController()
-    LoginScreen(navController)
+    LoginScreen(navController, isDarkTheme = false)
 }

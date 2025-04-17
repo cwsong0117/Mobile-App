@@ -42,13 +42,13 @@ fun Navigation(
 ) {
     NavHost(navController = navController, startDestination = Screen.InitialPage.route) {
         composable(Screen.InitialPage.route) {
-            InitialPage(navController)
+            InitialPage(navController, isDarkTheme)
         }
         composable(Screen.Signup.route) {
-            SignupScreen(navController)
+            SignupScreen(navController, isDarkTheme)
         }
         composable(Screen.Login.route) {
-            LoginScreen(navController)
+            LoginScreen(navController, isDarkTheme)
         }
         composable(Screen.Main.route) {
             MainScreen(
@@ -61,12 +61,16 @@ fun Navigation(
 }
 
 @Composable
-fun InitialPage(navController: NavController) {
+fun InitialPage(navController: NavController, isDarkTheme:Boolean) {
+
+    val backgroundColor = if (isDarkTheme) Color.Transparent else Color(0xFFE5FFFF)
+    val signUpButtonColor = if (isDarkTheme) Color.Transparent else Color(0xFF00008B)
+    val logInButtonColor = if (isDarkTheme) Color.Transparent else Color(0xFF89CFF0	)
 
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.White),
+            .background(backgroundColor),
         contentAlignment = Alignment.TopCenter
     ) {
         Column(
@@ -147,7 +151,7 @@ fun InitialPage(navController: NavController) {
                         modifier = Modifier
                             .fillMaxWidth(0.7f) // 按钮宽度 70% 屏幕宽度
                             .height(50.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = Color.Blue)
+                        colors = ButtonDefaults.buttonColors(signUpButtonColor)
                     ) {
                         Text(text = "Sign In", fontSize = 18.sp)
                     }
@@ -159,9 +163,9 @@ fun InitialPage(navController: NavController) {
                         modifier = Modifier
                             .fillMaxWidth(0.7f)
                             .height(50.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = Color.Gray)
+                        colors = ButtonDefaults.buttonColors(logInButtonColor)
                     ) {
-                        Text(text = "Login", fontSize = 18.sp)
+                        Text(text = "Login", fontSize = 18.sp, color = Color.Black)
                     }
                 }
             }
@@ -173,5 +177,5 @@ fun InitialPage(navController: NavController) {
 @Composable
 fun InitialPagePreview(){
     val fakeNavController = rememberNavController()
-    InitialPage(navController = fakeNavController)
+    InitialPage(navController = fakeNavController, isDarkTheme = false)
 }

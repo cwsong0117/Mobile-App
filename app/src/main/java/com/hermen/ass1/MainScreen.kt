@@ -50,7 +50,7 @@ enum class AppScreen(@StringRes val title: Int) {
     ClockOut(title = R.string.clock_out),
     AnnouncementOverview(title = R.string.announcement_overview),
     AnnouncementDetail(title = R.string.announcement_detail),
-    UserProfile(title = R.string.user_profile)
+    UserProfile(title = R.string.user_profile),
 }
 
 data class AppItem(

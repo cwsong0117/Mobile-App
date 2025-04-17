@@ -2,7 +2,6 @@ package com.hermen.ass1
 
 // no modification in this page unless navigation purpose !!!!
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -58,8 +57,9 @@ fun BottomNavigationBar(navController: NavController) {
         NavItem(
             "Calendar",
             null,
-            R.drawable._59592, // PNG Image
-            AppScreen.AnnouncementOverview.name
+            R.drawable.meeting_nav_bar, // PNG Image
+            //navigate to meeting room screen
+            "meeting_room_screen"
         ),
         NavItem(
             "Profile",

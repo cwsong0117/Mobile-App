@@ -37,7 +37,7 @@ import java.util.Calendar
 
 
 @Composable
-fun SignupScreen(navController: NavController) {
+fun SignupScreen(navController: NavController, isDarkTheme: Boolean) {
     val context = LocalContext.current
     val calendar = Calendar.getInstance()
     val year = calendar.get(Calendar.YEAR)
@@ -48,6 +48,7 @@ fun SignupScreen(navController: NavController) {
     val username = remember { mutableStateOf("") }
     val password = remember { mutableStateOf("") }
     val confirmpassword = remember { mutableStateOf("") }
+    val backgroundColor = if (isDarkTheme) Color.Transparent else Color(0xFFE5FFFF)
 
     val datePickerDialog = DatePickerDialog(
         context,
@@ -62,7 +63,7 @@ fun SignupScreen(navController: NavController) {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(color = Color.White),
+            .background(backgroundColor),
         contentAlignment = Alignment.TopCenter
     ) {
         Column(
@@ -219,5 +220,5 @@ fun SignupScreen(navController: NavController) {
 @Composable
 fun SignupPreview() {
     val navController = androidx.navigation.compose.rememberNavController()
-    SignupScreen(navController)
+    SignupScreen(navController, isDarkTheme = false)
 }
