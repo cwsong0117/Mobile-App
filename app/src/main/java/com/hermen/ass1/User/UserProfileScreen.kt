@@ -1,5 +1,6 @@
 package com.hermen.ass1.User
 
+import android.util.Log
 import androidx.compose.runtime.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -27,9 +28,8 @@ import com.hermen.ass1.ui.theme.Screen
 @Composable
 fun UserProfileScreen(
     navController: NavController,
-    themeViewModel: ThemeViewModel = viewModel()
+    isDarkTheme: Boolean
 ) {
-    val isDarkTheme by themeViewModel.isDarkTheme
     val backgroundColor = if (isDarkTheme) Color(0xFF121212) else Color(0xFFE6F4F1)
     val fieldBackground = if (isDarkTheme) Color(0xFF2C2C2C) else Color(0xFFE0E0E0)
     val labelColor = if (isDarkTheme) Color.LightGray else Color.Blue
@@ -61,6 +61,7 @@ fun UserProfileScreen(
             ) {
                 Text("Image", color = Color.White)
             }
+
 
             Spacer(modifier = Modifier.height(16.dp))
 

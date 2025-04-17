@@ -72,7 +72,9 @@ fun MainScreen(
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         bottomBar = {
-            BottomNavigationBar(navController = navController)
+            BottomNavigationBar(
+                navController = navController
+            )
         }
     ) { innerPadding ->
         NavHost(
@@ -151,7 +153,7 @@ fun MainScreen(
             composable(route = AppScreen.UserProfile.name) {
                 UserProfileScreen(
                     navController = navController,
-                    themeViewModel = themeViewModel
+                    isDarkTheme = isDarkTheme
                 )
             }
 
