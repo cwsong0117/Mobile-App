@@ -41,8 +41,9 @@ import androidx.compose.material3.ButtonDefaults
 import com.google.firebase.firestore.FirebaseFirestore
 import com.hermen.ass1.ui.theme.Screen
 import androidx.compose.ui.text.input.PasswordVisualTransformation
-
-
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.Icon
+import androidx.compose.ui.text.input.VisualTransformation
 
 @Composable
 fun SignupScreen(navController: NavController, isDarkTheme: Boolean) {
@@ -61,12 +62,15 @@ fun SignupScreen(navController: NavController, isDarkTheme: Boolean) {
     val emailPattern = "[a-zA-Z0-9._-]+@[a-z]+\\.+[a-z]+"
     val isEmailValid = email.value.matches(emailPattern.toRegex())
     val isPasswordStrong = password.value.length >= 6
+    val passwordVisible = remember { mutableStateOf(false) }
+    val confirmPasswordVisible = remember { mutableStateOf(false) }
+
     val datePickerDialog = DatePickerDialog(
         context,
         { _: DatePicker, selectedYear: Int, selectedMonth: Int, selectedDayOfMonth: Int ->
             val formattedMonth = String.format("%02d", selectedMonth + 1)
             val formattedDay = String.format("%02d", selectedDayOfMonth)
-            birthday.value = "$formattedMonth/$formattedDay/$selectedYear"
+            birthday.value = "$formattedDay/$formattedMonth/$selectedYear"
         }, year, month, day
     )
 
@@ -163,16 +167,25 @@ fun SignupScreen(navController: NavController, isDarkTheme: Boolean) {
                 TextField(
                     value = birthday.value,
                     onValueChange = { birthday.value = it },
-                    placeholder = { Text("MM/DD/YYYY") },
+                    placeholder = { Text("DD/MM/YYYY") },
+                    trailingIcon = {
+                        IconButton(onClick = { datePickerDialog.show() }) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.baseline_calendar_month_24),
+                                contentDescription = "Calendar Icon"
+                            )
+                        }
+                    },
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(50.dp))
                         .clickable {
                             datePickerDialog.show()
                         },
-                    enabled = false, // 让TextField不可编辑，必须通过选择器输入
-                    singleLine = true
+                    enabled = false, // So users can't manually edit, only pick from calendar
+                    readOnly = true,
                 )
+
                 Spacer(modifier = Modifier.height(30.dp))
                 Text(
                     text = "Password",
@@ -190,7 +203,20 @@ fun SignupScreen(navController: NavController, isDarkTheme: Boolean) {
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(50.dp)),
-                    singleLine = true
+                    singleLine = true,
+                    visualTransformation = if (passwordVisible.value) VisualTransformation.None else PasswordVisualTransformation(),
+                    trailingIcon = {
+                        IconButton(onClick = {
+                            passwordVisible.value = !passwordVisible.value
+                        }) {
+                            val iconRes = if (passwordVisible.value) R.drawable.img else R.drawable.img_1
+                            Icon(
+                                painter = painterResource(id = iconRes),
+                                contentDescription = if (passwordVisible.value) "Hide Password" else "Show Password",
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
+                    }
                 )
                 Spacer(modifier = Modifier.height(30.dp))
                 Text(
@@ -209,7 +235,20 @@ fun SignupScreen(navController: NavController, isDarkTheme: Boolean) {
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(50.dp)),
-                    singleLine = true
+                    singleLine = true,
+                    visualTransformation = if (passwordVisible.value) VisualTransformation.None else PasswordVisualTransformation(),
+                    trailingIcon = {
+                        IconButton(onClick = {
+                            passwordVisible.value = !passwordVisible.value
+                        }) {
+                            val iconRes = if (passwordVisible.value) R.drawable.img else R.drawable.img_1
+                            Icon(
+                                painter = painterResource(id = iconRes),
+                                contentDescription = if (passwordVisible.value) "Hide Password" else "Show Password",
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
+                    }
                 )
                 Spacer(modifier = Modifier.height(20.dp))
 
@@ -239,7 +278,7 @@ fun SignupScreen(navController: NavController, isDarkTheme: Boolean) {
                         Text(" Staff ", fontSize = 16.sp)
                     }
                 }
-                Spacer(modifier = Modifier.height(20.dp))
+                Spacer(modifier = Modifier.height(10.dp))
 
                 // Confirm 按钮与 Firestore 写入逻辑
                 Button(
@@ -247,6 +286,28 @@ fun SignupScreen(navController: NavController, isDarkTheme: Boolean) {
                         val db = FirebaseFirestore.getInstance()
                         val prefix = if (role.value == "admin") "A" else "S"
                         val ref = db.collection("User")
+
+                        if (email.value.isBlank() || username.value.isBlank() || birthday.value.isBlank() ||
+                            password.value.isBlank() || confirmpassword.value.isBlank() || role.value.isBlank()
+                        ) {
+                            Toast.makeText(context, "Please fill in all fields", Toast.LENGTH_SHORT).show()
+                            return@Button
+                        }
+
+                        if (!isEmailValid) {
+                            Toast.makeText(context, "Invalid email format", Toast.LENGTH_SHORT).show()
+                            return@Button
+                        }
+
+                        if (!isPasswordStrong) {
+                            Toast.makeText(context, "Password must be at least 6 characters", Toast.LENGTH_SHORT).show()
+                            return@Button
+                        }
+
+                        if (password.value != confirmpassword.value) {
+                            Toast.makeText(context, "Passwords do not match", Toast.LENGTH_SHORT).show()
+                            return@Button
+                        }
 
                         // 查询所有同前缀 doc IDs
                         ref.get()
@@ -297,24 +358,10 @@ fun SignupScreen(navController: NavController, isDarkTheme: Boolean) {
                                                 Toast.LENGTH_SHORT).show()
                                         }
                                 }
-                                else {
-                                    val errorMessage = when {
-                                        username.value.isBlank() -> "Username is required"
-                                        email.value.isBlank() -> "Email is required"
-                                        !isEmailValid -> "Email format is invalid"
-                                        birthday.value.isBlank() -> "Birthday is required"
-                                        password.value != confirmpassword.value -> "Passwords do not match"
-                                        !isPasswordStrong -> "Password must be at least 6 characters"
-                                        role.value.isBlank() -> "Role is required"
-                                        else -> "Please complete all fields correctly"
-                                    }
-                                    Toast.makeText(context, errorMessage, Toast.LENGTH_SHORT).show()
-                                }
+
                             }
                             .addOnFailureListener {
-                                Toast.makeText(context,
-                                    "读取ID失败",
-                                    Toast.LENGTH_SHORT).show()
+                                Toast.makeText(context, "Failed to connect to database", Toast.LENGTH_SHORT).show()
                             }
                     },
                     modifier = Modifier
