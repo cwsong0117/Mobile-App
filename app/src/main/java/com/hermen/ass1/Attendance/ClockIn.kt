@@ -1,4 +1,4 @@
-package com.hermen.ass1
+package com.hermen.ass1.Attendance
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -29,12 +28,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.hermen.ass1.R
 import kotlinx.coroutines.delay
-import java.text.SimpleDateFormat
 import java.util.*
 
 @Composable
-fun ClockOut(
+fun ClockIn(
     onBackButtonClicked: () -> Unit,
     onBackToHomeClicked: () -> Unit, // 🔹 Function to go back
     modifier: Modifier = Modifier
@@ -54,10 +53,11 @@ fun ClockOut(
     val minute = currentTime.get(Calendar.MINUTE)
     //Get current time function
 
-    var clockOutTimeString by remember { mutableStateOf("") }
+    var clockInTimeString by remember { mutableStateOf("") }
+    var name by remember { mutableStateOf("") }
 
-    val clockInTime = clockOutTimeString.toIntOrNull() ?: 0
-    val clockOutTime = clockOutTimeString.toIntOrNull()?.plus(9) ?: ""
+    val clockInTime = clockInTimeString.toIntOrNull() ?: 0
+    val clockOutTime = clockInTimeString.toIntOrNull()?.plus(9) ?: ""
 
     Column(
         modifier = Modifier.fillMaxSize(),
@@ -79,8 +79,6 @@ fun ClockOut(
                     modifier = Modifier.align(Alignment.Center) // Add padding here (change value as needed)
                 )
             }
-            //test
-            //test
 
             Text(
                 text = ":",
@@ -109,20 +107,28 @@ fun ClockOut(
         Spacer(modifier = Modifier.height(80.dp))
 
         TextField(
-            value = clockOutTimeString,
+            value = name,
+            onValueChange = {name = it},
+            label = { Text("Enter your name") }
+        )
+
+        TextField(
+            value = clockInTimeString,
             onValueChange = { newText ->
                 // Only allow digits
                 if (newText.all { it.isDigit() }) {
-                    clockOutTimeString = newText
+                    clockInTimeString = newText
                 }
             },
-            label = { Text("Enter clock-out time") } ,
+            label = { Text("Enter clock-in time") } ,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
         )
 
         Spacer(modifier = Modifier.height(50.dp))
 
-
+        Text(
+            text = "Your name: $name",
+        )
 
         Text(
             text = "Your clock-in time: $clockInTime",
