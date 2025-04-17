@@ -196,11 +196,12 @@ fun Home(
     onToggleTheme: () -> Unit
 ) {
     val icon = if (isDarkTheme) Icons.Filled.LightMode else Icons.Filled.DarkMode
+    val backgroundColor = if (isDarkTheme) Color.Transparent else Color(0xFFE5FFFF)
 
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(Color(0xffe5ffff))
+            .background(backgroundColor)
     ) {
         IconButton(
             onClick = { onToggleTheme() },

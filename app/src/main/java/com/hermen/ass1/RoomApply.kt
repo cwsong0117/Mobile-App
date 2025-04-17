@@ -348,6 +348,9 @@ fun StatusDetails(navController: NavController, applyId: String, viewModel: Room
     val selectedRequest = requestList.value.firstOrNull { it.applyId == applyId }
     var qrBitmap by remember { mutableStateOf<Bitmap?>(null) }
     val cyanInButton = Color(0xFF0099cc)
+    val userId = "A001"
+    val isAdmin = userId.startsWith("A") == true
+    var isQrCodeVisible by remember { mutableStateOf(true) }
 
     Box(
         modifier = Modifier
@@ -381,7 +384,7 @@ fun StatusDetails(navController: NavController, applyId: String, viewModel: Room
                         Text(text = "Applicants: ${it.name}",
                             fontSize = 24.sp)
                         Spacer(modifier = Modifier.height(12.dp))
-                        Text(text = "Applicants: ${it.applyId}",
+                        Text(text = "User ID: ${it.userId}",
                             fontSize = 24.sp)
                         Spacer(modifier = Modifier.height(12.dp))
                         Text(text = "Date: ${it.date}",
@@ -414,6 +417,42 @@ fun StatusDetails(navController: NavController, applyId: String, viewModel: Room
                             modifier = Modifier.fillMaxWidth(),
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
+                            if (isAdmin) {
+                                Log.d("NAVIGATION", "Passed room name: ${selectedRequest.roomType}")
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceEvenly
+                                ) {
+                                    Button(
+                                        colors = ButtonDefaults.buttonColors(
+                                            backgroundColor = cyanInButton,
+                                            contentColor = Color.White
+                                        ),
+                                        onClick = {
+                                            viewModel.updateRoomStatus(selectedRequest.applyId, "Approved")
+                                        }
+                                    ) {
+                                        Text("Approve",color = Color.White)
+                                    }
+
+                                    Button(
+                                        colors = ButtonDefaults.buttonColors(
+                                            backgroundColor = Color.Red,
+                                            contentColor = Color.White
+                                        ),
+                                        onClick = {
+                                            viewModel.updateRoomStatus(selectedRequest.applyId, "Rejected")
+                                            // hide the qr code
+                                            isQrCodeVisible = false
+                                            //remove the qr bitmap
+                                            qrBitmap = null
+                                        }
+                                    ) {
+                                        Text("Reject", color = Color.White)
+                                    }
+                                }
+                                Spacer(modifier = Modifier.height(16.dp))
+                            }
                             if (it.status.lowercase() == "approved") {
                                 Button(colors = ButtonDefaults.buttonColors(
                                     backgroundColor = cyanInButton,
@@ -421,21 +460,24 @@ fun StatusDetails(navController: NavController, applyId: String, viewModel: Room
                                 ),
                                     onClick = {
                                     val qrText = """
+                                Apply ID: ${it.applyId}
                                 Room: ${it.roomType}
+                                User ID: ${it.userId}
                                 Name: ${it.name}
                                 Date: ${it.date}
                                 Time: ${it.startTime} - ${it.endTime}
                                 Purpose: ${it.purpose}
                                 Status: ${it.status}
+                                
+                                You can use this QR Code to unlock the room.
                             """.trimIndent()
                                     qrBitmap = generateQRCode(qrText)
                                 },
                                 ) {
                                     Text("Generate QR Code", color = Color.White)
                                 }
-                                Spacer(modifier = Modifier.height(16.dp))
                                 qrBitmap?.let { bitmap ->
-                                    Spacer(modifier = Modifier.height(40.dp))
+                                    Spacer(modifier = Modifier.height(30.dp))
                                     Image(
                                         bitmap = bitmap.asImageBitmap(),
                                         contentDescription = "QR Code",
@@ -479,7 +521,6 @@ fun generateQRCode(text: String, size: Int = 512): Bitmap? {
         null
     }
 }
-
 
 @Preview(showBackground = true)
 @Composable

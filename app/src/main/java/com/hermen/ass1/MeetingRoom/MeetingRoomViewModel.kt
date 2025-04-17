@@ -21,6 +21,7 @@ class MeetingRoomViewModel: ViewModel() {
         purpose: String,
         type: String,
         status: String,
+        userId: String,
         onSuccess: () -> Unit,
         onError: (Exception) -> Unit
     ) {
@@ -34,7 +35,8 @@ class MeetingRoomViewModel: ViewModel() {
                     "endTime" to endTime,
                     "purpose" to purpose,
                     "type" to type,
-                    "status" to status
+                    "status" to status,
+                    "userId" to userId
                 )
                 db.collection("Room")
                     .document(docId)
@@ -112,7 +114,8 @@ class RoomViewModel : ViewModel() {
                             endTime = doc.getString("endTime") ?: "",
                             purpose = doc.getString("purpose") ?: "",
                             roomType = doc.getString("type") ?: "",
-                            status = doc.getString("status") ?: "Pending"
+                            status = doc.getString("status") ?: "Pending",
+                            userId = doc.getString("userId") ?: ""
                         )
                     } catch (e: Exception) {
                         Log.e("Firebase", "Document parsing error", e)
@@ -122,6 +125,30 @@ class RoomViewModel : ViewModel() {
 
                 _requestList.value = requests
                 Log.d("Firebase", "Loaded ${requests.size} requests")
+            }
+    }
+    fun updateRoomStatus(applyId: String, newStatus: String) {
+        db.collection("Room")
+            .whereEqualTo("applyId", applyId)
+            .get()
+            .addOnSuccessListener { documents ->
+                if (!documents.isEmpty) {
+                    val docId = documents.first().id
+                    db.collection("Room")
+                        .document(docId)
+                        .update("status", newStatus)
+                        .addOnSuccessListener {
+                            Log.d("Firebase", "Status updated to $newStatus")
+                        }
+                        .addOnFailureListener { e ->
+                            Log.e("Firebase", "Error updating status", e)
+                        }
+                } else {
+                    Log.e("Firebase", "No matching document found for applyId: $applyId")
+                }
+            }
+            .addOnFailureListener { e ->
+                Log.e("Firebase", "Failed to fetch document for status update", e)
             }
     }
 }

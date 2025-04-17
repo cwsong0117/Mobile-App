@@ -8,5 +8,6 @@ data class ApplicationStatus(
     val endTime: String,
     val purpose: String,
     val roomType: String,
-    val status: String
+    val status: String,
+    val userId: String
 )

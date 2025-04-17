@@ -14,6 +14,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import android.app.DatePickerDialog
+import android.content.Context
 import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
@@ -40,6 +41,7 @@ import com.hermen.ass1.MeetingRoom.MeetingRoomViewModel
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
+import java.util.concurrent.TimeUnit
 
 @Composable
 fun RoomDetail(navController: NavController, roomName: String) {
@@ -49,6 +51,7 @@ fun RoomDetail(navController: NavController, roomName: String) {
     val startTime = remember { mutableStateOf("") }
     val endTime = remember { mutableStateOf("") }
     val purpose = remember { mutableStateOf("") }
+    val userId = "A001" //later need to read the user id that user used to login
 
     val context = LocalContext.current
     // Show the room details of the meeting room based on the meetingRoomId
@@ -68,7 +71,7 @@ fun RoomDetail(navController: NavController, roomName: String) {
                 startTime = startTime.value, onStartTimeChange = { startTime.value = it },
                 endTime = endTime.value, onEndTimeChange = { endTime.value = it },
                 purpose = purpose.value, onPurposeChange = { purpose.value = it },
-                status = "Pending", roomName = roomName, onSuccess = {
+                status = "Pending", roomName = roomName,userId = userId, onSuccess = {
                     // Clear all input fields after successful submission
                     name.value = ""
                     date.value = ""
@@ -89,7 +92,8 @@ fun ApplyDetails(name:String, onNameChange: (String) -> Unit,
                  startTime:String, onStartTimeChange: (String) -> Unit,
                  endTime:String, onEndTimeChange: (String) -> Unit,
                  purpose:String, onPurposeChange: (String) -> Unit,
-                 roomName: String, onSuccess: () -> Unit, status: String) {
+                 roomName: String, onSuccess: () -> Unit, status: String,
+                 userId: String) {
 
     val cyanInTitle = Color(0xFF00cccc)
     val cyanInButton = Color(0xFF0099cc)
@@ -216,7 +220,10 @@ fun ApplyDetails(name:String, onNameChange: (String) -> Unit,
                     modifier = Modifier
                         .padding(top = 50.dp, bottom = 20.dp, end = 40.dp),
                     onClick = {
-                        if (name.isBlank() || date.isBlank() || startTime.isBlank() || endTime.isBlank() || purpose.isBlank()) {
+                        if (!validateSelectedDate(context, date)) {
+                            return@Button
+                        }
+                        else if (name.isBlank() || date.isBlank() || startTime.isBlank() || endTime.isBlank() || purpose.isBlank()) {
                             Toast.makeText(context, "Please fill in all fields", Toast.LENGTH_SHORT).show()
                             return@Button
                         }
@@ -228,6 +235,7 @@ fun ApplyDetails(name:String, onNameChange: (String) -> Unit,
                             purpose = purpose,
                             type = roomName,
                             status = status,
+                            userId = userId,
                             onSuccess = onSuccess,
                             onError = { e -> Log.e("Submit", "Error submitting application", e)}
                         )
@@ -281,16 +289,21 @@ fun NameInput(name:String, onNameChange:(String) -> Unit) {
 }
 
 @Composable
-fun DateInput(date:String, onDateChange: (String) -> Unit) {
+fun DateInput(date: String, onDateChange: (String) -> Unit) {
     val context = LocalContext.current
     val calendar = Calendar.getInstance()
     val dateFormat = SimpleDateFormat("dd-MM-yyyy", Locale.getDefault())
     val currentDate = dateFormat.format(calendar.time)
+
     val datePickerDialog = DatePickerDialog(
         context,
         { _, year, month, dayOfMonth ->
             val selectedCalendar = Calendar.getInstance().apply {
                 set(year, month, dayOfMonth)
+                set(Calendar.HOUR_OF_DAY, 0)
+                set(Calendar.MINUTE, 0)
+                set(Calendar.SECOND, 0)
+                set(Calendar.MILLISECOND, 0)
             }
             onDateChange(dateFormat.format(selectedCalendar.time))
         },
@@ -298,11 +311,14 @@ fun DateInput(date:String, onDateChange: (String) -> Unit) {
         calendar.get(Calendar.MONTH),
         calendar.get(Calendar.DAY_OF_MONTH)
     )
+
+    // Allow selecting today or future, not past
+    datePickerDialog.datePicker.minDate = calendar.timeInMillis
+
     Row(
         modifier = Modifier
             .fillMaxWidth(),
         horizontalArrangement = Arrangement.Center
-
     ) {
         BasicTextField(
             value = date,
@@ -338,6 +354,23 @@ fun DateInput(date:String, onDateChange: (String) -> Unit) {
         )
     }
 }
+
+fun validateSelectedDate(context: Context, selectedDateStr: String): Boolean {
+    val dateFormat = SimpleDateFormat("dd-MM-yyyy", Locale.getDefault())
+    val selectedDate = dateFormat.parse(selectedDateStr)
+    val currentTime = Calendar.getInstance().time
+
+    val diffInMillis = selectedDate.time - currentTime.time
+    val diffInHours = TimeUnit.MILLISECONDS.toHours(diffInMillis)
+
+    return if (diffInHours < 24) {
+        Toast.makeText(context, "You must reserve at least 1 day in advance.", Toast.LENGTH_SHORT).show()
+        false
+    } else {
+        true
+    }
+}
+
 
 @Composable
 fun StartTimeInput(startTime: String, onStartTimeChange:(String) -> Unit) {
