@@ -28,19 +28,35 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.NavHost
 import com.hermen.ass1.ui.theme.Screen
 
 @Composable
-fun Navigation() {
-    val navController = rememberNavController()
-
+fun Navigation(
+    navController: NavHostController,
+    isDarkTheme: Boolean,
+    onToggleTheme: () -> Unit
+) {
     NavHost(navController = navController, startDestination = Screen.InitialPage.route) {
-        composable(Screen.InitialPage.route) { InitialPage(navController) }
-        composable(Screen.Signup.route) { SignupScreen(navController) }
-        composable(Screen.Login.route) { LoginScreen(navController) }
+        composable(Screen.InitialPage.route) {
+            InitialPage(navController)
+        }
+        composable(Screen.Signup.route) {
+            SignupScreen(navController)
+        }
+        composable(Screen.Login.route) {
+            LoginScreen(navController)
+        }
+        composable(Screen.Main.route) {
+            MainScreen(
+                isDarkTheme = isDarkTheme,
+                onToggleTheme = onToggleTheme,
+                navController = navController // 👈 pass it here
+            )
+        }
     }
 }
 

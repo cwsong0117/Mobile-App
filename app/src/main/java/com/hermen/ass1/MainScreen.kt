@@ -29,6 +29,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -39,6 +40,7 @@ import com.hermen.ass1.Attendance.AttendanceOverview
 import com.hermen.ass1.Attendance.ClockIn
 import com.hermen.ass1.Attendance.ClockOut
 import com.hermen.ass1.MeetingRoom.RoomViewModel
+import com.hermen.ass1.User.SessionManager
 import com.hermen.ass1.User.UserProfileScreen
 
 enum class AppScreen(@StringRes val title: Int) {
@@ -59,6 +61,7 @@ data class AppItem(
 
 @Composable
 fun MainScreen(
+    navController: NavHostController,
     isDarkTheme: Boolean,
     onToggleTheme: () -> Unit,
     modifier: Modifier = Modifier
@@ -147,11 +150,11 @@ fun MainScreen(
 
             composable(route = AppScreen.UserProfile.name) {
                 UserProfileScreen(
-                    userId = "1",
                     navController = navController,
                     themeViewModel = themeViewModel
                 )
             }
+
             composable("meeting_room_screen") {
                 MeetingRoomApply(navController)
             }

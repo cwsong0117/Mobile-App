@@ -22,11 +22,11 @@ import com.hermen.ass1.User.UserRepository
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.NavController
 import com.hermen.ass1.ThemeViewModel
+import com.hermen.ass1.ui.theme.Screen
 
 @Composable
 fun UserProfileScreen(
-    userId: String,
-    navController: NavController, // <-- Pass NavController to handle back
+    navController: NavController,
     themeViewModel: ThemeViewModel = viewModel()
 ) {
     val isDarkTheme by themeViewModel.isDarkTheme
@@ -35,11 +35,7 @@ fun UserProfileScreen(
     val labelColor = if (isDarkTheme) Color.LightGray else Color.Blue
     val textColor = if (isDarkTheme) Color.White else Color.Black
 
-    var user by remember { mutableStateOf<User?>(null) }
-
-    LaunchedEffect(userId) {
-        user = UserRepository.getUserById(userId)
-    }
+    val user = SessionManager.currentUser
 
     Box(
         modifier = Modifier
@@ -78,7 +74,12 @@ fun UserProfileScreen(
             Spacer(modifier = Modifier.height(32.dp))
 
             Button(
-                onClick = { /* logout logic */ },
+                onClick = {
+                    SessionManager.currentUser = null
+                    navController.navigate(Screen.InitialPage.route) {
+                        popUpTo(Screen.Main.route) { inclusive = true }
+                    }
+                },
                 colors = ButtonDefaults.buttonColors(
                     containerColor = if (isDarkTheme) Color(0xFF440000) else Color.Transparent
                 ),
@@ -101,7 +102,7 @@ fun UserProfileScreen(
 
         // SAVE Button at Top Right
         Button(
-            onClick = { /* save logic */ },
+            onClick = { /* Save logic */ },
             modifier = Modifier.align(Alignment.TopEnd),
             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFB2DFDB))
         ) {

@@ -10,6 +10,7 @@ import androidx.activity.viewModels
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.NavType
+import androidx.navigation.compose.rememberNavController
 import com.hermen.ass1.ui.theme.Ass1Theme
 
 class MainActivity : ComponentActivity() {
@@ -20,8 +21,11 @@ class MainActivity : ComponentActivity() {
         val viewModel: ThemeViewModel by viewModels()
 
         setContent {
+            val navController = rememberNavController()
+
             Ass1Theme(darkTheme = viewModel.isDarkTheme.value) {
-                MainScreen(
+                Navigation(
+                    navController = navController,
                     isDarkTheme = viewModel.isDarkTheme.value,
                     onToggleTheme = viewModel::toggleTheme
                 )
@@ -33,13 +37,18 @@ class MainActivity : ComponentActivity() {
 @Preview(showBackground = true)
 @Composable
 fun GreetingPreview() {
-    val isDarkTheme = false // or true to preview dark mode
+    val isDarkTheme = false
 
     Ass1Theme(darkTheme = isDarkTheme) {
+        // Use a local composition here to avoid preview crash
+        val navController = rememberNavController()
+
         MainScreen(
+            navController = navController,
             isDarkTheme = isDarkTheme,
-            onToggleTheme = {} // No-op for preview
+            onToggleTheme = {} // No-op in preview
         )
     }
 }
+
 

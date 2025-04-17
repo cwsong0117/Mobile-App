@@ -48,6 +48,7 @@ import androidx.compose.foundation.rememberScrollState
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.firestore.ktx.firestore
 import com.hermen.ass1.User.SessionManager
+import com.hermen.ass1.ui.theme.Screen
 
 @Composable
 fun LoginScreen(navController: NavController) {
@@ -177,8 +178,12 @@ fun LoginScreen(navController: NavController) {
                     }
 
                     if (matchedUser != null) {
-                        SessionManager.currentUser = matchedUser // ✅ 存进去！
+                        SessionManager.currentUser = matchedUser
                         loginResult.value = "✅ Correct"
+
+                        navController.navigate(Screen.Main.route) {
+                            popUpTo(Screen.Login.route) { inclusive = true } // Optional: prevent back navigation
+                        }
                     } else {
                         loginResult.value = "❌ Invalid"
                     }
