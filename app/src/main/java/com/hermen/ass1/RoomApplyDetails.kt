@@ -44,7 +44,7 @@ import java.util.Locale
 import java.util.concurrent.TimeUnit
 
 @Composable
-fun RoomDetail(navController: NavController, roomName: String) {
+fun RoomDetail(navController: NavController, roomName: String, isDarkTheme: Boolean) {
     // Local state for each field
     val name = remember { mutableStateOf("") }
     val date = remember { mutableStateOf("") }
@@ -54,6 +54,7 @@ fun RoomDetail(navController: NavController, roomName: String) {
     val userId = "A001" //later need to read the user id that user used to login
 
     val context = LocalContext.current
+    val backgroundColor = if (isDarkTheme) Color.Transparent else Color(0xFFE5FFFF)
     // Show the room details of the meeting room based on the meetingRoomId
     Box(
         modifier = Modifier
@@ -62,16 +63,16 @@ fun RoomDetail(navController: NavController, roomName: String) {
 
         Column(
             modifier = Modifier
-                .background(Color(0xFFe5ffff))
+                .background(backgroundColor)
         ) {
-            BackButton(navController, title = roomName)
+            BackButton(navController, title = roomName, isDarkTheme = isDarkTheme)
             ApplyDetails(
                 name = name.value, onNameChange = { name.value = it },
                 date = date.value, onDateChange = { date.value = it },
                 startTime = startTime.value, onStartTimeChange = { startTime.value = it },
                 endTime = endTime.value, onEndTimeChange = { endTime.value = it },
                 purpose = purpose.value, onPurposeChange = { purpose.value = it },
-                status = "Pending", roomName = roomName,userId = userId, onSuccess = {
+                status = "Pending", roomName = roomName,userId = userId, isDarkTheme = isDarkTheme, onSuccess = {
                     // Clear all input fields after successful submission
                     name.value = ""
                     date.value = ""
@@ -93,18 +94,20 @@ fun ApplyDetails(name:String, onNameChange: (String) -> Unit,
                  endTime:String, onEndTimeChange: (String) -> Unit,
                  purpose:String, onPurposeChange: (String) -> Unit,
                  roomName: String, onSuccess: () -> Unit, status: String,
-                 userId: String) {
+                 userId: String, isDarkTheme: Boolean) {
 
-    val cyanInTitle = Color(0xFF00cccc)
-    val cyanInButton = Color(0xFF0099cc)
+    val cyanInTitle = if (isDarkTheme) Color(0xFFAFEEEE) else Color(0xFF00cccc)
+    val cyanInButton = if (isDarkTheme) Color(0xFF00ced1) else Color(0xFF0099cc)
     val scrollState = rememberScrollState()
     val viewModel: MeetingRoomViewModel = viewModel()
     val context = LocalContext.current
+    val backgroundColor = if (isDarkTheme) Color.Transparent else Color(0xFFE5FFFF)
 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .verticalScroll(scrollState),
+            .verticalScroll(scrollState)
+            .background(backgroundColor),
     ) {
         //input field for name
         Row(

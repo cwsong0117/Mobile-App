@@ -158,7 +158,9 @@ fun MainScreen(
             }
 
             composable("meeting_room_screen") {
-                MeetingRoomApply(navController)
+                MeetingRoomApply(
+                    navController = navController,
+                    isDarkTheme = isDarkTheme)
             }
 
             composable(
@@ -174,7 +176,8 @@ fun MainScreen(
                 val roomName = backStackEntry.arguments?.getString("roomName") ?: "default_room"
                 Log.d("NAVIGATION", "Passed room name: $roomName")
                 RoomDetail(navController = navController,
-                    roomName = roomName
+                    roomName = roomName,
+                    isDarkTheme = isDarkTheme
                 )
             }
 
@@ -187,7 +190,7 @@ fun MainScreen(
                 backStackEntry ->
                 val applyId = backStackEntry.arguments?.getString("applyId") ?: ""
                 val viewModel: RoomViewModel = viewModel()
-                StatusDetails(navController = navController, applyId = applyId, viewModel = viewModel)
+                StatusDetails(navController = navController, applyId = applyId, viewModel = viewModel, isDarkTheme = isDarkTheme)
             }
         }
     }

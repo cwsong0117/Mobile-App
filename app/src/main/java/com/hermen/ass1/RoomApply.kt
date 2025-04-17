@@ -23,11 +23,9 @@ import com.hermen.ass1.MeetingRoom.MeetingRoomResource
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.sp
@@ -35,9 +33,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.Button
 import androidx.compose.material.Divider
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.runtime.getValue
@@ -64,26 +59,27 @@ import androidx.compose.material.ButtonDefaults
 import androidx.compose.runtime.LaunchedEffect
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.hermen.ass1.MeetingRoom.RoomViewModel
+import androidx.compose.ui.graphics.Color
 
 @Composable
-fun MeetingRoomApply(navController: NavController) {
+fun MeetingRoomApply(navController: NavController, isDarkTheme: Boolean) {
     var selectedTabIndex by remember { mutableIntStateOf(0) }
     val topBarTitle = if (selectedTabIndex == 0) "Meeting Room" else "Application Status"
+    val backgroundColor = if (isDarkTheme) Color.Transparent else Color(0xFFE5FFFF)
 
     Column(
         modifier = Modifier
-            .background(Color(0xFFe5ffff))
+            .background(backgroundColor)
             .fillMaxSize()
     ) {
-        BackButton(navController = navController, title = topBarTitle)
-        MeetingRoomTabs(selectedTabIndex) { selectedTabIndex = it }
+        BackButton(navController = navController, title = topBarTitle, isDarkTheme = isDarkTheme)
+        MeetingRoomTabs(selectedTabIndex, onTabSelected = { selectedTabIndex = it })
 
         when (selectedTabIndex) {
             0 -> ApplyTabContent(navController)
-            1 -> StatusTabContent(navController)
+            1 -> StatusTabContent(navController, isDarkTheme)
         }
     }
-
 }
 
 @Composable
@@ -181,36 +177,6 @@ fun MeetingRoomCard(
 }
 
 @Composable
-fun BackButton(navController: NavController, title: String) {
-    Surface(
-        modifier = Modifier
-            .fillMaxWidth()
-    ) {
-        Row(
-            modifier = Modifier
-                .height(46.dp)
-                .fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            IconButton(onClick = { navController.popBackStack() }) {
-                Icon(
-                    painter = painterResource(id = R.drawable.baseline_arrow_back_ios_new_24),
-                    contentDescription = "Back",
-                    modifier = Modifier.size(24.dp)
-                )
-            }
-            Text(
-                text = title,
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(start = 8.dp),
-                color = Color.Black
-            )
-        }
-    }
-}
-
-@Composable
 fun MeetingRoomTabs(selectedIndex: Int, onTabSelected: (Int) -> Unit) {
     val tabTitles = listOf("Apply", "Status")
     Divider(
@@ -242,17 +208,17 @@ fun ApplyTabContent(navController: NavController) {
 }
 
 @Composable
-fun StatusTabContent(navController: NavController) {
-    Status(navController)
+fun StatusTabContent(navController: NavController, isDarkTheme: Boolean) {
+    Status(navController, isDarkTheme)
 }
 
 @Composable
-fun Status(navController: NavController) {
-    StatusScreen(navController, viewModel())
+fun Status(navController: NavController, isDarkTheme: Boolean) {
+    StatusScreen(navController, viewModel(), isDarkTheme = isDarkTheme)
 }
 
 @Composable
-fun StatusScreen(navController: NavController, viewModel: RoomViewModel = viewModel()) {
+fun StatusScreen(navController: NavController, viewModel: RoomViewModel = viewModel(), isDarkTheme: Boolean) {
     val requestList by viewModel.requestList.collectAsState()
 
     // You can add a loading state if needed
@@ -287,6 +253,9 @@ fun StatusScreen(navController: NavController, viewModel: RoomViewModel = viewMo
 
 @Composable
 fun ApplicationStatusCard(navController: NavController, request: ApplicationStatus) {
+
+    val textColor = Color.Black
+
     Spacer(modifier = Modifier.height(24.dp))
     Card(
         modifier = Modifier
@@ -309,12 +278,14 @@ fun ApplicationStatusCard(navController: NavController, request: ApplicationStat
                 Text(text = "Request: ${request.roomType}",
                     fontWeight = FontWeight.Bold,
                     fontSize = 20.sp,
-                    fontFamily = FontFamily.Serif
+                    fontFamily = FontFamily.Serif,
+                    color = textColor
                 )
             }
             Row {
                 Text(text = "From: ${request.name}",
-                    fontSize = 18.sp)
+                    fontSize = 18.sp,
+                    color = textColor)
             }
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -323,7 +294,8 @@ fun ApplicationStatusCard(navController: NavController, request: ApplicationStat
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text(
-                    text = "..."
+                    text = "...",
+                    color = textColor
                 )
 
                 Spacer(modifier = Modifier.weight(1f))
@@ -343,7 +315,7 @@ fun ApplicationStatusCard(navController: NavController, request: ApplicationStat
 }
 
 @Composable
-fun StatusDetails(navController: NavController, applyId: String, viewModel: RoomViewModel = viewModel()) {
+fun StatusDetails(navController: NavController, applyId: String, viewModel: RoomViewModel = viewModel(), isDarkTheme: Boolean) {
     val requestList = viewModel.requestList.collectAsState()
     val selectedRequest = requestList.value.firstOrNull { it.applyId == applyId }
     var qrBitmap by remember { mutableStateOf<Bitmap?>(null) }
@@ -351,17 +323,18 @@ fun StatusDetails(navController: NavController, applyId: String, viewModel: Room
     val userId = "A001"
     val isAdmin = userId.startsWith("A") == true
     var isQrCodeVisible by remember { mutableStateOf(true) }
+    val background = if (isDarkTheme) Color.Transparent else Color(0xFFE5FFFF)
 
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFFe5ffff))
+            .background(background)
     ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
         ) {
-            BackButton(navController = navController, title = "Request From: ${selectedRequest?.name ?: "Unknown!"}")
+            BackButton(navController = navController, title = "Request From: ${selectedRequest?.name ?: "Unknown!"}", isDarkTheme = isDarkTheme)
 
             Box(
                 modifier = Modifier
@@ -525,5 +498,5 @@ fun generateQRCode(text: String, size: Int = 512): Bitmap? {
 @Preview(showBackground = true)
 @Composable
 fun StatusPreview() {
-    StatusDetails(navController = rememberNavController(), applyId = "AP001")
+    StatusDetails(navController = rememberNavController(), applyId = "AP001", isDarkTheme = false)
 }
