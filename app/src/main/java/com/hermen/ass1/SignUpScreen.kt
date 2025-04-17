@@ -34,6 +34,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import java.util.Calendar
+import android.widget.Toast
+import androidx.compose.foundation.layout.Row
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import com.google.firebase.firestore.FirebaseFirestore
+import com.hermen.ass1.ui.theme.Screen
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+
 
 
 @Composable
@@ -43,13 +51,16 @@ fun SignupScreen(navController: NavController, isDarkTheme: Boolean) {
     val year = calendar.get(Calendar.YEAR)
     val month = calendar.get(Calendar.MONTH)
     val day = calendar.get(Calendar.DAY_OF_MONTH)
-    val fullname = remember { mutableStateOf("") }
+    val email = remember { mutableStateOf("") }
     val birthday = remember { mutableStateOf("") }
     val username = remember { mutableStateOf("") }
     val password = remember { mutableStateOf("") }
     val confirmpassword = remember { mutableStateOf("") }
     val backgroundColor = if (isDarkTheme) Color.Transparent else Color(0xFFE5FFFF)
-
+    val role = remember { mutableStateOf("") } // "admin" 或 "staff"
+    val emailPattern = "[a-zA-Z0-9._-]+@[a-z]+\\.+[a-z]+"
+    val isEmailValid = email.value.matches(emailPattern.toRegex())
+    val isPasswordStrong = password.value.length >= 6
     val datePickerDialog = DatePickerDialog(
         context,
         { _: DatePicker, selectedYear: Int, selectedMonth: Int, selectedDayOfMonth: Int ->
@@ -103,7 +114,7 @@ fun SignupScreen(navController: NavController, isDarkTheme: Boolean) {
                     .padding(start = 30.dp, end = 30.dp)
             ) {
                 Text(
-                    text = "Full Name as per IC",
+                    text = "Username",
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color.Black,
@@ -112,8 +123,8 @@ fun SignupScreen(navController: NavController, isDarkTheme: Boolean) {
                         .padding(bottom = 4.dp)
                 )
                 TextField(
-                    value = fullname.value,
-                    onValueChange = { fullname.value = it },
+                    value = username.value,
+                    onValueChange = { username.value = it },
                     placeholder = { Text("ex: LEE KEE ZHAN") },
                     modifier = Modifier
                         .fillMaxWidth()
@@ -122,7 +133,26 @@ fun SignupScreen(navController: NavController, isDarkTheme: Boolean) {
                 )
                 Spacer(modifier = Modifier.height(30.dp))
                 Text(
-                    text = "Date od Birth",
+                    text = "Email",
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.Black,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 4.dp)
+                )
+                TextField(
+                    value = email.value,
+                    onValueChange = { email.value = it },
+                    placeholder = { Text("ex: Ah Lee") },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(50.dp)),
+                    singleLine = true
+                )
+                Spacer(modifier = Modifier.height(30.dp))
+                Text(
+                    text = "Date of Birth",
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color.Black,
@@ -141,25 +171,6 @@ fun SignupScreen(navController: NavController, isDarkTheme: Boolean) {
                             datePickerDialog.show()
                         },
                     enabled = false, // 让TextField不可编辑，必须通过选择器输入
-                    singleLine = true
-                )
-                Spacer(modifier = Modifier.height(30.dp))
-                Text(
-                    text = "Username",
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.Black,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(bottom = 4.dp)
-                )
-                TextField(
-                    value = username.value,
-                    onValueChange = { username.value = it },
-                    placeholder = { Text("ex: Ah Lee") },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(50.dp)),
                     singleLine = true
                 )
                 Spacer(modifier = Modifier.height(30.dp))
@@ -200,18 +211,120 @@ fun SignupScreen(navController: NavController, isDarkTheme: Boolean) {
                         .clip(RoundedCornerShape(50.dp)),
                     singleLine = true
                 )
-                Spacer(modifier = Modifier.height(30.dp))
+                Spacer(modifier = Modifier.height(20.dp))
+
+                // 角色选择按钮
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceEvenly
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(20.dp))
+                            .background(if (role.value == "admin") Color.Gray else Color.LightGray)
+                            .clickable { role.value = "admin" }
+                            .padding(12.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text("Admin", fontSize = 16.sp)
+                    }
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(20.dp))
+                            .background(if (role.value == "staff") Color.Gray else Color.LightGray)
+                            .clickable { role.value = "staff" }
+                            .padding(12.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(" Staff ", fontSize = 16.sp)
+                    }
+                }
+                Spacer(modifier = Modifier.height(20.dp))
+
+                // Confirm 按钮与 Firestore 写入逻辑
+                Button(
+                    onClick = {
+                        val db = FirebaseFirestore.getInstance()
+                        val prefix = if (role.value == "admin") "A" else "S"
+                        val ref = db.collection("User")
+
+                        // 查询所有同前缀 doc IDs
+                        ref.get()
+                            .addOnSuccessListener { snap ->
+                                // 收集已用数字
+                                val used = snap.documents.mapNotNull { doc ->
+                                    val id = doc.id
+                                    if (id.startsWith(prefix) && id.length == 4) {
+                                        id.substring(1).toIntOrNull()
+                                    } else null
+                                }.toSet()
+
+                                // 找出第一个空缺
+                                val nextNum = (1..999).firstOrNull { it !in used }
+                                if (nextNum == null) {
+                                    Toast.makeText(context, "ID 已用完", Toast.LENGTH_SHORT).show()
+                                    return@addOnSuccessListener
+                                }
+                                val newId = prefix + String.format("%03d", nextNum)
+
+                                // 构建用户数据
+                                val userMap = hashMapOf(
+                                    "username" to username.value,
+                                    "email" to email.value,
+                                    "birthday" to birthday.value,
+                                    "password" to password.value,
+                                    "role" to role.value
+                                )
+
+                                // 校验后写入
+                                if (username.value.isNotBlank() &&
+                                    email.value.isNotBlank() &&
+                                    birthday.value.isNotBlank() &&
+                                    password.value == confirmpassword.value &&
+                                    role.value.isNotBlank()
+                                ) {
+                                    ref.document(newId)
+                                        .set(userMap)
+                                        .addOnSuccessListener {
+                                            Toast.makeText(context, "Signup successful: ID=$newId", Toast.LENGTH_SHORT).show()
+                                            navController.navigate(Screen.InitialPage.route) {
+                                                popUpTo(Screen.Signup.route) { inclusive = true } // clear backstack if needed
+                                            }
+                                        }
+                                        .addOnFailureListener {
+                                            Toast.makeText(context,
+                                                "Signup failed",
+                                                Toast.LENGTH_SHORT).show()
+                                        }
+                                }
+                                else {
+                                    val errorMessage = when {
+                                        username.value.isBlank() -> "Username is required"
+                                        email.value.isBlank() -> "Email is required"
+                                        !isEmailValid -> "Email format is invalid"
+                                        birthday.value.isBlank() -> "Birthday is required"
+                                        password.value != confirmpassword.value -> "Passwords do not match"
+                                        !isPasswordStrong -> "Password must be at least 6 characters"
+                                        role.value.isBlank() -> "Role is required"
+                                        else -> "Please complete all fields correctly"
+                                    }
+                                    Toast.makeText(context, errorMessage, Toast.LENGTH_SHORT).show()
+                                }
+                            }
+                            .addOnFailureListener {
+                                Toast.makeText(context,
+                                    "读取ID失败",
+                                    Toast.LENGTH_SHORT).show()
+                            }
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 20.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50))
+                ) {
+                    Text(text = "Confirm", color = Color.White, fontSize = 18.sp)
+                }
             }
-            Text(text = "Username: ${username.value}")
-            Text(text = "Password: ${password.value}")
-
-            // 在图标和按钮之间增加间距
-            Spacer(modifier = Modifier.height(50.dp))
-
-            Box(
-                modifier = Modifier
-            )
-
         }
     }
 }
