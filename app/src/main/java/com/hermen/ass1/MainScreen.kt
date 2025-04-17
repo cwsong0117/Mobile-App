@@ -35,6 +35,9 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.hermen.ass1.Announcement.*
+import com.hermen.ass1.Attendance.AttendanceOverview
+import com.hermen.ass1.Attendance.ClockIn
+import com.hermen.ass1.Attendance.ClockOut
 import com.hermen.ass1.MeetingRoom.RoomViewModel
 import com.hermen.ass1.User.UserProfileScreen
 
