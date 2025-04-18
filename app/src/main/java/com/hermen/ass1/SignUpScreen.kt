@@ -236,21 +236,21 @@ fun SignupScreen(navController: NavController, isDarkTheme: Boolean) {
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(50.dp)),
                     singleLine = true,
-                    visualTransformation = if (passwordVisible.value) VisualTransformation.None else PasswordVisualTransformation(),
+                    visualTransformation = if (confirmPasswordVisible.value) VisualTransformation.None else PasswordVisualTransformation(),
                     trailingIcon = {
                         IconButton(onClick = {
-                            passwordVisible.value = !passwordVisible.value
+                            confirmPasswordVisible.value = !confirmPasswordVisible.value
                         }) {
-                            val iconRes = if (passwordVisible.value) R.drawable.img else R.drawable.img_1
+                            val iconRes = if (confirmPasswordVisible.value) R.drawable.img else R.drawable.img_1
                             Icon(
                                 painter = painterResource(id = iconRes),
-                                contentDescription = if (passwordVisible.value) "Hide Password" else "Show Password",
+                                contentDescription = if (confirmPasswordVisible.value) "Hide Password" else "Show Password",
                                 modifier = Modifier.size(24.dp)
                             )
                         }
                     }
                 )
-                Spacer(modifier = Modifier.height(20.dp))
+                Spacer(modifier = Modifier.height(30.dp))
 
                 // 角色选择按钮
                 Row(
@@ -271,14 +271,13 @@ fun SignupScreen(navController: NavController, isDarkTheme: Boolean) {
                         modifier = Modifier
                             .clip(RoundedCornerShape(20.dp))
                             .background(if (role.value == "staff") Color.Gray else Color.LightGray)
-                            .clickable { role.value = "staff" }
+                            .clickable  { role.value = "staff" }
                             .padding(12.dp),
                         contentAlignment = Alignment.Center
                     ) {
                         Text(" Staff ", fontSize = 16.sp)
                     }
                 }
-                Spacer(modifier = Modifier.height(10.dp))
 
                 // Confirm 按钮与 Firestore 写入逻辑
                 Button(
@@ -330,11 +329,10 @@ fun SignupScreen(navController: NavController, isDarkTheme: Boolean) {
 
                                 // 构建用户数据
                                 val userMap = hashMapOf(
-                                    "username" to username.value,
+                                    "name" to username.value,
                                     "email" to email.value,
                                     "birthday" to birthday.value,
                                     "password" to password.value,
-                                    "role" to role.value
                                 )
 
                                 // 校验后写入

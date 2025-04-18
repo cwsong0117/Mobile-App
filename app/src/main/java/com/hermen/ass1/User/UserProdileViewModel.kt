@@ -1,12 +1,19 @@
 package com.hermen.ass1.User
 
+import android.net.Uri
 import android.util.Log
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
+import com.google.firebase.storage.FirebaseStorage
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 
 class UserProfileViewModel : ViewModel() {
     var name by mutableStateOf("")
@@ -15,6 +22,7 @@ class UserProfileViewModel : ViewModel() {
     var department by mutableStateOf("")
     var contactNo by mutableStateOf("")
     var email by mutableStateOf("")
+    var imageUrl by mutableStateOf("")
 
     var nameErrorMessage by mutableStateOf<String?>(null)
     var ageErrorMessage by mutableStateOf<String?>(null)
@@ -37,6 +45,7 @@ class UserProfileViewModel : ViewModel() {
         department = user.department
         contactNo = user.contactNo
         email = user.email
+        imageUrl = user.imageUrl ?: ""
 
         hasChanges = false
     }
@@ -47,7 +56,8 @@ class UserProfileViewModel : ViewModel() {
                 position != originalUser.position ||
                 department != originalUser.department ||
                 contactNo != originalUser.contactNo ||
-                email != originalUser.email
+                email != originalUser.email ||
+                imageUrl != (originalUser.imageUrl ?: "")
     }
 
     private fun formatContactNumber(input: String): String {
@@ -125,7 +135,8 @@ class UserProfileViewModel : ViewModel() {
             position = position,
             department = department,
             contactNo = contactNo,
-            email = email
+            email = email,
+            imageUrl = imageUrl
         )
 
         val userRef = Firebase.firestore.collection("User").document(updatedUser.id)
@@ -139,6 +150,25 @@ class UserProfileViewModel : ViewModel() {
             .addOnFailureListener { e ->
                 Log.e("UserProfileViewModel", "Failed to update user profile: ${e.message}")
             }
+    }
+
+    suspend fun uploadImageAndGetUrl(uri: Uri): String {
+        val storageRef = FirebaseStorage.getInstance().reference
+        val currentUid = FirebaseAuth.getInstance().currentUser?.uid
+        Log.d("UID_CHECK", "Current UID = $currentUid")
+
+        val uid = FirebaseAuth.getInstance().currentUser?.uid ?: throw Exception("No UID")
+        val imageRef = storageRef.child("images/$uid.jpg")
+
+        // Upload the image
+        imageRef.putFile(uri).await()
+
+        // Get the download URL
+        return imageRef.downloadUrl.await().toString()
+    }
+
+    fun markChangesMade() {
+        hasChanges = true
     }
 
     // Function to discard changes (restore the original data)

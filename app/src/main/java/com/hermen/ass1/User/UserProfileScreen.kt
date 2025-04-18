@@ -33,6 +33,24 @@ import androidx.compose.ui.text.TextStyle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.input.VisualTransformation
+import android.net.Uri
+import android.app.Activity
+import android.content.Intent
+import android.provider.MediaStore
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.core.net.toUri
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.painter.BitmapPainter
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
+import kotlinx.coroutines.launch
 
 @Composable
 fun UserProfileScreen(
@@ -51,6 +69,53 @@ fun UserProfileScreen(
         if (isDarkTheme) Color(0xFF616161) else Color(0xFFB2DFDB) // Normal
     }
 
+    var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
+    val context = LocalContext.current
+    val launcher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        uri?.let {
+            selectedImageUri = it
+            userProfileViewModel.markChangesMade()
+        }
+    }
+
+    val userImageUrl = SessionManager.currentUser?.imageUrl
+    Log.d("UserProfile", "userImageUrl = $userImageUrl")
+    if (!userImageUrl.isNullOrEmpty()) {
+        Text(
+            text = userImageUrl,
+            color = Color.Green,
+            fontSize = 12.sp,
+            modifier = Modifier.padding(8.dp)
+        )
+    }
+
+
+    if (selectedImageUri != null) {
+        // Load local selected image
+        val bitmap = remember(selectedImageUri) {
+            MediaStore.Images.Media.getBitmap(context.contentResolver, selectedImageUri)
+        }
+        Image(
+            bitmap = bitmap.asImageBitmap(),
+            contentDescription = "Profile Image",
+            modifier = Modifier.fillMaxSize(),
+            contentScale = ContentScale.Crop
+        )
+    } else if (!userImageUrl.isNullOrEmpty()) {
+        // Load from URL (needs Coil or Glide Compose)
+        AsyncImage(
+            model = userImageUrl,
+            contentDescription = "Profile Image",
+            modifier = Modifier.fillMaxSize(),
+            contentScale = ContentScale.Crop
+        )
+    } else {
+        Text("Tap to Upload", color = Color.White)
+    }
+
+    val coroutineScope = rememberCoroutineScope()
     val user = SessionManager.currentUser ?: return // Fail-safe in case user is already null
 
     // Initialize ViewModel with the current user data
@@ -81,7 +146,20 @@ fun UserProfileScreen(
 
                 Button(
                     onClick = {
-                        userProfileViewModel.saveUserProfile()
+                        coroutineScope.launch {
+                            selectedImageUri?.let { uri ->
+                                try {
+                                    val newUrl = userProfileViewModel.uploadImageAndGetUrl(uri)
+                                    SessionManager.currentUser?.imageUrl = newUrl
+                                    userProfileViewModel.imageUrl = newUrl // if you have it
+                                } catch (e: Exception) {
+                                    Log.e("Save", "Image upload failed: ${e.message}")
+                                    return@launch
+                                }
+                            }
+
+                            userProfileViewModel.saveUserProfile()
+                        }
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = saveButtonColor),
                     enabled = userProfileViewModel.hasChanges
@@ -113,10 +191,39 @@ fun UserProfileScreen(
                         modifier = Modifier
                             .size(100.dp)
                             .clip(CircleShape)
-                            .background(Color.Gray),
+                            .background(Color.Gray)
+                            .clickable { launcher.launch("image/*") },
                         contentAlignment = Alignment.Center
                     ) {
-                        Text("Image", color = Color.White)
+                        when {
+                            selectedImageUri != null -> {
+                                val bitmap = remember(selectedImageUri) {
+                                    MediaStore.Images.Media.getBitmap(context.contentResolver, selectedImageUri)
+                                }
+                                Image(
+                                    bitmap = bitmap.asImageBitmap(),
+                                    contentDescription = "Selected Image",
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentScale = ContentScale.Crop
+                                )
+                            }
+
+                            !userImageUrl.isNullOrEmpty() -> {
+                                AsyncImage(
+                                    model = ImageRequest.Builder(LocalContext.current)
+                                        .data(userImageUrl)
+                                        .crossfade(true)
+                                        .build(),
+                                    contentDescription = "Firebase Profile Image",
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentScale = ContentScale.Crop
+                                )
+                            }
+
+                            else -> {
+                                Text("Tap to Upload", color = Color.White)
+                            }
+                        }
                     }
 
                     Spacer(modifier = Modifier.height(16.dp))
