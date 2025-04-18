@@ -37,7 +37,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 @Composable
 fun ClockOut(
     onBackButtonClicked: () -> Unit,
-    onBackToHomeClicked: () -> Unit, // 🔹 Function to go back
     modifier: Modifier = Modifier
 ) {
     //Get current time function
@@ -150,21 +149,6 @@ fun ClockOut(
         }
 
         Spacer(modifier = Modifier.height(10.dp))
-
-        TextButton(
-            onClick = onBackToHomeClicked // 🔹 Now it correctly goes back
-        ) {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Text(
-                    text = "Back to Home",
-                    color = colorResource(id = R.color.teal_200),
-                    fontSize = 30.sp,
-                    fontWeight = FontWeight.Bold
-                )
-            }
-        }
 
         ClockOutScreen(employeeID = "S123")
     }

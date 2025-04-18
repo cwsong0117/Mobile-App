@@ -1,5 +1,10 @@
 package com.hermen.ass1.Attendance
 
+import android.Manifest
+import android.content.pm.PackageManager
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -24,23 +29,68 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat
 import com.hermen.ass1.R
 import kotlinx.coroutines.delay
 import java.util.*
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.google.android.gms.location.LocationServices
 import com.google.firebase.Timestamp
 
 @Composable
 fun ClockIn(
     onBackButtonClicked: () -> Unit,
-    onBackToHomeClicked: () -> Unit, // 🔹 Function to go back
     modifier: Modifier = Modifier
 ) {
+
+    val context = LocalContext.current
+    val locationPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+            Toast.makeText(context, "Permission Granted", Toast.LENGTH_SHORT).show()
+        } else {
+            Toast.makeText(context, "Permission Denied", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+// Request permission when UI launches
+    LaunchedEffect(Unit) {
+        if (ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            locationPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+        }
+    }
+    var currentLocation by remember { mutableStateOf("Fetching...") }
+    LaunchedEffect(Unit) {
+        val fusedLocationClient = LocationServices.getFusedLocationProviderClient(context)
+
+        if (ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED
+        ) {
+            fusedLocationClient.lastLocation.addOnSuccessListener { location ->
+                location?.let {
+                    currentLocation = "Lat: ${it.latitude}, Lng: ${it.longitude}"
+                } ?: run {
+                    currentLocation = "Location not available"
+                }
+            }
+        } else {
+            currentLocation = "Permission not granted"
+        }
+    }
+
     //Get current time function
     var currentTime by remember { mutableStateOf(Calendar.getInstance()) }
 
@@ -141,6 +191,8 @@ fun ClockIn(
             text = "Your expected clock-out time: $clockOutTime",
         )
 
+        Text(text = "Current Location: $currentLocation")
+
         Spacer(modifier = Modifier.height(30.dp))
 
         TextButton(
@@ -160,23 +212,6 @@ fun ClockIn(
 
         Spacer(modifier = Modifier.height(10.dp))
 
-        TextButton(
-            onClick = onBackToHomeClicked // 🔹 Now it correctly goes back
-        ) {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Text(
-                    text = "Back to Home",
-                    color = colorResource(id = R.color.teal_200),
-                    fontSize = 30.sp,
-                    fontWeight = FontWeight.Bold
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier.height(10.dp))
-
         AddAttendanceScreen()
     }
 }
@@ -186,7 +221,7 @@ fun AddAttendanceScreen(viewModel: AttendanceViewModel = viewModel()) {
     Column(modifier = Modifier.padding(16.dp)) {
         Button(onClick = {
             val newAttendance = Attendance(
-                attendanceID = "ATD180425-123",
+                attendanceID = "ATD1234-123",
                 clockInTime = Timestamp.now(),
                 clockOutTime = null,
                 employeeID = "S123",

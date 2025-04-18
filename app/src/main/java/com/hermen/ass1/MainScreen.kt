@@ -36,6 +36,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.hermen.ass1.Announcement.*
+import com.hermen.ass1.Attendance.AttendanceHistory
 import com.hermen.ass1.Attendance.AttendanceOverview
 import com.hermen.ass1.Attendance.ClockIn
 import com.hermen.ass1.Attendance.ClockOut
@@ -96,6 +97,9 @@ fun MainScreen(
 
             composable(route = AppScreen.Attendance.name) {
                 AttendanceOverview(
+                    gotoHistoryScreen = {
+                        navController.navigate("attendanceHistory")
+                    },
                     gotoClockInScreen = {
                         navController.navigate(AppScreen.ClockIn.name)
                     },
@@ -109,15 +113,16 @@ fun MainScreen(
                 )
             }
 
+            composable(route = "attendanceHistory") {
+               AttendanceHistory( onBackButtonClicked = {
+                   navController.popBackStack()
+               })
+            }
+
             composable(route = AppScreen.ClockIn.name) {
                 ClockIn(
                     onBackButtonClicked = {
                         navController.popBackStack()
-                    },
-                    onBackToHomeClicked = {
-                        navController.navigate(AppScreen.Home.name) {
-                            popUpTo(AppScreen.Home.name) { inclusive = false }
-                        }
                     },
                     modifier = modifier
                 )
@@ -127,11 +132,6 @@ fun MainScreen(
                 ClockOut(
                     onBackButtonClicked = {
                         navController.popBackStack()
-                    },
-                    onBackToHomeClicked = {
-                        navController.navigate(AppScreen.Home.name) {
-                            popUpTo(AppScreen.Home.name) { inclusive = false }
-                        }
                     },
                     modifier = modifier
                 )
