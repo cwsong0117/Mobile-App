@@ -65,6 +65,7 @@ fun LoginScreen(navController: NavController, isDarkTheme: Boolean) {
     val scope = rememberCoroutineScope()
     val loginResult = remember { mutableStateOf("") }
     val userList = remember { mutableStateOf<List<User>>(emptyList()) }
+    val user = SessionManager.currentUser
     val backgroundColor = if (isDarkTheme) Color.Transparent else Color(0xFFE5FFFF)
     val showPassword = remember { mutableStateOf(false) }
     val showDialog = remember { mutableStateOf(false) }
@@ -189,33 +190,19 @@ fun LoginScreen(navController: NavController, isDarkTheme: Boolean) {
                     }
 
                     if (matchedUser != null) {
-                        // Authenticate using Firebase
-                        FirebaseAuth.getInstance().signInWithEmailAndPassword(matchedUser.email, password.value)
-                            .addOnCompleteListener { task ->
-                                if (task.isSuccessful) {
-                                    // Successful login
-                                    SessionManager.currentUser = matchedUser
-                                    loginResult.value = "✅ Login Successful"
+                        SessionManager.currentUser = matchedUser
+                        loginResult.value = "✅ Correct"
 
-                                    // Navigate to main screen
-                                    navController.navigate(Screen.Main.route) {
-                                        popUpTo(Screen.Login.route) { inclusive = true }
-                                    }
-                                } else {
-                                    // Handle failed login
-                                    loginResult.value = "❌ Invalid credentials or authentication failed."
-                                    if (!useEmail.value) {
-                                        showDialog.value = true // 只在用用户名失败时弹窗
-                                    }
-                                }
-                            }
+                        navController.navigate(Screen.Main.route) {
+                            popUpTo(Screen.Login.route) { inclusive = true }
+                        }
                     } else {
-                        // Handle case when no user is found in the list
-                        loginResult.value = "❌ User not found in database."
+                        loginResult.value = "❌ Invalid"
+                        showDialog.value = true // 只在用户失败时弹窗
                     }
                 }
             }) {
-                Text(text = "Login")
+                Text(text = "Confirm")
             }
 
             Spacer(modifier = Modifier.height(30.dp))
