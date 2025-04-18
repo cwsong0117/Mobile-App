@@ -12,7 +12,7 @@ data class User(
     val email: String = "",
     val name: String = "",
     val position: String = "",
-    val password: String = ""
+    val password: String = "", // 💥 Added password field
 )
 
 fun DocumentSnapshot.toUser(): User {
@@ -24,7 +24,7 @@ fun DocumentSnapshot.toUser(): User {
     val email = getString("email") ?: ""
     val name = getString("name") ?: ""
     val position = getString("position") ?: ""
-    val password = getString("password") ?: ""
+    val password = getString("password") ?: "" // 💥 Extract password from Fire store
 
     return User(
         id = this.id,
@@ -34,7 +34,7 @@ fun DocumentSnapshot.toUser(): User {
         email = email,
         name = name,
         position = position,
-        password = password
+        password = password, // 💥 Set password here too
     )
 }
 

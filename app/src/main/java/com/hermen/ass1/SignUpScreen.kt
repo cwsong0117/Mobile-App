@@ -250,7 +250,7 @@ fun SignupScreen(navController: NavController, isDarkTheme: Boolean) {
                         }
                     }
                 )
-                Spacer(modifier = Modifier.height(20.dp))
+                Spacer(modifier = Modifier.height(30.dp))
 
                 // 角色选择按钮
                 Row(
@@ -271,14 +271,13 @@ fun SignupScreen(navController: NavController, isDarkTheme: Boolean) {
                         modifier = Modifier
                             .clip(RoundedCornerShape(20.dp))
                             .background(if (role.value == "staff") Color.Gray else Color.LightGray)
-                            .clickable { role.value = "staff" }
+                            .clickable  { role.value = "staff" }
                             .padding(12.dp),
                         contentAlignment = Alignment.Center
                     ) {
                         Text(" Staff ", fontSize = 16.sp)
                     }
                 }
-                Spacer(modifier = Modifier.height(10.dp))
 
                 // Confirm 按钮与 Firestore 写入逻辑
                 Button(
@@ -334,7 +333,6 @@ fun SignupScreen(navController: NavController, isDarkTheme: Boolean) {
                                     "email" to email.value,
                                     "birthday" to birthday.value,
                                     "password" to password.value,
-                                    "role" to role.value
                                 )
 
                                 // 校验后写入

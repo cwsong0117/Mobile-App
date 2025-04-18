@@ -49,6 +49,13 @@ import com.google.firebase.ktx.Firebase
 import com.google.firebase.firestore.ktx.firestore
 import com.hermen.ass1.User.SessionManager
 import com.hermen.ass1.ui.theme.Screen
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material3.Icon
+import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.TextButton
 
 @Composable
 fun LoginScreen(navController: NavController, isDarkTheme: Boolean) {
@@ -59,6 +66,10 @@ fun LoginScreen(navController: NavController, isDarkTheme: Boolean) {
     val userList = remember { mutableStateOf<List<User>>(emptyList()) }
     val user = SessionManager.currentUser
     val backgroundColor = if (isDarkTheme) Color.Transparent else Color(0xFFE5FFFF)
+    val showPassword = remember { mutableStateOf(false) }
+    val showDialog = remember { mutableStateOf(false) }
+    val useEmail = remember { mutableStateOf(false) }
+
 
     Box(
         modifier = Modifier
@@ -128,7 +139,7 @@ fun LoginScreen(navController: NavController, isDarkTheme: Boolean) {
                     .padding(start = 30.dp, end = 30.dp)
             ) {
                 Text(
-                    text = "Username",
+                    text = if (useEmail.value) "Email" else "Username",
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color.Black,
@@ -139,7 +150,7 @@ fun LoginScreen(navController: NavController, isDarkTheme: Boolean) {
                 TextField(
                     value = username.value,
                     onValueChange = { username.value = it },
-                    placeholder = { Text("ex: hello") },
+                    placeholder = { Text(if (useEmail.value) "ex: email@example.com" else "ex: Lee Kee Zhan") },
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(50.dp)),
@@ -159,7 +170,18 @@ fun LoginScreen(navController: NavController, isDarkTheme: Boolean) {
                     value = password.value,
                     onValueChange = { password.value = it },
                     placeholder = { Text("ex: ******") },
-                    visualTransformation = PasswordVisualTransformation(),
+                    visualTransformation = if (showPassword.value) VisualTransformation.None else PasswordVisualTransformation(),
+                    trailingIcon = {
+                        val image = if (showPassword.value)
+                            Icons.Filled.Visibility
+                        else Icons.Filled.VisibilityOff
+
+                        Icon(
+                            imageVector = image,
+                            contentDescription = if (showPassword.value) "Hide password" else "Show password",
+                            modifier = Modifier.clickable { showPassword.value = !showPassword.value }
+                        )
+                    },
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(50.dp)),
@@ -173,9 +195,12 @@ fun LoginScreen(navController: NavController, isDarkTheme: Boolean) {
                     val users = UserRepository.getUsers()
                     userList.value = users
 
-                    // Find if there's a user with matching name and password
                     val matchedUser = users.find {
-                        it.name == username.value && it.password == password.value
+                        if (useEmail.value) {
+                            it.email == username.value && it.password == password.value
+                        } else {
+                            it.name == username.value && it.password == password.value
+                        }
                     }
 
                     if (matchedUser != null) {
@@ -183,10 +208,13 @@ fun LoginScreen(navController: NavController, isDarkTheme: Boolean) {
                         loginResult.value = "✅ Correct"
 
                         navController.navigate(Screen.Main.route) {
-                            popUpTo(Screen.Login.route) { inclusive = true } // Optional: prevent back navigation
+                            popUpTo(Screen.Login.route) { inclusive = true }
                         }
                     } else {
                         loginResult.value = "❌ Invalid"
+                        if (!useEmail.value) {
+                            showDialog.value = true // 只在用用户名失败时弹窗
+                        }
                     }
                 }
             }) {
@@ -196,45 +224,36 @@ fun LoginScreen(navController: NavController, isDarkTheme: Boolean) {
             Spacer(modifier = Modifier.height(30.dp))
 
             Text(
-                text = "User Collection Data:",
-                fontWeight = FontWeight.Bold,
-                fontSize = 20.sp
-            )
-            userList.value.forEach { user ->
-                Text(text = user.toString()) // 或者更优雅地格式化
-                Text(text = "ID: ${user.id}, Name: ${user.name}, Password: ${user.password}")
-            }
-
-            Spacer(modifier = Modifier.height(10.dp))
-
-            Text(
                 text = loginResult.value,
                 fontSize = 18.sp,
                 fontWeight = FontWeight.SemiBold,
                 color = if (loginResult.value == "✅ Correct") Color.Green else Color.Red,
                 modifier = Modifier.align(Alignment.CenterHorizontally)
             )
-
-
-            Text(text = "Username: ${username.value}")
-            Text(text = "Password: ${password.value}")
-            Text(text = "Welcome ${user?.name}")
-            Text(text = " ${user?.id}")
-            Text(text = " ${user?.age}")
-            Text(text = " ${user?.contactNo}")
-            Text(text = " ${user?.department}")
-            Text(text = " ${user?.position}")
-
-            Spacer(modifier = Modifier.height(50.dp))
-
-            Text(text = "This is the Login Screen")
-            Text(
-                text = "← Back",
-                modifier = Modifier
-                    .padding(top = 20.dp)
-                    .clickable { navController.popBackStack() },
-                color = Color.Blue
-            )
+            Spacer(modifier = Modifier.height(30.dp))
+            if (showDialog.value) {
+                androidx.compose.material3.AlertDialog(
+                    onDismissRequest = { showDialog.value = false },
+                    title = { Text(text = "Login Failed") },
+                    text = { Text("Would you like to try logging in with your email instead?") },
+                    confirmButton = {
+                        Button(onClick = {
+                            showDialog.value = false
+                            useEmail.value = true
+                            username.value = "" // 清空旧用户名
+                        }) {
+                            Text("Yes")
+                        }
+                    },
+                    dismissButton = {
+                        Button(onClick = {
+                            showDialog.value = false
+                        }) {
+                            Text("No")
+                        }
+                    }
+                )
+            }
         }
     }
 }
