@@ -59,9 +59,12 @@ data class AppItem(
     val route: String
 )
 
+val LocalRootNavController = staticCompositionLocalOf<NavHostController> {
+    error("No Root NavController provided")
+}
+
 @Composable
 fun MainScreen(
-    navController: NavHostController,
     isDarkTheme: Boolean,
     onToggleTheme: () -> Unit,
     modifier: Modifier = Modifier
@@ -152,7 +155,8 @@ fun MainScreen(
 
             composable(route = AppScreen.UserProfile.name) {
                 UserProfileScreen(
-                    navController = navController,
+                    nestedNavController = navController,
+                    rootNavController = LocalRootNavController.current, // <- from CompositionLocal or state lift
                     isDarkTheme = isDarkTheme
                 )
             }

@@ -22,20 +22,40 @@ import com.hermen.ass1.User.User
 import com.hermen.ass1.User.UserRepository
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.NavController
+import androidx.navigation.NavHostController
 import com.hermen.ass1.ThemeViewModel
 import com.hermen.ass1.ui.theme.Screen
 
 @Composable
 fun UserProfileScreen(
-    navController: NavController,
+    nestedNavController: NavHostController,
+    rootNavController: NavHostController,
     isDarkTheme: Boolean
-) {
+){
     val backgroundColor = if (isDarkTheme) Color(0xFF121212) else Color(0xFFE6F4F1)
     val fieldBackground = if (isDarkTheme) Color(0xFF2C2C2C) else Color(0xFFE0E0E0)
     val labelColor = if (isDarkTheme) Color.LightGray else Color.Blue
     val textColor = if (isDarkTheme) Color.White else Color.Black
 
-    val user = SessionManager.currentUser
+//    var shouldLogout by remember { mutableStateOf(false) }
+//
+//    if (shouldLogout) {
+//        // Navigate first, then clear session after recomposition
+//        LaunchedEffect(Unit) {
+//            navController.navigate(Screen.InitialPage.route) {
+//                popUpTo(Screen.Main.route) { inclusive = true }
+//            }
+//
+//            // Delay just enough to let navigation complete
+//            kotlinx.coroutines.delay(300)
+//            SessionManager.currentUser = null
+//        }
+//
+//        // Don't draw any UI if we're logging out
+//        return
+//    }
+
+    val user = SessionManager.currentUser ?: return // Fail-safe in case user is already null
 
     Box(
         modifier = Modifier
@@ -62,46 +82,38 @@ fun UserProfileScreen(
                 Text("Image", color = Color.White)
             }
 
-
             Spacer(modifier = Modifier.height(16.dp))
 
-            ProfileField("Name", user?.name ?: "", labelColor, fieldBackground, textColor)
-            ProfileField("Age", user?.age?.toString() ?: "", labelColor, fieldBackground, textColor)
-            ProfileField("Position", user?.position ?: "", labelColor, fieldBackground, textColor)
-            ProfileField("Department", user?.department ?: "", labelColor, fieldBackground, textColor)
-            ProfileField("Contact No", user?.contactNo ?: "", labelColor, fieldBackground, textColor)
-            ProfileField("Email", user?.email ?: "", labelColor, fieldBackground, textColor)
+            ProfileField("Name", user.name, labelColor, fieldBackground, textColor)
+            ProfileField("Age", user.age.toString(), labelColor, fieldBackground, textColor)
+            ProfileField("Position", user.position, labelColor, fieldBackground, textColor)
+            ProfileField("Department", user.department, labelColor, fieldBackground, textColor)
+            ProfileField("Contact No", user.contactNo, labelColor, fieldBackground, textColor)
+            ProfileField("Email", user.email, labelColor, fieldBackground, textColor)
 
             Spacer(modifier = Modifier.height(32.dp))
 
             Button(
                 onClick = {
                     SessionManager.currentUser = null
-                    navController.navigate(Screen.InitialPage.route) {
-                        popUpTo(Screen.Main.route) { inclusive = true }
+                    rootNavController.navigate(Screen.InitialPage.route) {
+                        popUpTo(0) { inclusive = true }
                     }
-                },
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = if (isDarkTheme) Color(0xFF440000) else Color.Transparent
-                ),
-                modifier = Modifier
-                    .border(1.dp, Color.Red, shape = RoundedCornerShape(12.dp))
+                }
             ) {
-                Text("LOGOUT", color = Color.Red)
+                Text("Logout")
             }
 
             Spacer(modifier = Modifier.height(32.dp))
         }
 
-        // Back Button "< PROFILE" at Top Left
         TextButton(
-            onClick = { navController.popBackStack() },
+            onClick = { nestedNavController.popBackStack() },
             modifier = Modifier.align(Alignment.TopStart)
         ) {
             Text("< PROFILE", color = if (isDarkTheme) Color.White else Color.Black)
         }
 
-        // SAVE Button at Top Right
         Button(
             onClick = { /* Save logic */ },
             modifier = Modifier.align(Alignment.TopEnd),

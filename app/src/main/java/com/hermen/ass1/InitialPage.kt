@@ -16,6 +16,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -40,22 +41,26 @@ fun Navigation(
     isDarkTheme: Boolean,
     onToggleTheme: () -> Unit
 ) {
-    NavHost(navController = navController, startDestination = Screen.InitialPage.route) {
-        composable(Screen.InitialPage.route) {
-            InitialPage(navController, isDarkTheme)
-        }
-        composable(Screen.Signup.route) {
-            SignupScreen(navController, isDarkTheme)
-        }
-        composable(Screen.Login.route) {
-            LoginScreen(navController, isDarkTheme)
-        }
-        composable(Screen.Main.route) {
-            MainScreen(
-                isDarkTheme = isDarkTheme,
-                onToggleTheme = onToggleTheme,
-                navController = navController // 👈 pass it here
-            )
+    CompositionLocalProvider(LocalRootNavController provides navController) {
+        NavHost(
+            navController = navController,
+            startDestination = Screen.InitialPage.route
+        ) {
+            composable(Screen.InitialPage.route) {
+                InitialPage(navController, isDarkTheme)
+            }
+            composable(Screen.Signup.route) {
+                SignupScreen(navController, isDarkTheme)
+            }
+            composable(Screen.Login.route) {
+                LoginScreen(navController, isDarkTheme)
+            }
+            composable(Screen.Main.route) {
+                MainScreen(
+                    isDarkTheme = isDarkTheme,
+                    onToggleTheme = onToggleTheme
+                )
+            }
         }
     }
 }

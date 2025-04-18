@@ -44,7 +44,6 @@ fun GreetingPreview() {
         val navController = rememberNavController()
 
         MainScreen(
-            navController = navController,
             isDarkTheme = isDarkTheme,
             onToggleTheme = {} // No-op in preview
         )
