@@ -1,5 +1,6 @@
 package com.hermen.ass1.User
 
+import android.util.Log
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
@@ -118,16 +119,25 @@ class UserProfileViewModel : ViewModel() {
     fun saveUserProfile() {
         if (!validateFields()) return
 
-        // Proceed with saving
-        SessionManager.currentUser = User(name, age.toInt(), position, department, contactNo, email)
+        val updatedUser = originalUser.copy(
+            name = name,
+            age = age.toInt(),
+            position = position,
+            department = department,
+            contactNo = contactNo,
+            email = email
+        )
 
-        val userRef = Firebase.firestore.collection("users").document(SessionManager.currentUser!!.id)
-        userRef.set(SessionManager.currentUser!!)
+        val userRef = Firebase.firestore.collection("User").document(updatedUser.id)
+        userRef.set(updatedUser)
             .addOnSuccessListener {
-                // Success
+                SessionManager.currentUser = updatedUser
+                originalUser = updatedUser
+                hasChanges = false
+                Log.d("UserProfileViewModel", "User profile updated successfully.")
             }
-            .addOnFailureListener {
-                // Handle failure
+            .addOnFailureListener { e ->
+                Log.e("UserProfileViewModel", "Failed to update user profile: ${e.message}")
             }
     }
 
