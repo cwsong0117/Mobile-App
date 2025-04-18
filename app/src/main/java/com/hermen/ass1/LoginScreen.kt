@@ -229,23 +229,6 @@ fun LoginScreen(navController: NavController, isDarkTheme: Boolean) {
                 modifier = Modifier.align(Alignment.CenterHorizontally)
             )
 
-            // Optionally display fetched users for debugging purposes
-            userList.value.forEach { user ->
-                Text(text = "User: ${user.name}, Email: ${user.email}")
-            }
-            Text(text = "Username: ${username.value}")
-            Text(text = "Password: ${password.value}")
-
-            Spacer(modifier = Modifier.height(50.dp))
-
-            Text(text = "This is the Login Screen")
-            Text(
-                text = "← Back",
-                modifier = Modifier
-                    .padding(top = 20.dp)
-                    .clickable { navController.popBackStack() },
-                color = Color.Blue
-            )
             Spacer(modifier = Modifier.height(30.dp))
             if (showDialog.value) {
                 androidx.compose.material3.AlertDialog(
