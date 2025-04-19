@@ -190,15 +190,29 @@ fun LoginScreen(navController: NavController, isDarkTheme: Boolean) {
                     }
 
                     if (matchedUser != null) {
-                        SessionManager.currentUser = matchedUser
-                        loginResult.value = "✅ Correct"
+                        // Authenticate using Firebase
+                        FirebaseAuth.getInstance().signInWithEmailAndPassword(matchedUser.email, password.value)
+                            .addOnCompleteListener { task ->
+                                if (task.isSuccessful) {
+                                    // Successful login
+                                    SessionManager.currentUser = matchedUser
+                                    loginResult.value = "✅ Login Successful"
 
-                        navController.navigate(Screen.Main.route) {
-                            popUpTo(Screen.Login.route) { inclusive = true }
-                        }
+                                    // Navigate to main screen
+                                    navController.navigate(Screen.Main.route) {
+                                        popUpTo(Screen.Login.route) { inclusive = true }
+                                    }
+                                } else {
+                                    // Handle failed login
+                                    loginResult.value = "❌ Invalid credentials or authentication failed."
+                                    if (!useEmail.value) {
+                                        showDialog.value = true // 只在用用户名失败时弹窗
+                                    }
+                                }
+                            }
                     } else {
-                        loginResult.value = "❌ Invalid"
-                        showDialog.value = true // 只在用户失败时弹窗
+                        // Handle case when no user is found in the list
+                        loginResult.value = "❌ User not found in database."
                     }
                 }
             }) {
