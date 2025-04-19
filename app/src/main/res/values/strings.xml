@@ -12,5 +12,6 @@
     <string name="announcement_detail">AnnouncementDetail</string>
     <string name="user_profile">User Profile</string>
     <string name="leave">Leave</string>
+    <string name="leave_application">Leave Application</string>
 
 </resources>
