@@ -52,6 +52,7 @@ enum class AppScreen(@StringRes val title: Int) {
     AnnouncementOverview(title = R.string.announcement_overview),
     AnnouncementDetail(title = R.string.announcement_detail),
     UserProfile(title = R.string.user_profile),
+    LeaveApplication(title = R.string.leave_application),
 }
 
 data class AppItem(
@@ -117,6 +118,10 @@ fun MainScreen(
                AttendanceHistory( onBackButtonClicked = {
                    navController.popBackStack()
                })
+            }
+
+            composable(route = AppScreen.LeaveApplication.name) {
+                LeaveApplication(navController = navController, isDarkTheme = isDarkTheme)
             }
 
             composable(route = AppScreen.ClockIn.name) {
