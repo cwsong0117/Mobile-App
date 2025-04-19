@@ -40,8 +40,8 @@ import com.hermen.ass1.Attendance.AttendanceHistory
 import com.hermen.ass1.Attendance.AttendanceOverview
 import com.hermen.ass1.Attendance.ClockIn
 import com.hermen.ass1.Attendance.ClockOut
+import com.hermen.ass1.LeaveApplication.LeaveApply
 import com.hermen.ass1.MeetingRoom.RoomViewModel
-import com.hermen.ass1.User.SessionManager
 import com.hermen.ass1.User.UserProfileScreen
 
 enum class AppScreen(@StringRes val title: Int) {
@@ -174,8 +174,7 @@ fun MainScreen(
                 type = NavType.StringType
                 defaultValue = "default_room"
                 nullable = false
-            }
-            )
+            })
             ) { backStackEntry ->
                 val roomName = backStackEntry.arguments?.getString("roomName") ?: "default_room"
                 Log.d("NAVIGATION", "Passed room name: $roomName")
@@ -189,12 +188,21 @@ fun MainScreen(
             arguments = listOf(
             navArgument("applyId") {
                 type = NavType.StringType
-            }
-            )) {
+            })
+            ) {
                 backStackEntry ->
                 val applyId = backStackEntry.arguments?.getString("applyId") ?: ""
                 val viewModel: RoomViewModel = viewModel()
                 StatusDetails(navController = navController, applyId = applyId, viewModel = viewModel, isDarkTheme = isDarkTheme)
+            }
+
+            composable(
+                route = "leave_screen"
+            ) {
+                LeaveApply(
+                    navController = navController,
+                    isDarkTheme = isDarkTheme
+                )
             }
         }
     }

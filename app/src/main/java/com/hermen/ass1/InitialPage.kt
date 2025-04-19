@@ -1,5 +1,6 @@
 package com.hermen.ass1
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -69,7 +70,7 @@ fun Navigation(
 fun InitialPage(navController: NavController, isDarkTheme:Boolean) {
 
     val backgroundColor = if (isDarkTheme) Color.Transparent else Color(0xFFE5FFFF)
-    val signUpButtonColor = if (isDarkTheme) Color.Transparent else Color(0xFF00008B)
+    val signUpButtonColor = if (isDarkTheme) Color.Transparent else Color(0xFF89CFF0)
     val logInButtonColor = if (isDarkTheme) Color.Transparent else Color(0xFF89CFF0	)
 
     Box(
@@ -168,9 +169,10 @@ fun InitialPage(navController: NavController, isDarkTheme:Boolean) {
                         modifier = Modifier
                             .fillMaxWidth(0.7f)
                             .height(50.dp),
-                        colors = ButtonDefaults.buttonColors(logInButtonColor)
+                        colors = ButtonDefaults.buttonColors(Color.White),
+                        border = BorderStroke(2.dp, logInButtonColor)
                     ) {
-                        Text(text = "Login", fontSize = 18.sp, color = Color.Black)
+                        Text(text = "Login", fontSize = 18.sp, color = logInButtonColor)
                     }
                 }
             }

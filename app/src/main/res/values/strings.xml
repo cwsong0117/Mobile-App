@@ -11,4 +11,6 @@
     <string name="announcement_overview">AnnouncementOverview</string>
     <string name="announcement_detail">AnnouncementDetail</string>
     <string name="user_profile">User Profile</string>
+    <string name="leave">Leave</string>
+
 </resources>
