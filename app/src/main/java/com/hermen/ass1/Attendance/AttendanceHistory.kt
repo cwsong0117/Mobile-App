@@ -107,6 +107,7 @@ fun AttendanceScreen(
                     Column(modifier = Modifier.padding(8.dp)) {
                         Text(text = "Attendance ID: ${item.attendanceID}")
                         Text(text = "Employee ID: ${item.employeeID}")
+                        //need to update here
                         Text(text = "Clock In: ${item.clockInTime?.toDate()}")
                         Text(text = "Clock Out: ${item.clockOutTime?.toDate()}")
                         Text(text = "Status: ${item.status}")
