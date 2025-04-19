@@ -2,23 +2,18 @@ package com.hermen.ass1.Attendance
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -34,33 +29,32 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.hermen.ass1.R
-import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.coroutines.delay
 import java.util.Calendar
-import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Button
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.TopAppBar
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import java.text.SimpleDateFormat
 import java.util.Locale
+import java.util.TimeZone
+import com.google.firebase.Timestamp
 
+fun getMalaysiaTime(): Timestamp {
+    val malaysiaTimeZone = TimeZone.getTimeZone("Asia/Kuala_Lumpur")
+    val calendar = Calendar.getInstance(malaysiaTimeZone)
+    return Timestamp(calendar.time)
+}
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AttendanceOverview(
     gotoHistoryScreen: () -> Unit,
@@ -70,50 +64,76 @@ fun AttendanceOverview(
     modifier: Modifier = Modifier,
 ) {
 
-    //Get current time function
-    var currentTime by remember { mutableStateOf(Calendar.getInstance()) }
+    val malaysiaTimeZone = TimeZone.getTimeZone("Asia/Kuala_Lumpur")
 
-    //date
-    val dateFormat = remember { SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()) }
-    val currentDate = dateFormat.format(currentTime.time)
+    // Mutable state holding the current Firebase timestamp
+    var currentTimestamp by remember { mutableStateOf(getMalaysiaTime()) }
 
     // Update every second
     LaunchedEffect(Unit) {
         while (true) {
-            currentTime = Calendar.getInstance()
+            currentTimestamp = getMalaysiaTime()
             delay(1000L)
         }
     }
 
-    val hour = (currentTime.get(Calendar.HOUR_OF_DAY) + 8) % 24
-    val minute = currentTime.get(Calendar.MINUTE)
-    val amPm = if (hour >= 12) "PM" else "AM"
+    // Convert the timestamp to Calendar
+    val calendar = Calendar.getInstance(malaysiaTimeZone).apply {
+        time = currentTimestamp.toDate()
+    }
+
+    // Format date (e.g., 19/04/2025)
+    val dateFormat = remember {
+        SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).apply {
+            timeZone = malaysiaTimeZone
+        }
+    }
+    val currentDate = dateFormat.format(calendar.time)
+
+    // Extract hour, minute, AM/PM
+    val hour = calendar.get(Calendar.HOUR)
+    val minute = calendar.get(Calendar.MINUTE)
+    val amPm = if (calendar.get(Calendar.AM_PM) == Calendar.AM) "AM" else "PM"
     //Get current time function
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = {
-                    Text("ATTENDANCE")
-                },
-                navigationIcon = {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth() // makes the box span full width
+                    .drawBehind {
+                        // draw a shadow-like effect only at the bottom
+                        val shadowHeight = 4.dp.toPx()
+                        drawRect(
+                            color = Color(0x33000000), // translucent black
+                            topLeft = Offset(0f, size.height - shadowHeight),
+                            size = Size(size.width, shadowHeight)
+                        )
+                    }
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(start = 8.dp, top = 12.dp, bottom = 12.dp)
+                ) {
                     IconButton(onClick = onBackButtonClicked) {
                         Icon(
                             imageVector = ImageVector.vectorResource(id = R.drawable.baseline_arrow_back_ios_new_24),
                             contentDescription = "Back"
                         )
                     }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color.Transparent
-                ),
-                modifier = Modifier.shadow(
-                    elevation = 4.dp,
-                    spotColor = Color.Black
-                ),
-                windowInsets = WindowInsets(0) // Removes default top padding
-            )
+
+                    Text(
+                        text = "ATTENDANCE",
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(start = 4.dp)
+                    )
+                }
+            }
         }
+
     ) { innerPadding ->
         Column(
             modifier = Modifier
@@ -165,7 +185,6 @@ fun AttendanceOverview(
 
                 Text(
                     text = amPm,
-                    color = Color.Black,
                     fontSize = 30.sp,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.padding(top = 32.dp) // Add padding here (change value as needed)
@@ -174,7 +193,6 @@ fun AttendanceOverview(
 
             Text(
                 text = currentDate,
-                color = Color.Black,
                 fontSize = 30.sp,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.padding(top = 32.dp) // Add padding here (change value as needed)

@@ -7,6 +7,10 @@ import com.google.firebase.Firebase
 import com.google.firebase.firestore.firestore
 import com.google.firebase.Timestamp
 import com.google.firebase.firestore.Query
+import java.text.SimpleDateFormat
+import java.util.Calendar
+import java.util.Locale
+import java.util.TimeZone
 
 data class Attendance(
     val attendanceID: String = "",
@@ -77,5 +81,38 @@ class AttendanceViewModel : ViewModel() {
             .addOnFailureListener { onError(it) }
     }
 
+    fun generateAttendanceID(onResult: (String) -> Unit) {
+        val today = Calendar.getInstance(TimeZone.getTimeZone("Asia/Kuala_Lumpur"))
+        val dateFormat = SimpleDateFormat("ddMMyy", Locale.getDefault())
+        val dateStr = dateFormat.format(today.time)
 
+        db.collection("Attendance")
+            .whereGreaterThanOrEqualTo("clockInTime", getStartOfDayTimestamp(today))
+            .whereLessThan("clockInTime", getEndOfDayTimestamp(today))
+            .get()
+            .addOnSuccessListener { result ->
+                val count = result.size() + 1
+                val attendanceID = "ATD$dateStr-${String.format("%03d", count)}"
+                onResult(attendanceID)
+            }
+    }
+
+}
+
+private fun getStartOfDayTimestamp(calendar: Calendar): Timestamp {
+    val start = calendar.clone() as Calendar
+    start.set(Calendar.HOUR_OF_DAY, 0)
+    start.set(Calendar.MINUTE, 0)
+    start.set(Calendar.SECOND, 0)
+    start.set(Calendar.MILLISECOND, 0)
+    return Timestamp(start.time)
+}
+
+private fun getEndOfDayTimestamp(calendar: Calendar): Timestamp {
+    val end = calendar.clone() as Calendar
+    end.set(Calendar.HOUR_OF_DAY, 23)
+    end.set(Calendar.MINUTE, 59)
+    end.set(Calendar.SECOND, 59)
+    end.set(Calendar.MILLISECOND, 999)
+    return Timestamp(end.time)
 }
