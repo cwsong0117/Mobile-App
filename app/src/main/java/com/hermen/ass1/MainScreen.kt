@@ -282,7 +282,7 @@ fun AppLogo(modifier: Modifier = Modifier) {
 fun ApplicationSection(navController: NavController) {
     val apps = listOf(
         AppItem("Meeting Room", R.drawable.meeting_room, "meeting_room_screen"),
-        AppItem("Leave", R.drawable.leave, "leave_screen"),
+        AppItem("Leave", R.drawable.leave, AppScreen.LeaveApplication.name),
         AppItem("Attendance Panel", R.drawable.attendance, "attendance_screen")
     )
 
