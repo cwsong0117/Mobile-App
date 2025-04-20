@@ -24,6 +24,8 @@ import coil.compose.AsyncImage
 import com.hermen.ass1.ui.theme.LeaveRequest
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.layout.ContentScale
 
 
 @Composable
@@ -72,26 +74,32 @@ fun ApproveLeave(navController: NavController, isDarkTheme: Boolean) {
                         Text("Status: ${leave.status}")
                         Text("Dates: ${leave.leaveDates.joinToString(", ")}")
 
-                        // 显示图片 / PDF 链接
-                        if (leave.evidenceUrl.endsWith(".jpg") || leave.evidenceUrl.endsWith(".png")) {
-                            AsyncImage(
-                                model = leave.evidenceUrl,
-                                contentDescription = null,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(top = 8.dp)
-                                    .height(200.dp) // optional: 限制图片高度
-                            )
-                        } else {
-                            Text(
-                                text = "Evidence File: ${leave.evidenceUrl}",
-                                color = Color.Blue,
-                                modifier = Modifier.padding(top = 8.dp)
-                            )
-                        }
+                        val isImage = leave.evidenceUrl.endsWith(".jpg", ignoreCase = true) ||
+                                leave.evidenceUrl.endsWith(".jpeg", ignoreCase = true) ||
+                                leave.evidenceUrl.endsWith(".png", ignoreCase = true)
+
+                        val imageUrl = if (isImage) leave.evidenceUrl else "https://upload.wikimedia.org/wikipedia/commons/8/87/PDF_file_icon.svg"
+
+                        AsyncImage(
+                            model = imageUrl,
+                            contentDescription = "Evidence Preview",
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = 8.dp)
+                                .height(200.dp)
+                        )
+
                     }
                 }
             }
         }
     }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun ApproveLeavePreview() {
+    val navController = androidx.navigation.compose.rememberNavController()
+    ApproveLeave(navController, isDarkTheme = false)
 }

@@ -225,8 +225,25 @@ fun LeaveApplication(navController: NavController, isDarkTheme: Boolean) {
                                 .clip(RoundedCornerShape(8.dp))
                                 .background(if (isSelected) Color(0xFF00BCD4) else Color(0xFFE0E0E0))
                                 .clickable {
-                                    if (isSelected) selectedDates.remove(date)
-                                    else selectedDates.add(date)
+                                    val today = Calendar.getInstance().apply {
+                                        set(Calendar.HOUR_OF_DAY, 0)
+                                        set(Calendar.MINUTE, 0)
+                                        set(Calendar.SECOND, 0)
+                                        set(Calendar.MILLISECOND, 0)
+                                    }
+
+                                    val clickedDate = Calendar.getInstance().apply {
+                                        time = date
+                                        set(Calendar.HOUR_OF_DAY, 0)
+                                        set(Calendar.MINUTE, 0)
+                                        set(Calendar.SECOND, 0)
+                                        set(Calendar.MILLISECOND, 0)
+                                    }
+
+                                    if (clickedDate.after(today)) {
+                                        if (isSelected) selectedDates.remove(date)
+                                        else selectedDates.add(date)
+                                    }
                                 },
                             contentAlignment = Alignment.Center
                         ) {
