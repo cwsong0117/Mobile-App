@@ -45,6 +45,8 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Icon
 import androidx.compose.ui.text.input.VisualTransformation
 import com.google.firebase.auth.FirebaseAuth
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.rememberScrollState
 
 @Composable
 fun SignupScreen(navController: NavController, isDarkTheme: Boolean) {
@@ -65,7 +67,9 @@ fun SignupScreen(navController: NavController, isDarkTheme: Boolean) {
     val isPasswordStrong = password.value.length >= 6
     val passwordVisible = remember { mutableStateOf(false) }
     val confirmPasswordVisible = remember { mutableStateOf(false) }
-
+    val position = remember { mutableStateOf("") }
+    val department = remember { mutableStateOf("") }
+    val scrollState = rememberScrollState()
     val datePickerDialog = DatePickerDialog(
         context,
         { _: DatePicker, selectedYear: Int, selectedMonth: Int, selectedDayOfMonth: Int ->
@@ -85,6 +89,7 @@ fun SignupScreen(navController: NavController, isDarkTheme: Boolean) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .verticalScroll(scrollState)
                 .padding(horizontal = 32.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Top
@@ -189,6 +194,48 @@ fun SignupScreen(navController: NavController, isDarkTheme: Boolean) {
 
                 Spacer(modifier = Modifier.height(30.dp))
                 Text(
+                    text = "Position",
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.Black,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 4.dp)
+                )
+                TextField(
+                    value = position.value,
+                    onValueChange = { position.value = it },
+                    placeholder = { Text("ex: Manager") },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(50.dp)),
+                    singleLine = true
+                )
+
+                Spacer(modifier = Modifier.height(30.dp))
+
+                // 👉 加入 Department
+                Text(
+                    text = "Department",
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.Black,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 4.dp)
+                )
+                TextField(
+                    value = department.value,
+                    onValueChange = { department.value = it },
+                    placeholder = { Text("ex: Human Resource") },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(50.dp)),
+                    singleLine = true
+                )
+
+                Spacer(modifier = Modifier.height(30.dp))
+                Text(
                     text = "Password",
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Bold,
@@ -288,7 +335,8 @@ fun SignupScreen(navController: NavController, isDarkTheme: Boolean) {
                         val ref = db.collection("User")
 
                         if (email.value.isBlank() || username.value.isBlank() || birthday.value.isBlank() ||
-                            password.value.isBlank() || confirmpassword.value.isBlank() || role.value.isBlank()
+                            password.value.isBlank() || confirmpassword.value.isBlank() || role.value.isBlank()||
+                            position.value.isBlank() || department.value.isBlank()
                         ) {
                             Toast.makeText(context, "Please fill in all fields", Toast.LENGTH_SHORT).show()
                             return@Button
@@ -334,6 +382,8 @@ fun SignupScreen(navController: NavController, isDarkTheme: Boolean) {
                                     "email" to email.value,
                                     "birthday" to birthday.value,
                                     "password" to password.value,
+                                    "position" to position.value,
+                                    "department" to department.value
                                 )
 
                                 // 校验后写入
@@ -341,7 +391,9 @@ fun SignupScreen(navController: NavController, isDarkTheme: Boolean) {
                                     email.value.isNotBlank() &&
                                     birthday.value.isNotBlank() &&
                                     password.value == confirmpassword.value &&
-                                    role.value.isNotBlank()
+                                    role.value.isNotBlank() &&
+                                    position.value.isNotBlank() &&
+                                    department.value.isNotBlank()
                                 ) {
                                     FirebaseAuth.getInstance()
                                         .createUserWithEmailAndPassword(email.value, password.value)
@@ -353,7 +405,9 @@ fun SignupScreen(navController: NavController, isDarkTheme: Boolean) {
                                                     "email" to email.value,
                                                     "birthday" to birthday.value,
                                                     "password" to password.value,
-                                                    "role" to role.value
+                                                    "role" to role.value,
+                                                    "position" to position.value,
+                                                    "department" to department.value,
                                                 )
 
                                                 ref.document(newId)
