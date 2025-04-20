@@ -58,14 +58,19 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.foundation.Image
 import androidx.activity.compose.rememberLauncherForActivityResult
+import com.hermen.ass1.User.SessionManager
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LeaveApplication(navController: NavController, isDarkTheme: Boolean) {
     val backgroundColor = if (isDarkTheme) Color.Transparent else Color(0xFFE5FFFF)
-
+    val user = SessionManager.currentUser
     var leaveReason by remember { mutableStateOf("") }
     val selectedDates = remember { mutableStateListOf<Date>() }
+    val leaveDate by remember { mutableStateOf("") }
+    val leaveType by remember { mutableStateOf("") }
+    val reason by remember { mutableStateOf("") }
+
 
     // 使用 Calendar 代替 LocalDate
     val calendar = Calendar.getInstance()
@@ -138,6 +143,22 @@ fun LeaveApplication(navController: NavController, isDarkTheme: Boolean) {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Top
         ) {
+
+            if (user?.id?.startsWith("A") == true) {
+                Text(
+                    text = "Approve leave of absence →",
+                    color = Color.Blue,
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 16.sp,
+                    modifier = Modifier
+                        .padding(top = 12.dp)
+                        .clickable {
+                            // Navigate to ApproveLeave screen
+                            navController.navigate(AppScreen.ApproveLeave.name)
+                        }
+                )
+            }
+
             Spacer(modifier = Modifier.height(50.dp))
 
             // 📅 Leave Dates title
@@ -372,22 +393,81 @@ fun LeaveApplication(navController: NavController, isDarkTheme: Boolean) {
                     .padding(bottom = 16.dp),
                 contentAlignment = Alignment.BottomCenter
             ) {
-                // Confirm Button at the bottom center
                 Button(
                     onClick = {
-                        selectedFileUri?.let { uri ->
-                            val storage = FirebaseStorage.getInstance()
-                            val fileName = UUID.randomUUID().toString()
-                            val storageRef = storage.reference.child("image/$fileName")
+                        if (selectedFileUri == null) {
+                            Toast.makeText(context, "No file selected", Toast.LENGTH_SHORT).show()
+                            return@Button
+                        }
 
-                            storageRef.putFile(uri)
-                                .addOnSuccessListener {
-                                    Toast.makeText(context, "Upload successful!", Toast.LENGTH_SHORT).show()
+                        if (selectedDates.isEmpty() || selectedLeaveType.isBlank() || leaveReason.isBlank()) {
+                            Toast.makeText(context, "Please complete all fields", Toast.LENGTH_SHORT).show()
+                            return@Button
+                        }
+
+                        val dateFormat = SimpleDateFormat("dd-MM-yyyy", Locale.getDefault())
+                        val formattedLeaveDates = selectedDates.sortedBy { it.time }.map { dateFormat.format(it) }
+
+                        val storage = FirebaseStorage.getInstance()
+                        val firestore = FirebaseFirestore.getInstance()
+                        val fileName = UUID.randomUUID().toString()
+                        val storageRef = storage.reference.child("evidence/$fileName")
+
+                        // Upload file to Firebase Storage
+                        storageRef.putFile(selectedFileUri!!)
+                            .continueWithTask { task ->
+                                if (!task.isSuccessful) {
+                                    throw task.exception ?: Exception("Upload failed")
                                 }
-                                .addOnFailureListener { e ->
-                                    Toast.makeText(context, "Upload failed: ${e.message}", Toast.LENGTH_SHORT).show()
-                                }
-                        } ?: Toast.makeText(context, "No file selected", Toast.LENGTH_SHORT).show()
+                                storageRef.downloadUrl
+                            }
+                            .addOnSuccessListener { downloadUrl ->
+                                // Fetch existing doc IDs
+                                firestore.collection("Leave")
+                                    .get()
+                                    .addOnSuccessListener { snapshot ->
+                                        val existingIds = snapshot.documents.mapNotNull { doc ->
+                                            val id = doc.id
+                                            if (id.matches(Regex("L\\d{3}"))) id else null
+                                        }
+
+                                        // Generate next custom Leave ID like L001, L002, ...
+                                        val nextId = (1..999).map {
+                                            "L" + it.toString().padStart(3, '0')
+                                        }.firstOrNull { id -> id !in existingIds }
+
+                                        if (nextId == null) {
+                                            Toast.makeText(context, "No more Leave IDs available", Toast.LENGTH_LONG).show()
+                                            return@addOnSuccessListener
+                                        }
+
+                                        // Construct leave data map
+                                        val leaveData = mapOf(
+                                            "leaveDates" to formattedLeaveDates,
+                                            "leaveType" to selectedLeaveType,
+                                            "reason" to leaveReason,
+                                            "evidenceUrl" to downloadUrl.toString(),
+                                            "status" to "pending"
+                                        )
+
+                                        // Save to Firestore with custom ID
+                                        firestore.collection("Leave")
+                                            .document(nextId)
+                                            .set(leaveData)
+                                            .addOnSuccessListener {
+                                                Toast.makeText(context, "Leave submitted!", Toast.LENGTH_SHORT).show()
+                                            }
+                                            .addOnFailureListener { e ->
+                                                Toast.makeText(context, "Failed to save: ${e.message}", Toast.LENGTH_SHORT).show()
+                                            }
+                                    }
+                                    .addOnFailureListener { e ->
+                                        Toast.makeText(context, "Failed to read IDs: ${e.message}", Toast.LENGTH_SHORT).show()
+                                    }
+                            }
+                            .addOnFailureListener { e ->
+                                Toast.makeText(context, "Upload failed: ${e.message}", Toast.LENGTH_SHORT).show()
+                            }
                     },
                     modifier = Modifier
                         .align(Alignment.BottomCenter)
@@ -396,6 +476,17 @@ fun LeaveApplication(navController: NavController, isDarkTheme: Boolean) {
                     Text("Confirm")
                 }
             }
+
+
+
+            if (user != null) {
+                Text("Name: ${user.name}")
+                Text("Email: ${user.email}")
+                Text("Role: ${user.id}")
+            } else {
+                Text("No user is logged in.")
+            }
+
 
         }
     }
