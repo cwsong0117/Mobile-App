@@ -443,6 +443,7 @@ fun SignupScreen(navController: NavController, isDarkTheme: Boolean) {
                 ) {
                     Text(text = "Confirm", color = Color.White, fontSize = 18.sp)
                 }
+                Spacer(modifier = Modifier.height(30.dp))
             }
         }
     }
