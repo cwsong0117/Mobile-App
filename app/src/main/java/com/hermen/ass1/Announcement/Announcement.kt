@@ -8,6 +8,7 @@ import java.util.*
 
 @Serializable
 data class Announcement(
+    val id: String = "",
     val title: String = "",
     val content: String = "",
     val employeeID: String = "",
@@ -15,6 +16,7 @@ data class Announcement(
 )
 
 fun DocumentSnapshot.toAnnouncement(): Announcement {
+    val id = id
     val title = getString("title") ?: ""
     val content = getString("content") ?: ""
     val employeeID = getString("employeeID") ?: ""
@@ -26,6 +28,7 @@ fun DocumentSnapshot.toAnnouncement(): Announcement {
     val formattedDate = SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH).format(timestamp)
 
     return Announcement(
+        id = id,
         title = title,
         content = content,
         employeeID = employeeID,

@@ -2,6 +2,7 @@ package com.hermen.ass1
 
 // no modification in this page unless navigation purpose !!!!
 
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -108,38 +109,41 @@ fun BackButton(navController: NavController, title: String, isDarkTheme: Boolean
     val backgroundColor = if (isDarkTheme) Color.Transparent else Color.White
     val textColor = if (isDarkTheme) Color.White else Color.Black
     val iconColor = if (isDarkTheme) Color.White else Color.Black
+
     Surface(
-        modifier = Modifier
-            .fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth(),
         color = backgroundColor
     ) {
-        Row(
-            modifier = Modifier
-                .height(46.dp)
-                .fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            IconButton(onClick = { navController.popBackStack() }) {
-                Icon(
-                    painter = painterResource(id = R.drawable.baseline_arrow_back_ios_new_24),
-                    contentDescription = "Back",
-                    modifier = Modifier.size(24.dp),
-                    tint = iconColor
+        Column {
+            Row(
+                modifier = Modifier
+                    .height(46.dp)
+                    .fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                IconButton(onClick = { navController.popBackStack() }) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.baseline_arrow_back_ios_new_24),
+                        contentDescription = "Back",
+                        modifier = Modifier.size(24.dp),
+                        tint = iconColor
+                    )
+                }
+                Text(
+                    text = title,
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(start = 8.dp),
+                    color = textColor
                 )
             }
-            Text(
-                text = title,
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(start = 8.dp),
-                color = textColor
+
+            Divider(
+                color = Color.LightGray,
+                thickness = 1.dp
             )
         }
     }
-    Divider(
-        color = Color.LightGray,
-        thickness = 1.dp
-    )
 }
 
 @Preview(showBackground = true)

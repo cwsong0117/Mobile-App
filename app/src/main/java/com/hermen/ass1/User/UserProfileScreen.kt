@@ -50,6 +50,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import com.hermen.ass1.BackButton
 import kotlinx.coroutines.launch
 
 @Composable
@@ -125,7 +126,6 @@ fun UserProfileScreen(
         }
     }
 
-
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -134,19 +134,15 @@ fun UserProfileScreen(
         Column(
             modifier = Modifier
         ) {
-            Row(
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(if (isDarkTheme) Color.Black else Color.White),
-                horizontalArrangement = Arrangement.SpaceBetween
+                    .background(if (isDarkTheme) Color.Transparent else Color.White)
             ) {
-                TextButton(
-                    onClick = { nestedNavController.popBackStack() },
-                    modifier = Modifier
-                ) {
-                    Text("< PROFILE", color = if (isDarkTheme) Color.White else Color.Black)
-                }
+                // Back Button
+                BackButton(navController = nestedNavController, title = "PROFILE", isDarkTheme = isDarkTheme)
 
+                // Save Button aligned to the end (right)
                 Button(
                     onClick = {
                         coroutineScope.launch {
@@ -154,18 +150,21 @@ fun UserProfileScreen(
                                 try {
                                     val newUrl = userProfileViewModel.uploadImageAndGetUrl(uri)
                                     SessionManager.currentUser?.imageUrl = newUrl
-                                    userProfileViewModel.imageUrl = newUrl // if you have it
+                                    userProfileViewModel.imageUrl = newUrl
                                 } catch (e: Exception) {
                                     Log.e("Save", "Image upload failed: ${e.message}")
                                     return@launch
                                 }
                             }
-
                             userProfileViewModel.saveUserProfile()
                         }
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = saveButtonColor),
-                    enabled = userProfileViewModel.hasChanges
+                    enabled = userProfileViewModel.hasChanges,
+                    modifier = Modifier
+                        .align(Alignment.CenterEnd)
+                        .padding(end = 8.dp, top = 8.dp)
+                        .height(36.dp)
                 ) {
                     Text("SAVE")
                 }

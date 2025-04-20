@@ -19,16 +19,20 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.hermen.ass1.Announcement.AnnouncementRepository
 import com.hermen.ass1.AppScreen
+import com.hermen.ass1.BackButton
+import com.hermen.ass1.User.SessionManager
 //import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -37,12 +41,17 @@ import kotlinx.serialization.json.Json
 import java.net.URLEncoder
 import kotlinx.serialization.encodeToString
 
-
 @Composable
-fun AnnouncementOverview(navController: NavHostController) {
-    // State for announcements
+fun AnnouncementOverview(
+    navController: NavHostController,
+    isDarkTheme: Boolean
+) {
     val announcements = remember { mutableStateOf(emptyList<Announcement>()) }
     val isLoading = remember { mutableStateOf(true) }
+    val backgroundColor = if (isDarkTheme) Color.Transparent else Color(0xFFE5FFFF)
+
+    val currentUser = SessionManager.currentUser
+    val isAdmin = currentUser?.id?.startsWith("A") == true
 
     // Fetch announcements data from Firestore
     LaunchedEffect(Unit) {
@@ -52,13 +61,39 @@ fun AnnouncementOverview(navController: NavHostController) {
         isLoading.value = false
     }
 
-    // UI Layout
-    Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
-        // Loading indicator
+    Column(
+        modifier = Modifier
+            .background(backgroundColor)
+            .fillMaxSize()
+    ) {
+        Box {
+            // Back Button (your existing composable)
+            BackButton(navController = navController, title = "Announcement", isDarkTheme = isDarkTheme)
+
+            if (isAdmin) {
+                IconButton(
+                    onClick = {
+                        // Navigate to CreateOrEditAnnouncement with empty parameters for a new announcement
+                        navController.navigate("CreateOrEditAnnouncementScreen?announcementId=&title=&content=")
+                    },
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(end = 12.dp, top = 6.dp)
+                        .size(36.dp)
+                        .background(
+                            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
+                            shape = RoundedCornerShape(8.dp)
+                        )
+                ) {
+                    Text("+", color = MaterialTheme.colorScheme.primary, fontSize = 20.sp)
+                }
+            }
+        }
+
+        // Main content
         if (isLoading.value) {
             CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
         } else {
-            // Displaying announcements in a list
             LazyColumn(modifier = Modifier.fillMaxSize()) {
                 items(announcements.value) { announcement ->
                     AnnouncementRow(announcement = announcement, navController = navController)
@@ -119,5 +154,5 @@ fun AnnouncementRow(announcement: Announcement, navController: NavHostController
 @Preview(showBackground = true)
 @Composable
 fun PreviewAnnouncementOverview() {
-    AnnouncementOverview(navController = rememberNavController())
+//    AnnouncementOverview(navController = rememberNavController())
 }

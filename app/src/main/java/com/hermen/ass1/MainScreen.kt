@@ -55,6 +55,7 @@ enum class AppScreen(@StringRes val title: Int) {
     AnnouncementDetail(title = R.string.announcement_detail),
     UserProfile(title = R.string.user_profile),
     LeaveApplication(title = R.string.leave_application),
+    CreateOrEditAnnouncement(title = R.string.create_or_edit_announcement)
 }
 
 data class AppItem(
@@ -145,7 +146,33 @@ fun MainScreen(
             }
 
             composable(route = AppScreen.AnnouncementOverview.name) {
-                AnnouncementOverview(navController = navController)
+                AnnouncementOverview(
+                    navController = navController,
+                    isDarkTheme = isDarkTheme)
+            }
+
+            composable(
+                route = "CreateOrEditAnnouncementScreen?announcementId={announcementId}&title={title}&content={content}",
+                arguments = listOf(
+                    navArgument("announcementId") { type = NavType.StringType },
+                    navArgument("title") { type = NavType.StringType },
+                    navArgument("content") { type = NavType.StringType }
+                )
+            ) { backStackEntry ->
+                val announcementId = backStackEntry.arguments?.getString("announcementId")
+                val title = backStackEntry.arguments?.getString("title")
+                val content = backStackEntry.arguments?.getString("content")
+
+                // Debugging logs to check the values of the parameters
+                Log.d("CreateOrEditAnnouncement", "announcementId: $announcementId, title: $title, content: $content")
+
+                CreateOrEditAnnouncement(
+                    navController = navController,
+                    announcementId = announcementId,
+                    isDarkTheme = isDarkTheme,
+                    title = title,
+                    content = content
+                )
             }
 
             composable(
