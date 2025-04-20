@@ -26,6 +26,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.layout.ContentScale
+import android.util.Log
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.rememberScrollState
 
 
 @Composable
@@ -33,6 +36,7 @@ fun ApproveLeave(navController: NavController, isDarkTheme: Boolean) {
     val backgroundColor = if (isDarkTheme) Color.Transparent else Color(0xFFE5FFFF)
     val firestore = FirebaseFirestore.getInstance()
     val leaveList = remember { mutableStateListOf<LeaveRequest>() }
+    val scrollState = rememberScrollState()
 
     // 读取 Firestore 数据
     LaunchedEffect(Unit) {
@@ -56,8 +60,8 @@ fun ApproveLeave(navController: NavController, isDarkTheme: Boolean) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 16.dp)
-                .verticalScroll(rememberScrollState()),
+                .verticalScroll(scrollState)
+                .padding(horizontal = 16.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Top
         ) {
@@ -74,28 +78,26 @@ fun ApproveLeave(navController: NavController, isDarkTheme: Boolean) {
                         Text("Status: ${leave.status}")
                         Text("Dates: ${leave.leaveDates.joinToString(", ")}")
 
-                        val isImage = leave.evidenceUrl.endsWith(".jpg", ignoreCase = true) ||
-                                leave.evidenceUrl.endsWith(".jpeg", ignoreCase = true) ||
-                                leave.evidenceUrl.endsWith(".png", ignoreCase = true)
-
-                        val imageUrl = if (isImage) leave.evidenceUrl else "https://upload.wikimedia.org/wikipedia/commons/8/87/PDF_file_icon.svg"
-
                         AsyncImage(
-                            model = imageUrl,
-                            contentDescription = "Evidence Preview",
-                            contentScale = ContentScale.Crop,
+                            model = leave.evidenceUrl,
+                            contentDescription = "Leave Evidence Image",
+                            contentScale = ContentScale.Fit,
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(top = 8.dp)
                                 .height(200.dp)
+                                .padding(top = 8.dp),
+                            onError = {
+                                Log.e("Coil", "Image load failed: ${it.result.throwable}")
+                            }
                         )
-
                     }
                 }
             }
         }
     }
 }
+
+
 
 @Preview(showBackground = true)
 @Composable

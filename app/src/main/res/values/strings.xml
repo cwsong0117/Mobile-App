@@ -14,4 +14,5 @@
     <string name="leave">Leave</string>
     <string name="leave_application">Leave Application</string>
     <string name="approve_leave">Approve Leave</string>
+    <string name="create_or_edit_announcement">Create Or Edit Announcement</string>
 </resources>

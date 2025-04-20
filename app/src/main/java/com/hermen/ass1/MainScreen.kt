@@ -57,6 +57,7 @@ enum class AppScreen(@StringRes val title: Int) {
     UserProfile(title = R.string.user_profile),
     LeaveApplication(title = R.string.leave_application),
     ApproveLeave(title = R.string.approve_leave),
+    CreateOrEditAnnouncement(title = R.string.create_or_edit_announcement),
 }
 
 data class AppItem(
