@@ -8,8 +8,10 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.LightMode
@@ -228,6 +230,23 @@ fun Home(
             .fillMaxSize()
             .background(backgroundColor)
     ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(16.dp)
+        ) {
+            Spacer(modifier = Modifier.height(48.dp))
+            AppLogo(modifier = Modifier.size(200.dp))
+            Spacer(modifier = Modifier.height(16.dp))
+            ApplicationSection(navController = navController)
+            Spacer(modifier = Modifier.height(16.dp))
+            AnnouncementSection(navController = navController)
+            Spacer(modifier = Modifier.height(16.dp))
+            GotoAttendanceOverview(navController = navController)
+        }
+
         IconButton(
             onClick = { onToggleTheme() },
             modifier = Modifier
@@ -235,18 +254,6 @@ fun Home(
                 .padding(8.dp)
         ) {
             Icon(imageVector = icon, contentDescription = "Toggle Theme")
-        }
-
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.fillMaxSize().padding(16.dp)
-        ) {
-            AppLogo(modifier = Modifier.size(200.dp))
-            Spacer(modifier = Modifier.height(16.dp))
-            ApplicationSection(navController = navController)
-            Spacer(modifier = Modifier.height(16.dp))
-            AnnouncementSection(navController = navController)
-            GotoAttendanceOverview(navController = navController)
         }
     }
 }
