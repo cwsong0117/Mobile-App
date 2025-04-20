@@ -44,6 +44,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Icon
 import androidx.compose.ui.text.input.VisualTransformation
+import com.google.firebase.auth.FirebaseAuth
 
 @Composable
 fun SignupScreen(navController: NavController, isDarkTheme: Boolean) {
@@ -342,21 +343,40 @@ fun SignupScreen(navController: NavController, isDarkTheme: Boolean) {
                                     password.value == confirmpassword.value &&
                                     role.value.isNotBlank()
                                 ) {
-                                    ref.document(newId)
-                                        .set(userMap)
-                                        .addOnSuccessListener {
-                                            Toast.makeText(context, "Signup successful: ID=$newId", Toast.LENGTH_SHORT).show()
-                                            navController.navigate(Screen.InitialPage.route) {
-                                                popUpTo(Screen.Signup.route) { inclusive = true } // clear backstack if needed
+                                    FirebaseAuth.getInstance()
+                                        .createUserWithEmailAndPassword(email.value, password.value)
+                                        .addOnCompleteListener { authTask ->
+                                            if (authTask.isSuccessful) {
+                                                // If auth creation successful, then write user info to Firestore
+                                                val userMap = hashMapOf(
+                                                    "name" to username.value,
+                                                    "email" to email.value,
+                                                    "birthday" to birthday.value,
+                                                    "password" to password.value,
+                                                    "role" to role.value
+                                                )
+
+                                                ref.document(newId)
+                                                    .set(userMap)
+                                                    .addOnSuccessListener {
+                                                        Toast.makeText(context, "Signup successful: ID=$newId", Toast.LENGTH_SHORT).show()
+                                                        navController.navigate(Screen.InitialPage.route) {
+                                                            popUpTo(Screen.Signup.route) { inclusive = true }
+                                                        }
+                                                    }
+                                                    .addOnFailureListener {
+                                                        Toast.makeText(context, "Failed to save user info", Toast.LENGTH_SHORT).show()
+                                                    }
+                                            } else {
+                                                // Auth failed - show reason
+                                                Toast.makeText(
+                                                    context,
+                                                    "Authentication failed: ${authTask.exception?.localizedMessage}",
+                                                    Toast.LENGTH_LONG
+                                                ).show()
                                             }
                                         }
-                                        .addOnFailureListener {
-                                            Toast.makeText(context,
-                                                "Signup failed",
-                                                Toast.LENGTH_SHORT).show()
-                                        }
                                 }
-
                             }
                             .addOnFailureListener {
                                 Toast.makeText(context, "Failed to connect to database", Toast.LENGTH_SHORT).show()
