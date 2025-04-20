@@ -120,8 +120,11 @@ fun UserProfileScreen(
 
     // Initialize ViewModel with the current user data
     LaunchedEffect(user) {
-        userProfileViewModel.initializeUserData(user)
+        if (userProfileViewModel.name.isEmpty()) {
+            userProfileViewModel.initializeUserData(user)
+        }
     }
+
 
     Box(
         modifier = Modifier
@@ -251,6 +254,14 @@ fun UserProfileScreen(
                         errorMessage = userProfileViewModel.ageErrorMessage
                     )
 
+                    NonEditableProfileField(
+                        label = "Birthday",
+                        value = userProfileViewModel.birthday,
+                        labelColor = labelColor,
+                        fieldBackground = fieldBackground,
+                        textColor = textColor
+                    )
+
                     EditableProfileField(
                         label = "Position",
                         value = userProfileViewModel.position,
@@ -328,42 +339,67 @@ fun EditableProfileField(
     labelColor: Color,
     fieldBackground: Color,
     textColor: Color,
-    errorMessage: String? = null // Receive the error message from the ViewModel
+    errorMessage: String? = null
 ) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 6.dp, horizontal = 24.dp)
+            .padding(horizontal = 16.dp, vertical = 4.dp)
     ) {
         Text(label, color = labelColor, fontSize = 14.sp)
 
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(IntrinsicSize.Min) // Let the height adjust based on content
                 .padding(top = 8.dp)
                 .clip(RoundedCornerShape(16.dp))
-                .background(fieldBackground),
-            contentAlignment = Alignment.CenterStart
+                .background(fieldBackground)
         ) {
             BasicTextField(
                 value = value,
-                onValueChange = onValueChange, // Directly call onValueChange without any processing
+                onValueChange = onValueChange,
                 textStyle = TextStyle(fontSize = 16.sp, color = textColor),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 16.dp)
+                    .padding(horizontal = 12.dp, vertical = 12.dp) // Match NonEditable padding
             )
         }
 
-        // Show error message below the text field, if any
         errorMessage?.let {
-            Spacer(modifier = Modifier.height(4.dp)) // Add some space before the error
+            Spacer(modifier = Modifier.height(4.dp))
             Text(
                 text = it,
                 color = Color.Red,
                 fontSize = 12.sp
             )
+        }
+    }
+}
+
+@Composable
+fun NonEditableProfileField(
+    label: String,
+    value: String,
+    labelColor: Color,
+    fieldBackground: Color,
+    textColor: Color
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 4.dp),
+    ) {
+        Text(text = label, color = labelColor, fontSize = 14.sp)
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(16.dp))
+                .background(fieldBackground)
+                .padding(horizontal = 12.dp, vertical = 12.dp) // Match editable padding
+        ) {
+            Text(text = value,
+                color = textColor.copy(alpha = 0.5f),
+                fontSize = 16.sp)
         }
     }
 }

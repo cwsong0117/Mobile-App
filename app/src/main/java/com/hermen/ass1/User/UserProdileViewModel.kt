@@ -18,6 +18,7 @@ import kotlinx.coroutines.tasks.await
 class UserProfileViewModel : ViewModel() {
     var name by mutableStateOf("")
     var age by mutableStateOf("")
+    var birthday by mutableStateOf("")
     var position by mutableStateOf("")
     var department by mutableStateOf("")
     var contactNo by mutableStateOf("")
@@ -37,17 +38,21 @@ class UserProfileViewModel : ViewModel() {
     private lateinit var originalUser: User
 
     fun initializeUserData(user: User) {
-        originalUser = user.copy() // Save a snapshot for comparison
+        // Initialize only if the data is not already set
+        if (this::originalUser.isInitialized.not()) {
+            originalUser = user.copy() // Save a snapshot for comparison
 
-        name = user.name
-        age = user.age.toString()
-        position = user.position
-        department = user.department
-        contactNo = user.contactNo
-        email = user.email
-        imageUrl = user.imageUrl ?: ""
+            name = user.name
+            age = user.age.toString()
+            position = user.position
+            department = user.department
+            contactNo = user.contactNo
+            birthday = user.birthday
+            email = user.email
+            imageUrl = user.imageUrl ?: ""
 
-        hasChanges = false
+            hasChanges = false
+        }
     }
 
     fun checkForChanges() {
@@ -169,10 +174,5 @@ class UserProfileViewModel : ViewModel() {
 
     fun markChangesMade() {
         hasChanges = true
-    }
-
-    // Function to discard changes (restore the original data)
-    fun discardChanges(user: User) {
-        initializeUserData(user)
     }
 }

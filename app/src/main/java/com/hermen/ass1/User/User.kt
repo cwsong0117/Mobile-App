@@ -7,6 +7,7 @@ import kotlinx.serialization.Serializable
 data class User(
     val id: String = "",
     val age: Int = 0,
+    val birthday: String = "",
     val contactNo: String = "",
     val department: String = "",
     val email: String = "",
@@ -21,6 +22,7 @@ fun DocumentSnapshot.toUser(): User {
     val rawContactNo = getString("contactNo") ?: ""
     val formattedContact = formatContactNumber(rawContactNo)
 
+    val birthday = getString("birthday") ?: ""
     val department = getString("department") ?: ""
     val email = getString("email") ?: ""
     val name = getString("name") ?: ""
@@ -31,6 +33,7 @@ fun DocumentSnapshot.toUser(): User {
     return User(
         id = this.id,
         age = age,
+        birthday = birthday,
         contactNo = formattedContact,
         department = department,
         email = email,
