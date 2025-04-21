@@ -12,7 +12,8 @@ data class Announcement(
     val title: String = "",
     val content: String = "",
     val employeeID: String = "",
-    val created_at: String = ""
+    val created_at: String = "",
+    val imageUrl: String = ""
 )
 
 fun DocumentSnapshot.toAnnouncement(): Announcement {
@@ -20,18 +21,15 @@ fun DocumentSnapshot.toAnnouncement(): Announcement {
     val title = getString("title") ?: ""
     val content = getString("content") ?: ""
     val employeeID = getString("employeeID") ?: ""
-
-    // Firebase Timestamp to Date
-    val timestamp = getTimestamp("created_at")?.toDate() ?: Date()
-
-    // Format the timestamp to only include the date
-    val formattedDate = SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH).format(timestamp)
+    val imageUrl = getString("imageUrl") ?: ""
+    val createdAt = getString("created_at") ?: ""
 
     return Announcement(
         id = id,
         title = title,
         content = content,
         employeeID = employeeID,
-        created_at = formattedDate
+        created_at = createdAt,
+        imageUrl = imageUrl
     )
 }

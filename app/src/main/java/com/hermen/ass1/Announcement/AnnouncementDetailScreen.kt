@@ -1,7 +1,9 @@
 package com.hermen.ass1.Announcement
 
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -9,6 +11,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.Divider
 import androidx.compose.material.IconButton
 import androidx.compose.material3.Icon
@@ -33,6 +38,12 @@ import androidx.compose.material.Surface
 import androidx.compose.material.Button
 import androidx.compose.material.Text
 import androidx.compose.material.ButtonDefaults
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
+import com.hermen.ass1.BackButton
 import java.net.URLEncoder
 
 @Composable
@@ -42,8 +53,11 @@ fun AnnouncementDetailScreen(
     themeViewModel: ThemeViewModel
 ) {
     val announcement = remember {
-        Json.decodeFromString<Announcement>(URLDecoder.decode(json, "UTF-8"))
+        Json.decodeFromString<Announcement>(json)
     }
+
+    val decodedTitle = URLDecoder.decode(announcement.title, "UTF-8")
+    val decodedContent = URLDecoder.decode(announcement.content, "UTF-8")
 
     val isDarkTheme = themeViewModel.isDarkTheme.value
     val textColor = if (isDarkTheme) MaterialTheme.colorScheme.onBackground else MaterialTheme.colorScheme.onSurface
@@ -54,77 +68,75 @@ fun AnnouncementDetailScreen(
 
     Column(
         modifier = Modifier
-            .fillMaxSize()
             .background(backgroundColor)
     ) {
-        // Top bar with back and conditional edit button
-        Surface(
-            modifier = Modifier.fillMaxWidth(),
-            color = backgroundColor
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
         ) {
-            Row(
-                modifier = Modifier
-                    .height(56.dp)
-                    .fillMaxWidth()
-                    .padding(horizontal = 8.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                IconButton(onClick = { navController.popBackStack() }) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.baseline_arrow_back_ios_new_24),
-                        contentDescription = "Back",
-                        tint = iconColor
-                    )
-                }
+            BackButton(navController = navController, title = "", isDarkTheme = isDarkTheme)
 
-                Spacer(modifier = Modifier.weight(1f))
-
-                if (SessionManager.currentUser?.id == announcement.employeeID) {
-                    Button(
-                        onClick = {
-                            navController.navigate(
-                                "CreateOrEditAnnouncementScreen?announcementId=${announcement.id}&title=${announcement.title}&content=${announcement.content}"
-                            )
-                        },
-                        colors = ButtonDefaults.buttonColors(backgroundColor = saveButtonColor),
-                        modifier = Modifier
-                            .height(36.dp)
-                            .align(Alignment.CenterVertically)
-                            .padding(end = 8.dp)
-                    ) {
-                        Text(
-                            text = "EDIT",
-                            color = buttonTextColor
+            // Edit Button aligned to the right (End)
+            if (SessionManager.currentUser?.id == announcement.employeeID) {
+                Button(
+                    onClick = {
+                        navController.navigate(
+                            "CreateOrEditAnnouncementScreen?announcementId=${announcement.id}&title=${decodedTitle}&content=${decodedContent}"
                         )
-                    }
+                    },
+                    colors = ButtonDefaults.buttonColors(backgroundColor = saveButtonColor),
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(end = 12.dp, top = 6.dp, bottom = 8.dp)
+                        .height(36.dp)
+                ) {
+                    Text("EDIT", color = buttonTextColor)
                 }
             }
         }
 
-        Divider(color = Color.LightGray, thickness = 1.dp)
-
+        // Content Section
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(24.dp)
+                .verticalScroll(rememberScrollState())
+                .padding(vertical = 8.dp, horizontal = 16.dp)
         ) {
+
+            if (!announcement.imageUrl.isNullOrEmpty()) {
+                AsyncImage(
+                    model = ImageRequest.Builder(LocalContext.current)
+                        .data(announcement.imageUrl)
+                        .crossfade(true)
+                        .build(),
+                    contentDescription = "Announcement Image",
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(200.dp)
+                        .clip(RoundedCornerShape(16.dp)),
+                    contentScale = ContentScale.Crop
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+            }
+
+            // Title and Content
             Text(
-                text = announcement.title,
+                text = decodedTitle,
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold,
                 color = textColor
             )
-
             Spacer(modifier = Modifier.height(16.dp))
 
             Text(
-                text = announcement.content,
+                text = decodedContent,
                 style = MaterialTheme.typography.bodyLarge,
                 color = textColor
             )
 
             Spacer(modifier = Modifier.weight(1f))
 
+            // Footer Information
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.End
