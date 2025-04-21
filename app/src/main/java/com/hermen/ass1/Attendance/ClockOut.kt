@@ -138,13 +138,11 @@ fun ClockOutScreen(
     employeeID: String,
     viewModel: AttendanceViewModel = viewModel()
 ) {
-    var showSuccessDialog by remember { mutableStateOf(false) }
-    var showLeaveEarly by remember { mutableStateOf(false) }
-
     var message by remember { mutableStateOf("") }
     var showEarlyLeaveDialog by remember { mutableStateOf(false) }
+    var isEarlyLeaveConfirmed by remember { mutableStateOf(false) }
 
-    // Fetch latest clock-in when the screen is first composed
+    // Fetch latest clock-in when screen is first shown
     LaunchedEffect(Unit) {
         viewModel.fetchLatestClockIn(employeeID)
     }
@@ -154,6 +152,14 @@ fun ClockOutScreen(
     val timeFormat = remember {
         SimpleDateFormat("HH:mm:ss dd-MM-yyyy", Locale.getDefault()).apply {
             timeZone = TimeZone.getTimeZone("Asia/Kuala_Lumpur")
+        }
+    }
+
+    val now = Calendar.getInstance(TimeZone.getTimeZone("Asia/Kuala_Lumpur"))
+    val shiftEnd: Calendar? = latestClockIn?.toDate()?.let { clockInDate ->
+        Calendar.getInstance(TimeZone.getTimeZone("Asia/Kuala_Lumpur")).apply {
+            time = clockInDate
+            add(Calendar.HOUR_OF_DAY, 8)
         }
     }
 
@@ -173,17 +179,11 @@ fun ClockOutScreen(
         Spacer(modifier = Modifier.height(16.dp))
 
         Button(onClick = {
-            if (latestClockIn != null) {
-                val now = Calendar.getInstance(TimeZone.getTimeZone("Asia/Kuala_Lumpur"))
-                val shiftEnd = Calendar.getInstance(TimeZone.getTimeZone("Asia/Kuala_Lumpur")).apply {
-                    set(Calendar.HOUR_OF_DAY, 17)
-                    set(Calendar.MINUTE, 0)
-                    set(Calendar.SECOND, 0)
-                }
-
+            if (latestClockIn != null && shiftEnd != null) {
                 if (now.before(shiftEnd)) {
                     showEarlyLeaveDialog = true
                 } else {
+                    // Normal clock out
                     viewModel.clockOut(
                         employeeID = employeeID,
                         isEarlyLeave = false,
@@ -212,6 +212,7 @@ fun ClockOutScreen(
         LeaveEarlyDialog(
             onConfirm = {
                 showEarlyLeaveDialog = false
+                isEarlyLeaveConfirmed = true
                 viewModel.clockOut(
                     employeeID = employeeID,
                     isEarlyLeave = true,
@@ -228,6 +229,7 @@ fun ClockOutScreen(
         )
     }
 }
+
 
 @Composable
 fun ClockOutSuccessDialog(onDismiss: () -> Unit) {
@@ -300,29 +302,24 @@ fun LeaveEarlyDialog(
 
                 Image(
                     painter = painterResource(id = R.drawable.exit),
-                    contentDescription = "Early Leave",
+                    contentDescription = "Leave Early",
                     modifier = Modifier.size(150.dp),
                     contentScale = ContentScale.Fit
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                Text("Your shift hasn’t ended yet.")
+                Text("Your shift hasn't ended yet.")
                 Text("Are you sure you want to clock out early?")
 
                 Spacer(modifier = Modifier.height(24.dp))
 
                 Row(
-                    horizontalArrangement = Arrangement.SpaceEvenly,
-                    modifier = Modifier.fillMaxWidth()
+                    horizontalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    Button(
-                        onClick = onConfirm,
-                        colors = ButtonDefaults.buttonColors(containerColor = Color.Red)
-                    ) {
-                        Text("Yes")
+                    Button(onClick = onConfirm) {
+                        Text("Yes, Leave Early")
                     }
-
                     OutlinedButton(onClick = onDismiss) {
                         Text("Cancel")
                     }
@@ -331,6 +328,7 @@ fun LeaveEarlyDialog(
         }
     }
 }
+
 
 
 

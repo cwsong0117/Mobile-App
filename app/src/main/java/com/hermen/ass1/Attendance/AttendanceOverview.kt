@@ -187,7 +187,7 @@ fun AttendanceOverview(
                     text = amPm,
                     fontSize = 30.sp,
                     fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(top = 32.dp) // Add padding here (change value as needed)
+                    modifier = Modifier.padding(top = 40.dp) // Add padding here (change value as needed)
                 )
             }
 

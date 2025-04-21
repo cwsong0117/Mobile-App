@@ -65,7 +65,6 @@ import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
 import java.util.Locale
 import com.google.android.gms.location.Priority
-import com.hermen.ass1.LeaveApplication.LeaveViewModel
 
 @Composable
 fun ClockIn(
@@ -297,7 +296,6 @@ fun ClockIn(
             ) {
                 Text(
                     text = "Back",
-                    color = Color.Black,
                     fontSize = 30.sp,
                     fontWeight = FontWeight.Bold
                 )
@@ -329,12 +327,11 @@ fun AddAttendanceScreen(viewModel: AttendanceViewModel = viewModel()) {
 
     var showSuccessDialog by remember { mutableStateOf(false) }
     var showNotAtWorkplaceDialog by remember { mutableStateOf(false) }
+    var clockedInToday by remember { mutableStateOf<Attendance?>(null) }
 
     val context = LocalContext.current
     val fusedLocationClient = remember { LocationServices.getFusedLocationProviderClient(context) }
 
-//    2.981085096711732, 101.79936946524971 kajang
-    //tarumt
     val workplaceLat = 3.2154587237369303
     val workplaceLng = 101.72655709533397
     val allowedRadius = 200f // meters
@@ -351,7 +348,7 @@ fun AddAttendanceScreen(viewModel: AttendanceViewModel = viewModel()) {
         }
     }
 
-    // Request permission once
+    // 1. Request location permission
     LaunchedEffect(Unit) {
         if (ContextCompat.checkSelfPermission(
                 context,
@@ -364,12 +361,21 @@ fun AddAttendanceScreen(viewModel: AttendanceViewModel = viewModel()) {
         }
     }
 
-    // Get accurate location when permission is granted
+    // 2. Fetch latest attendance for validation
+    LaunchedEffect(Unit) {
+        SessionManager.currentUser?.let { user ->
+            viewModel.getLatestAttendanceForToday(user.id) { attendance ->
+                clockedInToday = attendance
+            }
+        }
+    }
+
+    // 3. Get current location if permission is granted
     LaunchedEffect(permissionGranted) {
         if (permissionGranted) {
             val locationRequest = LocationRequest.Builder(
                 Priority.PRIORITY_HIGH_ACCURACY,
-                1000L // every 1 second if needed
+                1000L
             )
                 .setWaitForAccurateLocation(true)
                 .setMaxUpdates(1)
@@ -377,9 +383,7 @@ fun AddAttendanceScreen(viewModel: AttendanceViewModel = viewModel()) {
 
             val locationCallback = object : LocationCallback() {
                 override fun onLocationResult(result: LocationResult) {
-                    super.onLocationResult(result)
                     userLocation = result.lastLocation
-                    // Optionally stop updates (but setMaxUpdates(1) already handles it)
                 }
             }
 
@@ -388,6 +392,12 @@ fun AddAttendanceScreen(viewModel: AttendanceViewModel = viewModel()) {
                 locationCallback,
                 Looper.getMainLooper()
             )
+        }
+    }
+
+    val timeFormat = remember {
+        SimpleDateFormat("HH:mm", Locale.getDefault()).apply {
+            timeZone = TimeZone.getTimeZone("Asia/Kuala_Lumpur")
         }
     }
 
@@ -400,8 +410,17 @@ fun AddAttendanceScreen(viewModel: AttendanceViewModel = viewModel()) {
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        Button(
-            onClick = {
+        if (clockedInToday != null) {
+            val clockInTime = clockedInToday!!.clockInTime?.toDate()
+            val shiftEndTime = Calendar.getInstance().apply {
+                time = clockInTime!!
+                add(Calendar.HOUR_OF_DAY, 8)
+            }
+
+            Text("You have already clocked in.")
+            Text("Shift: ${timeFormat.format(clockInTime)} - ${timeFormat.format(shiftEndTime.time)}")
+        } else {
+            Button(onClick = {
                 val location = userLocation
                 if (location != null) {
                     val result = FloatArray(1)
@@ -425,25 +444,24 @@ fun AddAttendanceScreen(viewModel: AttendanceViewModel = viewModel()) {
                                     status = "Clocked In"
                                 )
                                 viewModel.addAttendance(newAttendance)
-                                Toast.makeText(context, "Clock-in successful", Toast.LENGTH_SHORT).show()
                                 showSuccessDialog = true
+                                clockedInToday = newAttendance // Update UI immediately
                             }
                         }
                     } else {
-                        Toast.makeText(context, "You are not at the workplace!", Toast.LENGTH_LONG).show()
                         showNotAtWorkplaceDialog = true
                     }
                 } else {
                     Toast.makeText(context, "Location not ready yet", Toast.LENGTH_SHORT).show()
                 }
+            }) {
+                Text("Clock-IN")
             }
-        ) {
-            Text("Clock-IN")
         }
 
         if (showSuccessDialog) {
             SuccessDialog(onDismiss = { showSuccessDialog = false })
-        }else if (showNotAtWorkplaceDialog) {
+        } else if (showNotAtWorkplaceDialog) {
             NotAtWorkPlaceDialog(onDismiss = { showNotAtWorkplaceDialog = false })
         }
     }
@@ -499,10 +517,11 @@ fun NotAtWorkPlaceDialog(onDismiss: () -> Unit) {
     Dialog(onDismissRequest = onDismiss) {
         Box(
             modifier = Modifier
-                .width(320.dp) // 👈 Adjust the width as needed
+                .width(320.dp)
                 .wrapContentHeight()
                 .background(Color.White, shape = RoundedCornerShape(16.dp))
-                .padding(24.dp)
+                .padding(24.dp),
+            contentAlignment = Alignment.Center // 👈 THIS LINE CENTERS THE COLUMN
         ) {
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,

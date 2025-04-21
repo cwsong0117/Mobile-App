@@ -36,6 +36,16 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.hermen.ass1.R
 import com.hermen.ass1.User.SessionManager
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ExpandLess
+import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.material3.*
+import java.text.SimpleDateFormat
+import java.util.*
+
 
 @Composable
 fun AttendanceHistory(onBackButtonClicked: () -> Unit){
@@ -84,10 +94,12 @@ fun AttendanceHistory(onBackButtonClicked: () -> Unit){
 @Composable
 fun HistoryList(
     viewModel: AttendanceViewModel = viewModel(),
-    modifier: Modifier = Modifier)
-{
+    modifier: Modifier = Modifier
+) {
     val attendanceList = viewModel.attendance
     var isLoading by remember { mutableStateOf(true) }
+    val currentUserId = SessionManager.currentUser?.id
+    var expandedId by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(Unit) {
         isLoading = true
@@ -98,26 +110,61 @@ fun HistoryList(
 
     if (isLoading) {
         Box(
-                modifier = modifier
-                    .fillMaxSize(),
-                contentAlignment = Alignment.Center
+            modifier = modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
         ) {
-                CircularProgressIndicator()
+            CircularProgressIndicator()
         }
     } else {
-        LazyColumn(modifier = modifier) {
-            val currentUserId = SessionManager.currentUser?.id
-
+        LazyColumn(modifier = modifier.padding(8.dp)) {
             items(attendanceList.filter { it.employeeID == currentUserId }) { item ->
-                Column(modifier = Modifier.padding(8.dp)) {
-                    Text(text = "Attendance ID: ${item.attendanceID}")
-                    Text(text = "Employee ID: ${item.employeeID}")
-                    Text(text = "Clock In: ${item.clockInTime?.toDate()}")
-                    Text(text = "Clock Out: ${item.clockOutTime?.toDate()}")
-                    Text(text = "Status: ${item.status}")
+                val clockInDate = item.clockInTime?.toDate()
+                val dateFormat = SimpleDateFormat("dd MMM yyyy", Locale.getDefault())
+                val dayFormat = SimpleDateFormat("EEEE", Locale.getDefault())
+                val dateStr = clockInDate?.let { dateFormat.format(it) } ?: "Unknown Date"
+                val dayStr = clockInDate?.let { dayFormat.format(it) } ?: ""
+
+                val isExpanded = expandedId == item.attendanceID
+
+                Card(
+                    shape = RoundedCornerShape(16.dp),
+                    elevation = CardDefaults.cardElevation(8.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 6.dp)
+                        .clickable {
+                            expandedId = if (isExpanded) null else item.attendanceID
+                        }
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        // Header (collapsed view)
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Column {
+                                Text(text = dayStr, fontWeight = FontWeight.Bold)
+                                Text(text = dateStr, style = MaterialTheme.typography.bodyMedium)
+                            }
+                            Icon(
+                                imageVector = if (isExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                                contentDescription = null
+                            )
+                        }
+
+                        // Expanded view
+                        AnimatedVisibility(visible = isExpanded) {
+                            Column(modifier = Modifier.padding(top = 12.dp)) {
+                                Text("Attendance ID: ${item.attendanceID}")
+                                Text("Clock In: ${item.clockInTime?.toDate()}")
+                                Text("Clock Out: ${item.clockOutTime?.toDate() ?: "Still working"}")
+                                Text("Status: ${item.status}")
+                            }
+                        }
+                    }
                 }
             }
         }
     }
-
 }

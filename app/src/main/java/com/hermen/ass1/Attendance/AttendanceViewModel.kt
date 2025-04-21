@@ -69,6 +69,39 @@ class AttendanceViewModel : ViewModel() {
             }
     }
 
+    fun getLatestAttendanceForToday(employeeID: String, onResult: (Attendance?) -> Unit) {
+        val todayStart = Calendar.getInstance(TimeZone.getTimeZone("Asia/Kuala_Lumpur")).apply {
+            set(Calendar.HOUR_OF_DAY, 0)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }
+
+        val todayEnd = Calendar.getInstance(TimeZone.getTimeZone("Asia/Kuala_Lumpur")).apply {
+            set(Calendar.HOUR_OF_DAY, 23)
+            set(Calendar.MINUTE, 59)
+            set(Calendar.SECOND, 59)
+        }
+
+        db.collection("Attendance")
+            .whereEqualTo("employeeID", employeeID)
+            .whereGreaterThanOrEqualTo("clockInTime", Timestamp(todayStart.time))
+            .whereLessThanOrEqualTo("clockInTime", Timestamp(todayEnd.time))
+            .whereEqualTo("clockOutTime", null)
+            .get()
+            .addOnSuccessListener { documents ->
+                if (!documents.isEmpty) {
+                    val data = documents.first().toObject(Attendance::class.java)
+                    onResult(data)
+                } else {
+                    onResult(null)
+                }
+            }
+            .addOnFailureListener {
+                onResult(null)
+            }
+    }
+
 
     fun clockOut(
         employeeID: String,
