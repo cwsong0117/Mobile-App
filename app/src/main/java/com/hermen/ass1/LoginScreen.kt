@@ -232,7 +232,7 @@ fun LoginScreen(navController: NavController, isDarkTheme: Boolean) {
 
             Spacer(modifier = Modifier.height(30.dp))
             if (showDialog.value) {
-                androidx.compose.material3.AlertDialog(
+                AlertDialog(
                     onDismissRequest = { showDialog.value = false },
                     title = { Text(text = "Login Failed") },
                     text = { Text("Would you like to try logging in with your email instead?") },

@@ -104,7 +104,7 @@ fun LeaveApplication(navController: NavController, isDarkTheme: Boolean) {
     // 🧾 Leave Type Dropdown
     val leaveTypes = listOf(
         "Annual Leave",
-        "Sick Leave",
+        "Medical Leave",
         "Emergency Leave",
         "Maternity Leave",
         "Paternity Leave",

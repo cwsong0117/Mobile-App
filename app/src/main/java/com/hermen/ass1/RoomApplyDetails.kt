@@ -45,13 +45,12 @@ import androidx.navigation.NavController
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.google.firebase.Firebase
 import com.hermen.ass1.MeetingRoom.MeetingRoomViewModel
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
 import java.util.concurrent.TimeUnit
-import com.google.firebase.auth.FirebaseAuth
+import com.hermen.ass1.User.SessionManager
 import com.hermen.ass1.User.UserProfileViewModel
 
 @Composable
@@ -65,7 +64,8 @@ fun RoomDetail(navController: NavController, roomName: String, isDarkTheme: Bool
     val customPurpose = remember { mutableStateOf("") }
 
     //later need to read the user id that user used to login
-    val userId = userProfileViewModel.userId
+    val user = SessionManager.currentUser!!
+    val userId = user.id
 
     val context = LocalContext.current
     val backgroundColor = if (isDarkTheme) Color.Transparent else Color(0xFFE5FFFF)
