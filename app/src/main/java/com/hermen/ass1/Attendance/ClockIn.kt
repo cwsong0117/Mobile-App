@@ -48,6 +48,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
@@ -64,13 +65,38 @@ import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
 import java.util.Locale
 import com.google.android.gms.location.Priority
+import com.hermen.ass1.LeaveApplication.LeaveViewModel
 
 @Composable
 fun ClockIn(
+    viewModel: LeaveViewModel = viewModel(), // or however you're accessing the leave list
     onBackButtonClicked: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+//    //check leaves list
+//    val currentUserId = SessionManager.currentUser?.id
+//    val msiaTimeZone = TimeZone.getTimeZone("Asia/Kuala_Lumpur")
+//
+//    val leaveList by viewModel.leaveList.collectAsState() // make sure viewModel exposes this properly
+//    val leaveDateFormat = SimpleDateFormat("dd-MM-yyyy", Locale.getDefault()).apply {
+//        timeZone = msiaTimeZone
+//    }
+//
+//    val today = Calendar.getInstance(msiaTimeZone).time
+//
+//    val isOnLeaveToday = leaveList.any { leave ->
+//        leave.employeeId == currentUserId && leave.status == "approved" &&
+//                try {
+//                    val fromDate = leaveDateFormat.parse(leave.dateFrom)
+//                    val toDate = leaveDateFormat.parse(leave.dateTo)
+//                    fromDate != null && toDate != null && today in fromDate..toDate
+//                } catch (e: Exception) {
+//                    false
+//                }
+//    }
+//    //check leaves list
 
+    //location function
     val context = LocalContext.current
 
     // Define workplace location (e.g., Kajang home)
