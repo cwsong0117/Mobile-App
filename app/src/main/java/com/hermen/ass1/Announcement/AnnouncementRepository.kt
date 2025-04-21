@@ -25,7 +25,6 @@ object AnnouncementRepository {
         }
     }
 
-
     suspend fun getAnnouncementById(id: String): Announcement? {
         return try {
             val snapshot = announcementRef.document(id).get().await()
@@ -34,6 +33,4 @@ object AnnouncementRepository {
             null
         }
     }
-
-
 }
