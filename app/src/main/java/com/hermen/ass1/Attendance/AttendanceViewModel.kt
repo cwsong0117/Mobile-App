@@ -58,7 +58,7 @@ class AttendanceViewModel : ViewModel() {
     ) {
         db.collection("Attendance")
             .whereEqualTo("employeeID", employeeID)
-            .whereEqualTo("clockOutTime", null)
+            .whereEqualTo("status", "Clocked In") // <- this is the fix
             .orderBy("clockInTime", Query.Direction.DESCENDING)
             .limit(1)
             .get()

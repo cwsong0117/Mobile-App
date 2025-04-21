@@ -22,7 +22,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -45,10 +44,17 @@ import com.google.firebase.Timestamp
 import android.location.Geocoder
 import android.location.Location
 import android.os.Looper
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.window.Dialog
 import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationResult
-
 import com.google.firebase.auth.FirebaseAuth
 import com.hermen.ass1.User.SessionManager
 import kotlinx.coroutines.CoroutineScope
@@ -168,6 +174,18 @@ fun ClockIn(
         time = currentTimestamp.toDate()
     }
 
+    // Format date (e.g., sat, 19/04/2025)
+    val dateFormat = remember {
+        SimpleDateFormat("EEEE, dd/MM/yyyy", Locale.getDefault()).apply {
+            timeZone = malaysiaTimeZone
+        }
+    }
+    val currentDate = dateFormat.format(calendar.time)
+    //check if its weekend
+    val currentDay = remember {
+        Calendar.getInstance(malaysiaTimeZone).get(Calendar.DAY_OF_WEEK)
+    }
+
     // Extract hour, minute, AM/PM
     val hour = calendar.get(Calendar.HOUR)
     val minute = calendar.get(Calendar.MINUTE)
@@ -189,6 +207,7 @@ fun ClockIn(
                 modifier = Modifier
                     .padding(5.dp)
                     .size(100.dp)
+                    .clip(RoundedCornerShape(32.dp))
                     .background(colorResource(id = R.color.teal_200))
             ){
                 Text(
@@ -212,6 +231,7 @@ fun ClockIn(
                 modifier = Modifier
                     .padding(5.dp)
                     .size(100.dp)
+                    .clip(RoundedCornerShape(32.dp))
                     .background(colorResource(id = R.color.teal_200))
             ){
                 Text(
@@ -230,6 +250,13 @@ fun ClockIn(
                 modifier = Modifier.padding(top = 32.dp) // Add padding here (change value as needed)
             )
         }
+
+        Text(
+            text = currentDate,
+            fontSize = 30.sp,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(top = 32.dp) // Add padding here (change value as needed)
+        )
 
         Spacer(modifier = Modifier.height(30.dp))
 
@@ -273,12 +300,30 @@ fun ClockIn(
 
         Spacer(modifier = Modifier.height(10.dp))
 
-        AddAttendanceScreen()
+        if (currentDay != Calendar.SATURDAY && currentDay != Calendar.SUNDAY) {
+            AddAttendanceScreen()
+        } else {
+            // Optional: Show a message if it's weekend
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "Hooray! It's the weekend.",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Medium
+                )
+            }
+        }
     }
 }
 
 @Composable
 fun AddAttendanceScreen(viewModel: AttendanceViewModel = viewModel()) {
+
+    var showSuccessDialog by remember { mutableStateOf(false) }
+    var showNotAtWorkplaceDialog by remember { mutableStateOf(false) }
+
     val context = LocalContext.current
     val fusedLocationClient = remember { LocationServices.getFusedLocationProviderClient(context) }
 
@@ -373,10 +418,12 @@ fun AddAttendanceScreen(viewModel: AttendanceViewModel = viewModel()) {
                                 )
                                 viewModel.addAttendance(newAttendance)
                                 Toast.makeText(context, "Clock-in successful", Toast.LENGTH_SHORT).show()
+                                showSuccessDialog = true
                             }
                         }
                     } else {
                         Toast.makeText(context, "You are not at the workplace!", Toast.LENGTH_LONG).show()
+                        showNotAtWorkplaceDialog = true
                     }
                 } else {
                     Toast.makeText(context, "Location not ready yet", Toast.LENGTH_SHORT).show()
@@ -385,11 +432,103 @@ fun AddAttendanceScreen(viewModel: AttendanceViewModel = viewModel()) {
         ) {
             Text("Clock-IN")
         }
+
+        if (showSuccessDialog) {
+            SuccessDialog(onDismiss = { showSuccessDialog = false })
+        }else if (showNotAtWorkplaceDialog) {
+            NotAtWorkPlaceDialog(onDismiss = { showNotAtWorkplaceDialog = false })
+        }
     }
 }
 
 
 @Composable
-fun SuccessDialog(onDismiss: () -> Unit) {}
+fun SuccessDialog(onDismiss: () -> Unit) {
+    Dialog(onDismissRequest = onDismiss) {
+        Box(
+            modifier = Modifier
+                .width(320.dp) // 👈 Adjust the width as needed
+                .wrapContentHeight()
+                .background(Color.White, shape = RoundedCornerShape(16.dp))
+                .padding(24.dp)
+        ) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                Text(
+                    text = "Clock-In Successful",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 20.sp
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Image(
+                    painter = painterResource(id = R.drawable.tick),
+                    contentDescription = "success",
+                    modifier = Modifier.size(150.dp),
+                    contentScale = ContentScale.Fit
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Text("You have successfully clocked in at your workplace.")
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                Button(onClick = onDismiss) {
+                    Text("OK")
+                }
+            }
+        }
+    }
+}
+
+
+@Composable
+fun NotAtWorkPlaceDialog(onDismiss: () -> Unit) {
+    Dialog(onDismissRequest = onDismiss) {
+        Box(
+            modifier = Modifier
+                .width(320.dp) // 👈 Adjust the width as needed
+                .wrapContentHeight()
+                .background(Color.White, shape = RoundedCornerShape(16.dp))
+                .padding(24.dp)
+        ) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                Text(
+                    text = "Not at workplace!",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 20.sp
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Image(
+                    painter = painterResource(id = R.drawable.location_logo),
+                    contentDescription = "Not at workplace",
+                    modifier = Modifier.size(150.dp),
+                    contentScale = ContentScale.Fit
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Text("You are not at your workplace.")
+                Text("Unable to clock in now.")
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                Button(onClick = onDismiss) {
+                    Text("OK")
+                }
+            }
+        }
+    }
+}
+
 
 

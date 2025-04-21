@@ -33,6 +33,7 @@ import com.hermen.ass1.R
 import kotlinx.coroutines.delay
 import java.util.*
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.hermen.ass1.User.SessionManager
 
 @Composable
 fun ClockOut(
@@ -108,27 +109,9 @@ fun ClockOut(
 
         Spacer(modifier = Modifier.height(80.dp))
 
-        TextField(
-            value = clockOutTimeString,
-            onValueChange = { newText ->
-                // Only allow digits
-                if (newText.all { it.isDigit() }) {
-                    clockOutTimeString = newText
-                }
-            },
-            label = { Text("Enter clock-out time") } ,
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
-        )
-
-        Spacer(modifier = Modifier.height(25.dp))
-
 
         Text(
-            text = "Your clock-in time: $clockInTime",
-        )
-
-        Text(
-            text = "Your clock-out time: $clockOutTime",
+            text = "Today's clock-in: $clockInTime",
         )
 
         Spacer(modifier = Modifier.height(20.dp))
@@ -150,7 +133,7 @@ fun ClockOut(
 
         Spacer(modifier = Modifier.height(10.dp))
 
-        ClockOutScreen(employeeID = "S123")
+        SessionManager.currentUser?.let { ClockOutScreen(employeeID = it.id) }
     }
 }
 

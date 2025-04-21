@@ -35,6 +35,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.hermen.ass1.R
+import com.hermen.ass1.User.SessionManager
 
 @Composable
 fun AttendanceHistory(onBackButtonClicked: () -> Unit){
@@ -76,14 +77,15 @@ fun AttendanceHistory(onBackButtonClicked: () -> Unit){
             }
         }
     ) { innerPadding ->
-        AttendanceScreen(modifier = Modifier.padding(innerPadding))
+        HistoryList(modifier = Modifier.padding(innerPadding))
     }
 }
 
 @Composable
-fun AttendanceScreen(
+fun HistoryList(
     viewModel: AttendanceViewModel = viewModel(),
-    modifier: Modifier = Modifier) {
+    modifier: Modifier = Modifier)
+{
     val attendanceList = viewModel.attendance
     var isLoading by remember { mutableStateOf(true) }
 
@@ -94,26 +96,28 @@ fun AttendanceScreen(
         }
     }
 
-    Column(
-        modifier = Modifier.fillMaxSize().padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        if (isLoading) {
-            CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
-        } else {
-            LazyColumn {
-                items(attendanceList) { item ->
-                    Column(modifier = Modifier.padding(8.dp)) {
-                        Text(text = "Attendance ID: ${item.attendanceID}")
-                        Text(text = "Employee ID: ${item.employeeID}")
-                        //need to update here
-                        Text(text = "Clock In: ${item.clockInTime?.toDate()}")
-                        Text(text = "Clock Out: ${item.clockOutTime?.toDate()}")
-                        Text(text = "Status: ${item.status}")
-                    }
+    if (isLoading) {
+        Box(
+                modifier = modifier
+                    .fillMaxSize(),
+                contentAlignment = Alignment.Center
+        ) {
+                CircularProgressIndicator()
+        }
+    } else {
+        LazyColumn(modifier = modifier) {
+            val currentUserId = SessionManager.currentUser?.id
+
+            items(attendanceList.filter { it.employeeID == currentUserId }) { item ->
+                Column(modifier = Modifier.padding(8.dp)) {
+                    Text(text = "Attendance ID: ${item.attendanceID}")
+                    Text(text = "Employee ID: ${item.employeeID}")
+                    Text(text = "Clock In: ${item.clockInTime?.toDate()}")
+                    Text(text = "Clock Out: ${item.clockOutTime?.toDate()}")
+                    Text(text = "Status: ${item.status}")
                 }
             }
         }
     }
+
 }

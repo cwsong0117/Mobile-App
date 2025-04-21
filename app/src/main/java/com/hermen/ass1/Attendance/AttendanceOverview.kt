@@ -83,8 +83,9 @@ fun AttendanceOverview(
     }
 
     // Format date (e.g., 19/04/2025)
+    // Format date (e.g., 19/04/2025)
     val dateFormat = remember {
-        SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).apply {
+        SimpleDateFormat("EEEE, dd/MM/yyyy", Locale.getDefault()).apply {
             timeZone = malaysiaTimeZone
         }
     }
@@ -147,8 +148,8 @@ fun AttendanceOverview(
                     modifier = Modifier
                         .padding(5.dp)
                         .size(100.dp)
+                        .clip(RoundedCornerShape(32.dp))
                         .background(colorResource(id = R.color.teal_200))
-                        .clip(RoundedCornerShape(16.dp))
                 ){
                     Text(
                         text = "%02d".format(hour),
@@ -171,8 +172,8 @@ fun AttendanceOverview(
                     modifier = Modifier
                         .padding(5.dp)
                         .size(100.dp)
+                        .clip(RoundedCornerShape(32.dp))
                         .background(colorResource(id = R.color.teal_200))
-                        .clip(RoundedCornerShape(16.dp))
                 ){
                     Text(
                         text = "%02d".format(minute),
