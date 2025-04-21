@@ -2,6 +2,7 @@ package com.hermen.ass1.Attendance
 
 import android.util.Log
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import com.google.firebase.Firebase
 import com.google.firebase.firestore.firestore
@@ -11,6 +12,7 @@ import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
 import java.util.TimeZone
+import androidx.compose.runtime.State
 
 data class Attendance(
     val attendanceID: String = "",
@@ -51,11 +53,10 @@ class AttendanceViewModel : ViewModel() {
             }
     }
 
-    fun clockOut(
-        employeeID: String,
-        onSuccess: () -> Unit = {},
-        onError: (Exception) -> Unit = {}
-    ) {
+    private val _latestClockIn = mutableStateOf<Timestamp?>(null)
+    val latestClockIn: State<Timestamp?> get() = _latestClockIn
+
+    fun fetchLatestClockIn(employeeID: String) {
         db.collection("Attendance")
             .whereEqualTo("employeeID", employeeID)
             .whereEqualTo("clockOutTime", null)
@@ -63,15 +64,67 @@ class AttendanceViewModel : ViewModel() {
             .limit(1)
             .get()
             .addOnSuccessListener { result ->
+                val latest = result.documents.firstOrNull()?.getTimestamp("clockInTime")
+                _latestClockIn.value = latest
+            }
+    }
+
+    fun getLatestAttendanceForToday(employeeID: String, onResult: (Attendance?) -> Unit) {
+        val todayStart = Calendar.getInstance(TimeZone.getTimeZone("Asia/Kuala_Lumpur")).apply {
+            set(Calendar.HOUR_OF_DAY, 0)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }
+
+        val todayEnd = Calendar.getInstance(TimeZone.getTimeZone("Asia/Kuala_Lumpur")).apply {
+            set(Calendar.HOUR_OF_DAY, 23)
+            set(Calendar.MINUTE, 59)
+            set(Calendar.SECOND, 59)
+        }
+
+        db.collection("Attendance")
+            .whereEqualTo("employeeID", employeeID)
+            .whereGreaterThanOrEqualTo("clockInTime", Timestamp(todayStart.time))
+            .whereLessThanOrEqualTo("clockInTime", Timestamp(todayEnd.time))
+            .whereEqualTo("clockOutTime", null)
+            .get()
+            .addOnSuccessListener { documents ->
+                if (!documents.isEmpty) {
+                    val data = documents.first().toObject(Attendance::class.java)
+                    onResult(data)
+                } else {
+                    onResult(null)
+                }
+            }
+            .addOnFailureListener {
+                onResult(null)
+            }
+    }
+
+
+    fun clockOut(
+        employeeID: String,
+        isEarlyLeave: Boolean = false,
+        onSuccess: () -> Unit = {},
+        onError: (Exception) -> Unit = {}
+    ) {
+        db.collection("Attendance")
+            .whereEqualTo("employeeID", employeeID)
+            .whereEqualTo("status", "Clocked In")
+            .orderBy("clockInTime", Query.Direction.DESCENDING)
+            .limit(1)
+            .get()
+            .addOnSuccessListener { result ->
                 if (!result.isEmpty) {
                     val document = result.documents.first()
+                    val updates = mutableMapOf<String, Any>(
+                        "clockOutTime" to Timestamp.now(),
+                        "status" to if (isEarlyLeave) "Left Early" else "OUT"
+                    )
+
                     db.collection("Attendance").document(document.id)
-                        .update(
-                            mapOf(
-                                "clockOutTime" to Timestamp.now(),
-                                "status" to "OUT"
-                            )
-                        )
+                        .update(updates)
                         .addOnSuccessListener { onSuccess() }
                         .addOnFailureListener { onError(it) }
                 } else {
@@ -80,6 +133,7 @@ class AttendanceViewModel : ViewModel() {
             }
             .addOnFailureListener { onError(it) }
     }
+
 
     fun generateAttendanceID(onResult: (String) -> Unit) {
         val today = Calendar.getInstance(TimeZone.getTimeZone("Asia/Kuala_Lumpur"))

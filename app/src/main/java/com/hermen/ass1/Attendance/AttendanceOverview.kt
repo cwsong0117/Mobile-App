@@ -84,14 +84,14 @@ fun AttendanceOverview(
 
     // Format date (e.g., 19/04/2025)
     val dateFormat = remember {
-        SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).apply {
+        SimpleDateFormat("EEEE, dd/MM/yyyy", Locale.getDefault()).apply {
             timeZone = malaysiaTimeZone
         }
     }
     val currentDate = dateFormat.format(calendar.time)
 
     // Extract hour, minute, AM/PM
-    val hour = calendar.get(Calendar.HOUR)
+    val hour = calendar.get(Calendar.HOUR_OF_DAY)
     val minute = calendar.get(Calendar.MINUTE)
     val amPm = if (calendar.get(Calendar.AM_PM) == Calendar.AM) "AM" else "PM"
     //Get current time function
@@ -147,8 +147,8 @@ fun AttendanceOverview(
                     modifier = Modifier
                         .padding(5.dp)
                         .size(100.dp)
+                        .clip(RoundedCornerShape(32.dp))
                         .background(colorResource(id = R.color.teal_200))
-                        .clip(RoundedCornerShape(16.dp))
                 ){
                     Text(
                         text = "%02d".format(hour),
@@ -171,8 +171,8 @@ fun AttendanceOverview(
                     modifier = Modifier
                         .padding(5.dp)
                         .size(100.dp)
+                        .clip(RoundedCornerShape(32.dp))
                         .background(colorResource(id = R.color.teal_200))
-                        .clip(RoundedCornerShape(16.dp))
                 ){
                     Text(
                         text = "%02d".format(minute),
@@ -187,7 +187,7 @@ fun AttendanceOverview(
                     text = amPm,
                     fontSize = 30.sp,
                     fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(top = 32.dp) // Add padding here (change value as needed)
+                    modifier = Modifier.padding(top = 40.dp) // Add padding here (change value as needed)
                 )
             }
 
