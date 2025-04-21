@@ -70,6 +70,7 @@ fun SignupScreen(navController: NavController, isDarkTheme: Boolean) {
     val position = remember { mutableStateOf("") }
     val department = remember { mutableStateOf("") }
     val scrollState = rememberScrollState()
+
     val datePickerDialog = DatePickerDialog(
         context,
         { _: DatePicker, selectedYear: Int, selectedMonth: Int, selectedDayOfMonth: Int ->
@@ -78,7 +79,7 @@ fun SignupScreen(navController: NavController, isDarkTheme: Boolean) {
             birthday.value = "$formattedDay/$formattedMonth/$selectedYear"
         }, year, month, day
     )
-
+    datePickerDialog.datePicker.maxDate = System.currentTimeMillis()
 
     Box(
         modifier = Modifier
