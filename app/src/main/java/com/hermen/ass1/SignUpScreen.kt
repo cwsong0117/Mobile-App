@@ -406,7 +406,6 @@ fun SignupScreen(navController: NavController, isDarkTheme: Boolean) {
                                                     "email" to email.value,
                                                     "birthday" to birthday.value,
                                                     "password" to password.value,
-                                                    "role" to role.value,
                                                     "position" to position.value,
                                                     "department" to department.value,
                                                 )
