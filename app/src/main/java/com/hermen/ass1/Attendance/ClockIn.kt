@@ -69,31 +69,11 @@ import com.hermen.ass1.LeaveApplication.LeaveViewModel
 
 @Composable
 fun ClockIn(
-    viewModel: LeaveViewModel = viewModel(), // or however you're accessing the leave list
     onBackButtonClicked: () -> Unit,
     modifier: Modifier = Modifier
 ) {
 //    //check leaves list
-//    val currentUserId = SessionManager.currentUser?.id
-//    val msiaTimeZone = TimeZone.getTimeZone("Asia/Kuala_Lumpur")
-//
-//    val leaveList by viewModel.leaveList.collectAsState() // make sure viewModel exposes this properly
-//    val leaveDateFormat = SimpleDateFormat("dd-MM-yyyy", Locale.getDefault()).apply {
-//        timeZone = msiaTimeZone
-//    }
-//
-//    val today = Calendar.getInstance(msiaTimeZone).time
-//
-//    val isOnLeaveToday = leaveList.any { leave ->
-//        leave.employeeId == currentUserId && leave.status == "approved" &&
-//                try {
-//                    val fromDate = leaveDateFormat.parse(leave.dateFrom)
-//                    val toDate = leaveDateFormat.parse(leave.dateTo)
-//                    fromDate != null && toDate != null && today in fromDate..toDate
-//                } catch (e: Exception) {
-//                    false
-//                }
-//    }
+
 //    //check leaves list
 
     //location function
@@ -213,7 +193,7 @@ fun ClockIn(
     }
 
     // Extract hour, minute, AM/PM
-    val hour = calendar.get(Calendar.HOUR)
+    val hour = calendar.get(Calendar.HOUR_OF_DAY)
     val minute = calendar.get(Calendar.MINUTE)
     val amPm = if (calendar.get(Calendar.AM_PM) == Calendar.AM) "AM" else "PM"
     //Get current time function
@@ -353,9 +333,11 @@ fun AddAttendanceScreen(viewModel: AttendanceViewModel = viewModel()) {
     val context = LocalContext.current
     val fusedLocationClient = remember { LocationServices.getFusedLocationProviderClient(context) }
 
-    val workplaceLat = 2.981085096711732
-    val workplaceLng = 101.79936946524971
-    val allowedRadius = 100f // meters
+//    2.981085096711732, 101.79936946524971 kajang
+    //tarumt
+    val workplaceLat = 3.2154587237369303
+    val workplaceLng = 101.72655709533397
+    val allowedRadius = 200f // meters
 
     var userLocation by remember { mutableStateOf<Location?>(null) }
     var permissionGranted by remember { mutableStateOf(false) }

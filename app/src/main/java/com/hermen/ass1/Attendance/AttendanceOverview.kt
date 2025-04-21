@@ -83,7 +83,6 @@ fun AttendanceOverview(
     }
 
     // Format date (e.g., 19/04/2025)
-    // Format date (e.g., 19/04/2025)
     val dateFormat = remember {
         SimpleDateFormat("EEEE, dd/MM/yyyy", Locale.getDefault()).apply {
             timeZone = malaysiaTimeZone
@@ -92,7 +91,7 @@ fun AttendanceOverview(
     val currentDate = dateFormat.format(calendar.time)
 
     // Extract hour, minute, AM/PM
-    val hour = calendar.get(Calendar.HOUR)
+    val hour = calendar.get(Calendar.HOUR_OF_DAY)
     val minute = calendar.get(Calendar.MINUTE)
     val amPm = if (calendar.get(Calendar.AM_PM) == Calendar.AM) "AM" else "PM"
     //Get current time function

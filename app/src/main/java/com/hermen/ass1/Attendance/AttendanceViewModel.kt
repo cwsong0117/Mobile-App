@@ -2,6 +2,7 @@ package com.hermen.ass1.Attendance
 
 import android.util.Log
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import com.google.firebase.Firebase
 import com.google.firebase.firestore.firestore
@@ -11,6 +12,7 @@ import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
 import java.util.TimeZone
+import androidx.compose.runtime.State
 
 data class Attendance(
     val attendanceID: String = "",
@@ -51,27 +53,45 @@ class AttendanceViewModel : ViewModel() {
             }
     }
 
+    private val _latestClockIn = mutableStateOf<Timestamp?>(null)
+    val latestClockIn: State<Timestamp?> get() = _latestClockIn
+
+    fun fetchLatestClockIn(employeeID: String) {
+        db.collection("Attendance")
+            .whereEqualTo("employeeID", employeeID)
+            .whereEqualTo("clockOutTime", null)
+            .orderBy("clockInTime", Query.Direction.DESCENDING)
+            .limit(1)
+            .get()
+            .addOnSuccessListener { result ->
+                val latest = result.documents.firstOrNull()?.getTimestamp("clockInTime")
+                _latestClockIn.value = latest
+            }
+    }
+
+
     fun clockOut(
         employeeID: String,
+        isEarlyLeave: Boolean = false,
         onSuccess: () -> Unit = {},
         onError: (Exception) -> Unit = {}
     ) {
         db.collection("Attendance")
             .whereEqualTo("employeeID", employeeID)
-            .whereEqualTo("status", "Clocked In") // <- this is the fix
+            .whereEqualTo("status", "Clocked In")
             .orderBy("clockInTime", Query.Direction.DESCENDING)
             .limit(1)
             .get()
             .addOnSuccessListener { result ->
                 if (!result.isEmpty) {
                     val document = result.documents.first()
+                    val updates = mutableMapOf<String, Any>(
+                        "clockOutTime" to Timestamp.now(),
+                        "status" to if (isEarlyLeave) "Left Early" else "OUT"
+                    )
+
                     db.collection("Attendance").document(document.id)
-                        .update(
-                            mapOf(
-                                "clockOutTime" to Timestamp.now(),
-                                "status" to "OUT"
-                            )
-                        )
+                        .update(updates)
                         .addOnSuccessListener { onSuccess() }
                         .addOnFailureListener { onError(it) }
                 } else {
@@ -80,6 +100,7 @@ class AttendanceViewModel : ViewModel() {
             }
             .addOnFailureListener { onError(it) }
     }
+
 
     fun generateAttendanceID(onResult: (String) -> Unit) {
         val today = Calendar.getInstance(TimeZone.getTimeZone("Asia/Kuala_Lumpur"))
