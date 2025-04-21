@@ -35,12 +35,14 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.NavHost
 import com.hermen.ass1.ui.theme.Screen
+import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
+import androidx.compose.material3.windowsizeclass.calculateWindowSizeClass
 
 @Composable
 fun Navigation(
     navController: NavHostController,
     isDarkTheme: Boolean,
-    onToggleTheme: () -> Unit
+    onToggleTheme: () -> Unit,
 ) {
     CompositionLocalProvider(LocalRootNavController provides navController) {
         NavHost(
@@ -59,7 +61,7 @@ fun Navigation(
             composable(Screen.Main.route) {
                 MainScreen(
                     isDarkTheme = isDarkTheme,
-                    onToggleTheme = onToggleTheme
+                    onToggleTheme = onToggleTheme,
                 )
             }
         }

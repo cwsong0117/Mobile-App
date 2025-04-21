@@ -135,6 +135,7 @@ fun LeaveApplication(navController: NavController, isDarkTheme: Boolean) {
             .background(backgroundColor),
         contentAlignment = Alignment.TopCenter
     ) {
+        BackButton(navController = navController, title = "Leave Application", isDarkTheme = false)
         Column(
             modifier = Modifier
                 .fillMaxSize()

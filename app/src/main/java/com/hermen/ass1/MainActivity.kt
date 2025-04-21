@@ -2,7 +2,6 @@
 package com.hermen.ass1
 
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -13,6 +12,8 @@ import androidx.navigation.NavController
 import androidx.navigation.NavType
 import androidx.navigation.compose.rememberNavController
 import com.hermen.ass1.ui.theme.Ass1Theme
+import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
+import androidx.compose.material3.windowsizeclass.calculateWindowSizeClass
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -28,7 +29,7 @@ class MainActivity : ComponentActivity() {
                 Navigation(
                     navController = navController,
                     isDarkTheme = viewModel.isDarkTheme.value,
-                    onToggleTheme = viewModel::toggleTheme
+                    onToggleTheme = viewModel::toggleTheme,
                 )
             }
         }
@@ -44,10 +45,11 @@ fun GreetingPreview() {
         // Use a local composition here to avoid preview crash
         val navController = rememberNavController()
 
-        MainScreen(
-            isDarkTheme = isDarkTheme,
-            onToggleTheme = {} // No-op in preview
-        )
+//        MainScreen(
+//            isDarkTheme = isDarkTheme,
+//            onToggleTheme = {} // No-op in preview
+//
+//        )
     }
 }
 

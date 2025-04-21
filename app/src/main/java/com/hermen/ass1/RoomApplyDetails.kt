@@ -17,18 +17,26 @@ import android.app.DatePickerDialog
 import android.content.Context
 import android.util.Log
 import android.widget.Toast
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -37,21 +45,27 @@ import androidx.navigation.NavController
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.google.firebase.Firebase
 import com.hermen.ass1.MeetingRoom.MeetingRoomViewModel
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
 import java.util.concurrent.TimeUnit
+import com.google.firebase.auth.FirebaseAuth
+import com.hermen.ass1.User.UserProfileViewModel
 
 @Composable
-fun RoomDetail(navController: NavController, roomName: String, isDarkTheme: Boolean) {
+fun RoomDetail(navController: NavController, roomName: String, isDarkTheme: Boolean, userProfileViewModel: UserProfileViewModel = viewModel() ) {
     // Local state for each field
     val name = remember { mutableStateOf("") }
     val date = remember { mutableStateOf("") }
     val startTime = remember { mutableStateOf("") }
     val endTime = remember { mutableStateOf("") }
     val purpose = remember { mutableStateOf("") }
-    val userId = "A001" //later need to read the user id that user used to login
+    val customPurpose = remember { mutableStateOf("") }
+
+    //later need to read the user id that user used to login
+    val userId = userProfileViewModel.userId
 
     val context = LocalContext.current
     val backgroundColor = if (isDarkTheme) Color.Transparent else Color(0xFFE5FFFF)
@@ -72,13 +86,16 @@ fun RoomDetail(navController: NavController, roomName: String, isDarkTheme: Bool
                 startTime = startTime.value, onStartTimeChange = { startTime.value = it },
                 endTime = endTime.value, onEndTimeChange = { endTime.value = it },
                 purpose = purpose.value, onPurposeChange = { purpose.value = it },
-                status = "Pending", roomName = roomName,userId = userId, isDarkTheme = isDarkTheme, onSuccess = {
+                customPurpose = customPurpose.value, onCustomPurposeChange = { customPurpose.value = it },
+                status = "Pending", roomName = roomName,userId = userId,
+                isDarkTheme = isDarkTheme, onSuccess = {
                     // Clear all input fields after successful submission
                     name.value = ""
                     date.value = ""
                     startTime.value = ""
                     endTime.value = ""
                     purpose.value = ""
+                    customPurpose.value = ""
 
                     Toast.makeText(context, "Application submitted successfully!", Toast.LENGTH_SHORT).show()
                 }
@@ -93,6 +110,7 @@ fun ApplyDetails(name:String, onNameChange: (String) -> Unit,
                  startTime:String, onStartTimeChange: (String) -> Unit,
                  endTime:String, onEndTimeChange: (String) -> Unit,
                  purpose:String, onPurposeChange: (String) -> Unit,
+                 customPurpose: String, onCustomPurposeChange: (String) -> Unit,
                  roomName: String, onSuccess: () -> Unit, status: String,
                  userId: String, isDarkTheme: Boolean) {
 
@@ -160,7 +178,7 @@ fun ApplyDetails(name:String, onNameChange: (String) -> Unit,
         ) {
 
             StartTimeInput(startTime, onStartTimeChange)
-            
+
         }
 
         //input field for end time
@@ -204,8 +222,7 @@ fun ApplyDetails(name:String, onNameChange: (String) -> Unit,
 
         ) {
 
-            PurposeInput(purpose, onPurposeChange)
-
+            PurposeInput(purpose, onPurposeChange,  customPurpose = customPurpose, onCustomPurposeChange = onCustomPurposeChange, isDarkTheme = isDarkTheme)
         }
 
         //submit button
@@ -261,34 +278,16 @@ fun NameInput(name:String, onNameChange:(String) -> Unit) {
         modifier = Modifier
             .fillMaxWidth(),
         horizontalArrangement = Arrangement.Center
-
-    ) {
-        BasicTextField(
-            value = name,
-            onValueChange = onNameChange,
-            modifier = Modifier
-                .width(380.dp)
-                .padding(10.dp)
-                .background(Color.White, RoundedCornerShape(36.dp))
-                .padding(10.dp)
-                .height(40.dp),
-            decorationBox = { innerTextField ->
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(start = 10.dp)
-                ) {
-                    if (name.isEmpty()) {
-                        Text("Enter Your Name", color = Color.Gray)
-                    } else {
-                        innerTextField()
-                    }
-                }
-            }
-        )
-    }
+    ){
+        TextField(
+        value = name,
+        onValueChange = onNameChange,
+        placeholder = { Text("ex: John") },
+        modifier = Modifier
+            .width(380.dp)
+            .padding(10.dp)
+            .clip(RoundedCornerShape(50.dp)),
+    )}
 }
 
 @Composable
@@ -479,30 +478,77 @@ fun EndTimeInput(endTime: String, onEndTimeChange: (String) -> Unit) {
 
 
 @Composable
-fun PurposeInput(purpose:String, onPurposeChange: (String) -> Unit) {
-    BasicTextField( /* Create a drop window to let the user select in a range TODO*/
-        value = purpose,
-        onValueChange = onPurposeChange,
+fun PurposeInput(purpose: String, onPurposeChange: (String) -> Unit, customPurpose: String, onCustomPurposeChange: (String) -> Unit, isDarkTheme: Boolean) {
+    val purposeList = listOf("Meeting", "Conference", "Training", "Discussion", "Interview", "Project Planning", "Other")
+    var expanded by remember { mutableStateOf(false) }
+
+    Column(
         modifier = Modifier
-            .width(380.dp)
-            .padding(10.dp)
-            .background(Color.White, RoundedCornerShape(36.dp))
-            .padding(10.dp)
-            .height(40.dp),
-        decorationBox = { innerTextField ->
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(start = 10.dp)
-            ) {
-                if (purpose.isEmpty()) {
-                    Text("why", color = Color.Gray)
-                } else {
-                    innerTextField()
-                }
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        // Main Purpose Dropdown (read-only)
+        TextField(
+            value = customPurpose,
+            onValueChange = {},
+            readOnly = true,
+            placeholder = { Text("Select purpose") },
+            modifier = Modifier
+                .width(380.dp)
+                .padding(10.dp)
+                .clip(RoundedCornerShape(50.dp)),
+            trailingIcon = {
+                Icon(
+                    Icons.Default.ArrowDropDown,
+                    contentDescription = "Dropdown icon",
+                    modifier = Modifier.clickable { expanded = !expanded }
+                )
+            }
+        )
+
+        // Dropdown List
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
+            modifier = Modifier
+                .width(380.dp)
+                .padding(start = 24.dp)
+        ) {
+            purposeList.forEach { item ->
+                DropdownMenuItem(
+                    text = { Text(text = item) },
+                    onClick = {
+                        onCustomPurposeChange(item)
+                        if (item != "Other") {
+                            onPurposeChange(item)
+                        } else {
+                            onPurposeChange("") // Clear old value when switching to "Other"
+                        }
+                        expanded = false
+                    }
+                )
             }
         }
-    )
+
+        // Show additional field if "Other" is selected
+        if (customPurpose == "Other") {
+            val cyanInTitle = if (isDarkTheme) Color(0xFFAFEEEE) else Color(0xFF00cccc)
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(text = "Enter Your Purpose: ",
+                color = cyanInTitle)
+            TextField(
+                value = purpose,
+                onValueChange = onPurposeChange,
+                placeholder = { Text("Enter your reservation purpose") },
+                modifier = Modifier
+                    .width(380.dp)
+                    .padding(10.dp)
+                    .clip(RoundedCornerShape(50.dp))
+            )
+        }
+        else if (purpose.isNotEmpty()) {
+            onPurposeChange(customPurpose)
+        }
+    }
 }

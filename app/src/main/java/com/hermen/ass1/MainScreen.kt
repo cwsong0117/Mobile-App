@@ -16,6 +16,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material3.*
+import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -45,7 +46,9 @@ import com.hermen.ass1.Attendance.ClockOut
 import com.hermen.ass1.LeaveApplication.LeaveApply
 import com.hermen.ass1.MeetingRoom.RoomViewModel
 import com.hermen.ass1.User.UserProfileScreen
-import coil.compose.AsyncImage
+import androidx.compose.ui.platform.LocalContext
+import androidx.navigation.compose.composable
+import com.wx.myapplication.IndicateFooter
 
 enum class AppScreen(@StringRes val title: Int) {
     Home(title = R.string.app_name),
@@ -57,6 +60,7 @@ enum class AppScreen(@StringRes val title: Int) {
     UserProfile(title = R.string.user_profile),
     LeaveApplication(title = R.string.leave_application),
     ApproveLeave(title = R.string.approve_leave),
+    CreateOrEditAnnouncement(title = R.string.create_or_edit_announcement),
 }
 
 data class AppItem(
@@ -73,179 +77,112 @@ val LocalRootNavController = staticCompositionLocalOf<NavHostController> {
 fun MainScreen(
     isDarkTheme: Boolean,
     onToggleTheme: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     val navController = rememberNavController()
     val themeViewModel: ThemeViewModel = viewModel()
+    val context = LocalContext.current
+    val navigationType = getNavigationType(context, context.resources.configuration.orientation)
 
-    Scaffold(
-        modifier = Modifier.fillMaxSize(),
-        bottomBar = {
-            BottomNavigationBar(
-                navController = navController
+    IndicateFooter(navigationType = navigationType, navController = navController) {
+        AppNavHost(
+            navController = navController,
+            modifier = modifier,
+            isDarkTheme = isDarkTheme,
+            onToggleTheme = onToggleTheme,
+            themeViewModel = themeViewModel
+        )
+    }
+}
+
+
+
+@Composable
+fun AppNavHost(
+    navController: NavHostController,
+    modifier: Modifier = Modifier,
+    isDarkTheme: Boolean,
+    onToggleTheme: () -> Unit,
+    themeViewModel: ThemeViewModel
+) {
+    NavHost(
+        navController = navController,
+        startDestination = AppScreen.Home.name,
+        modifier = modifier
+    ) {
+        composable(route = AppScreen.Home.name) {
+            Home(
+                navController = navController,
+                modifier = modifier,
+                isDarkTheme = isDarkTheme,
+                onToggleTheme = onToggleTheme
             )
         }
-    ) { innerPadding ->
-        NavHost(
-            navController = navController,
-            startDestination = AppScreen.Home.name,
-            modifier = modifier.padding(innerPadding)
-        ) {
-            composable(route = AppScreen.Home.name) {
-                Home(
-                    navController = navController,
-                    modifier = modifier,
-                    isDarkTheme = isDarkTheme,
-                    onToggleTheme = onToggleTheme
-                )
-            }
-
-            composable(route = AppScreen.Attendance.name) {
-                AttendanceOverview(
-                    gotoHistoryScreen = {
-                        navController.navigate("attendanceHistory")
-                    },
-                    gotoClockInScreen = {
-                        navController.navigate(AppScreen.ClockIn.name)
-                    },
-                    gotoClockOutScreen = {
-                        navController.navigate(AppScreen.ClockOut.name)
-                    },
-                    onBackButtonClicked = {
-                        navController.popBackStack()
-                    },
-                    modifier = modifier
-                )
-            }
-
-            composable(route = "attendanceHistory") {
-               AttendanceHistory( onBackButtonClicked = {
-                   navController.popBackStack()
-               })
-            }
-
-            composable(route = AppScreen.LeaveApplication.name) {
-                LeaveApplication(navController = navController, isDarkTheme = isDarkTheme)
-            }
-
-            composable(route = AppScreen.ApproveLeave.name) {
-                ApproveLeave(navController = navController, isDarkTheme = isDarkTheme)
-            }
-
-            composable(route = AppScreen.ClockIn.name) {
-                ClockIn(
-                    onBackButtonClicked = {
-                        navController.popBackStack()
-                    },
-                    modifier = modifier
-                )
-            }
-
-            composable(route = AppScreen.ClockOut.name) {
-                ClockOut(
-                    onBackButtonClicked = {
-                        navController.popBackStack()
-                    },
-                    modifier = modifier
-                )
-            }
-
-            composable(route = AppScreen.AnnouncementOverview.name) {
-                AnnouncementOverview(
-                    navController = navController,
-                    isDarkTheme = isDarkTheme)
-            }
-
-            composable(
-                route = "CreateOrEditAnnouncementScreen?announcementId={announcementId}&title={title}&content={content}",
-                arguments = listOf(
-                    navArgument("announcementId") { type = NavType.StringType },
-                    navArgument("title") { type = NavType.StringType },
-                    navArgument("content") { type = NavType.StringType }
-                )
-            ) { backStackEntry ->
-                val announcementId = backStackEntry.arguments?.getString("announcementId")
-                val title = backStackEntry.arguments?.getString("title")
-                val content = backStackEntry.arguments?.getString("content")
-
-                // Debugging logs to check the values of the parameters
-                Log.d("CreateOrEditAnnouncement", "announcementId: $announcementId, title: $title, content: $content")
-
-                CreateOrEditAnnouncement(
-                    navController = navController,
-                    announcementId = announcementId,
-                    isDarkTheme = isDarkTheme,
-                    title = title,
-                    content = content
-                )
-            }
-
-            composable(
-                route = "${AppScreen.AnnouncementDetail.name}/{announcementJson}",
-                arguments = listOf(navArgument("announcementJson") { type = NavType.StringType })
-            ) { backStackEntry ->
-                val json = backStackEntry.arguments?.getString("announcementJson") ?: ""
-                AnnouncementDetailScreen(
-                    json = json,
-                    navController = navController,
-                    themeViewModel = themeViewModel
-                )
-            }
-
-            composable(route = AppScreen.UserProfile.name) {
-                UserProfileScreen(
-                    nestedNavController = navController,
-                    rootNavController = LocalRootNavController.current, // <- from CompositionLocal or state lift
-                    isDarkTheme = isDarkTheme
-                )
-            }
-
-            composable("meeting_room_screen") {
-                MeetingRoomApply(
-                    navController = navController,
-                    isDarkTheme = isDarkTheme)
-            }
-
-            composable(
-            route = "roomDetail/{roomName}",
-            arguments = listOf(
-            navArgument("roomName") {
-                type = NavType.StringType
-                defaultValue = "default_room"
-                nullable = false
-            })
-            ) { backStackEntry ->
-                val roomName = backStackEntry.arguments?.getString("roomName") ?: "default_room"
-                Log.d("NAVIGATION", "Passed room name: $roomName")
-                RoomDetail(navController = navController,
-                    roomName = roomName,
-                    isDarkTheme = isDarkTheme
-                )
-            }
-
-            composable("status_details/{applyId}",
-            arguments = listOf(
-            navArgument("applyId") {
-                type = NavType.StringType
-            })
-            ) {
+        composable(route = AppScreen.Attendance.name) {
+            AttendanceOverview(
+                gotoHistoryScreen = {
+                    navController.navigate("attendanceHistory")
+                },
+                gotoClockInScreen = {
+                    navController.navigate(AppScreen.ClockIn.name)
+                },
+                gotoClockOutScreen = {
+                    navController.navigate(AppScreen.ClockOut.name)
+                },
+                onBackButtonClicked = {
+                    navController.popBackStack()
+                },
+                modifier = modifier
+            )
+        }
+        composable("attendanceHistory") {
+            AttendanceHistory(onBackButtonClicked = { navController.popBackStack() })
+        }
+        composable(AppScreen.LeaveApplication.name) {
+            LeaveApplication(navController = navController, isDarkTheme = isDarkTheme)
+        }
+        composable(AppScreen.ApproveLeave.name) {
+            ApproveLeave(navController = navController, isDarkTheme = isDarkTheme)
+        }
+        composable(AppScreen.ClockIn.name) {
+            ClockIn(onBackButtonClicked = { navController.popBackStack() }, modifier = modifier)
+        }
+        composable(AppScreen.ClockOut.name) {
+            ClockOut(onBackButtonClicked = { navController.popBackStack() }, modifier = modifier)
+        }
+        composable(AppScreen.AnnouncementOverview.name) {
+            AnnouncementOverview(navController = navController, isDarkTheme = isDarkTheme)
+        }
+        composable("${AppScreen.AnnouncementDetail.name}/{announcementJson}") {
                 backStackEntry ->
-                val applyId = backStackEntry.arguments?.getString("applyId") ?: ""
-                val viewModel: RoomViewModel = viewModel()
-                StatusDetails(navController = navController, applyId = applyId, viewModel = viewModel, isDarkTheme = isDarkTheme)
-            }
-
-            composable(
-                route = "leave_screen"
-            ) {
-                LeaveApply(
-                    navController = navController,
-                    isDarkTheme = isDarkTheme
-                )
-            }
+            val json = backStackEntry.arguments?.getString("announcementJson") ?: ""
+            AnnouncementDetailScreen(json, navController, themeViewModel)
+        }
+        composable(AppScreen.UserProfile.name) {
+            UserProfileScreen(
+                nestedNavController = navController,
+                rootNavController = LocalRootNavController.current,
+                isDarkTheme = isDarkTheme
+            )
+        }
+        composable("meeting_room_screen") {
+            MeetingRoomApply(navController = navController, isDarkTheme = isDarkTheme)
+        }
+        composable("roomDetail/{roomName}") { backStackEntry ->
+            val roomName = backStackEntry.arguments?.getString("roomName") ?: "default_room"
+            RoomDetail(navController = navController, roomName = roomName, isDarkTheme = isDarkTheme)
+        }
+        composable("status_details/{applyId}") { backStackEntry ->
+            val applyId = backStackEntry.arguments?.getString("applyId") ?: ""
+            val viewModel: RoomViewModel = viewModel()
+            StatusDetails(navController = navController, applyId = applyId, viewModel = viewModel, isDarkTheme = isDarkTheme)
+        }
+        composable("leave_screen") {
+            LeaveApply(navController = navController, isDarkTheme = isDarkTheme)
         }
     }
 }
+
 
 @Composable
 fun Home(
@@ -325,11 +262,12 @@ fun ApplicationSection(navController: NavController) {
         AppItem("Attendance Panel", R.drawable.attendance, "attendance_screen")
     )
 
-    Column {
+    Column(modifier = Modifier.fillMaxWidth()) {
         Text(
             text = "Application",
             fontSize = 18.sp,
-            fontWeight = FontWeight.Bold
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(horizontal = 16.dp)
         )
         Spacer(modifier = Modifier.height(8.dp))
         Row(
@@ -383,7 +321,6 @@ fun AnnouncementSection(
     navController: NavController,
     viewModel: AnnouncementViewModel = viewModel()
 ) {
-    // Collect the announcements
     val announcements by viewModel.announcements.collectAsState()
 
     Column(modifier = Modifier.fillMaxWidth()) {
@@ -408,7 +345,6 @@ fun AnnouncementSection(
                 items(announcements) { announcement ->
                     AnnouncementCard(
                         title = announcement.title,
-                        imageUrl = announcement.imageUrl, // Pass imageUrl here
                         onClick = {
                             navController.navigate(AppScreen.AnnouncementOverview.name)
                         }
@@ -420,7 +356,7 @@ fun AnnouncementSection(
 }
 
 @Composable
-fun AnnouncementCard(title: String, imageUrl: String?, onClick: () -> Unit) {
+fun AnnouncementCard(title: String, onClick: () -> Unit) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
@@ -428,23 +364,11 @@ fun AnnouncementCard(title: String, imageUrl: String?, onClick: () -> Unit) {
             .padding(5.dp)
             .clickable(onClick = onClick)
     ) {
-        if (!imageUrl.isNullOrEmpty()) {
-            AsyncImage(
-                model = imageUrl,
-                contentDescription = "Announcement Image",
-                modifier = Modifier
-                    .size(100.dp)
-                    .clip(RoundedCornerShape(8.dp)),
-                contentScale = ContentScale.Crop
-            )
-        } else {
-            Box(
-                modifier = Modifier
-                    .size(100.dp)
-                    .background(Color.Gray)
-            )
-        }
-
+        Box(
+            modifier = Modifier
+                .size(100.dp)
+                .background(Color.Gray)
+        )
         Spacer(modifier = Modifier.height(8.dp))
         Text(
             text = title,

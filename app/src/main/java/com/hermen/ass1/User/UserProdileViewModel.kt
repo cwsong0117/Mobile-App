@@ -24,6 +24,7 @@ class UserProfileViewModel : ViewModel() {
     var contactNo by mutableStateOf("")
     var email by mutableStateOf("")
     var imageUrl by mutableStateOf("")
+    var userId by mutableStateOf("")
 
     var nameErrorMessage by mutableStateOf<String?>(null)
     var ageErrorMessage by mutableStateOf<String?>(null)
@@ -50,6 +51,7 @@ class UserProfileViewModel : ViewModel() {
             birthday = user.birthday
             email = user.email
             imageUrl = user.imageUrl ?: ""
+            userId = user.id
 
             hasChanges = false
         }
