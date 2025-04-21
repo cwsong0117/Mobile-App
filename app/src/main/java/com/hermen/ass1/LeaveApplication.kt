@@ -458,8 +458,16 @@ fun LeaveApplication(navController: NavController, isDarkTheme: Boolean) {
                                             return@addOnSuccessListener
                                         }
 
+
+                                        if (user == null) {
+                                            Toast.makeText(context, "User not logged in", Toast.LENGTH_SHORT).show()
+                                            return@addOnSuccessListener
+                                        }
+
                                         // Construct leave data map
                                         val leaveData = mapOf(
+                                            "id" to user.id,
+                                            "name" to user.name,
                                             "leaveDates" to formattedLeaveDates,
                                             "leaveType" to selectedLeaveType,
                                             "reason" to leaveReason,
