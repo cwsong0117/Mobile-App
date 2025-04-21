@@ -1,6 +1,7 @@
 package com.hermen.ass1.Announcement
 
 import android.net.Uri
+import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
@@ -48,6 +49,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import coil.compose.rememberAsyncImagePainter
 import com.hermen.ass1.R
+import java.net.URLDecoder
 
 @Composable
 fun CreateOrEditAnnouncement(
@@ -55,9 +57,11 @@ fun CreateOrEditAnnouncement(
     announcementId: String? = null,
     isDarkTheme: Boolean,
     title: String? = null,
-    content: String? = null
+    content: String? = null,
+    imageUrl: String? = null
 ) {
     val viewModel: AnnouncementViewModel = viewModel()
+    Log.d("TEST DEBUG", "passed URL: ${imageUrl}")
 
     // Load announcement data if editing
     LaunchedEffect(announcementId) {
@@ -69,8 +73,9 @@ fun CreateOrEditAnnouncement(
         }
     }
 
-    LaunchedEffect(viewModel.saveSuccessful.value) {
+    LaunchedEffect(viewModel.saveSuccessful.value){
         if (viewModel.saveSuccessful.value) {
+            viewModel.saveSuccessful.value = false
             navController.popBackStack()
         }
     }
@@ -83,6 +88,7 @@ fun CreateOrEditAnnouncement(
     val textColor = if (isDarkTheme) Color.White else Color.Black
     val iconColor = if (isDarkTheme) Color.White else Color.Black
     val buttonBackground = if (isDarkTheme) Color(0xFF80CBC4) else Color(0xFF009688)
+    val buttonTextColor = if (isDarkTheme) Color.Black else Color.White
 
     val context = LocalContext.current
     val imageUri = remember { mutableStateOf<Uri?>(null) }
@@ -100,7 +106,7 @@ fun CreateOrEditAnnouncement(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(Color.White)
+                .background(backgroundColor)
         ) {
             Row(
                 modifier = Modifier
@@ -117,6 +123,7 @@ fun CreateOrEditAnnouncement(
                         Icon(
                             painter = painterResource(id = R.drawable.baseline_arrow_back_ios_new_24),
                             contentDescription = "Back",
+                            tint = iconColor,
                             modifier = Modifier.size(24.dp)
                         )
                     }
@@ -141,16 +148,18 @@ fun CreateOrEditAnnouncement(
                 ) {
                     IconButton(
                         onClick = {
-                            if (announcementId != null) {
+                            if (!announcementId.isNullOrEmpty()) {
+                                Log.d("DEBUG", "announcementId is NOT null or empty: $announcementId")
                                 viewModel.updateAnnouncement(announcementId, imageUri.value)
                             } else {
+                                Log.d("DEBUG", "announcementId is null or empty")
                                 viewModel.createAnnouncementWithCustomId()
                             }
                         }
                     ) {
                         Text(
                             text = "Save",
-                            color = Color.White,
+                            color = buttonTextColor,
                             fontWeight = FontWeight.Bold
                         )
                     }
@@ -176,8 +185,8 @@ fun CreateOrEditAnnouncement(
                     onValueChange = { viewModel.title.value = it },
                     colors = TextFieldDefaults.textFieldColors(backgroundColor = Color.Transparent),
                     modifier = Modifier.fillMaxWidth(),
-                    placeholder = { Text("Enter title") },
-                    singleLine = true
+                    maxLines = 3,
+                    placeholder = { Text("Enter title") }
                 )
             }
 
@@ -202,6 +211,7 @@ fun CreateOrEditAnnouncement(
                     placeholder = { Text("Enter content") }
                 )
             }
+            Log.d("Debug","image url: ${imageUrl}")
             if (imageUri.value != null) {
                 Spacer(modifier = Modifier.height(16.dp))
                 Text("Selected Image", color = textColor, fontWeight = FontWeight.Medium)
@@ -209,6 +219,19 @@ fun CreateOrEditAnnouncement(
                 Image(
                     painter = rememberAsyncImagePainter(imageUri.value),
                     contentDescription = "Selected Image",
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(200.dp)
+                        .clip(RoundedCornerShape(12.dp)),
+                    contentScale = ContentScale.Crop
+                )
+            } else if (!imageUrl.isNullOrBlank()) {
+                Spacer(modifier = Modifier.height(16.dp))
+                Text("Existing Image", color = textColor, fontWeight = FontWeight.Medium)
+                Spacer(modifier = Modifier.height(4.dp))
+                Image(
+                    painter = rememberAsyncImagePainter(imageUrl),
+                    contentDescription = "Existing Image",
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(200.dp)
@@ -225,7 +248,7 @@ fun CreateOrEditAnnouncement(
                     .background(buttonBackground, shape = RoundedCornerShape(8.dp)),
                 colors = ButtonDefaults.buttonColors(backgroundColor = buttonBackground)
             ) {
-                Text("Upload Image", color = Color.White, fontWeight = FontWeight.Bold)
+                Text("Upload Image", color = buttonTextColor, fontWeight = FontWeight.Bold)
             }
         }
     }

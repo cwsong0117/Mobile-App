@@ -50,21 +50,23 @@ import java.net.URLEncoder
 fun AnnouncementDetailScreen(
     json: String,
     navController: NavController,
-    themeViewModel: ThemeViewModel
+    isDarkTheme: Boolean
 ) {
     val announcement = remember {
         Json.decodeFromString<Announcement>(json)
     }
 
+    val encodedImageUrl = URLEncoder.encode(announcement.imageUrl, "UTF-8")
+
     val decodedTitle = URLDecoder.decode(announcement.title, "UTF-8")
     val decodedContent = URLDecoder.decode(announcement.content, "UTF-8")
-
-    val isDarkTheme = themeViewModel.isDarkTheme.value
     val textColor = if (isDarkTheme) MaterialTheme.colorScheme.onBackground else MaterialTheme.colorScheme.onSurface
     val iconColor = if (isDarkTheme) Color.White else Color.Black
     val backgroundColor = if (isDarkTheme) Color(0xFF121212) else Color(0xFFE6F4F1)
     val saveButtonColor = if (isDarkTheme) Color(0xFF80CBC4) else Color(0xFF009688)
     val buttonTextColor = if (isDarkTheme) Color.Black else Color.White
+
+    Log.d("Announcement Image Url", "Url: ${announcement.imageUrl}")
 
     Column(
         modifier = Modifier
@@ -81,7 +83,7 @@ fun AnnouncementDetailScreen(
                 Button(
                     onClick = {
                         navController.navigate(
-                            "CreateOrEditAnnouncementScreen?announcementId=${announcement.id}&title=${decodedTitle}&content=${decodedContent}"
+                            "CreateOrEditAnnouncementScreen?announcementId=${announcement.id}&title=${decodedTitle}&content=${decodedContent}&imageUrl=${encodedImageUrl}"
                         )
                     },
                     colors = ButtonDefaults.buttonColors(backgroundColor = saveButtonColor),
@@ -144,11 +146,13 @@ fun AnnouncementDetailScreen(
                 Column(horizontalAlignment = Alignment.End) {
                     Text(
                         text = "Posted by: ${announcement.employeeID}",
-                        style = MaterialTheme.typography.bodySmall
+                        style = MaterialTheme.typography.bodySmall,
+                        color = textColor
                     )
                     Text(
                         text = "At: ${announcement.created_at}",
-                        style = MaterialTheme.typography.bodySmall
+                        style = MaterialTheme.typography.bodySmall,
+                        color = textColor
                     )
                 }
             }

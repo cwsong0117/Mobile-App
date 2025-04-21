@@ -157,7 +157,7 @@ fun AppNavHost(
         composable("${AppScreen.AnnouncementDetail.name}/{announcementJson}") {
                 backStackEntry ->
             val json = backStackEntry.arguments?.getString("announcementJson") ?: ""
-            AnnouncementDetailScreen(json, navController, themeViewModel)
+            AnnouncementDetailScreen(json, navController, isDarkTheme)
         }
         composable(AppScreen.UserProfile.name) {
             UserProfileScreen(
@@ -182,26 +182,28 @@ fun AppNavHost(
             LeaveApply(navController = navController, isDarkTheme = isDarkTheme)
         }
         composable(
-            route = "CreateOrEditAnnouncementScreen?announcementId={announcementId}&title={title}&content={content}",
+            route = "CreateOrEditAnnouncementScreen?announcementId={announcementId}&title={title}&content={content}&imageUrl={imageUrl}",
             arguments = listOf(
-                navArgument("announcementId") { type = NavType.StringType },
-                navArgument("title") { type = NavType.StringType },
-                navArgument("content") { type = NavType.StringType }
+                navArgument("announcementId") { type = NavType.StringType; nullable = true },
+                navArgument("title") { type = NavType.StringType; nullable = true },
+                navArgument("content") { type = NavType.StringType; nullable = true },
+                navArgument("imageUrl") { type = NavType.StringType; nullable = true }
             )
         ) { backStackEntry ->
             val announcementId = backStackEntry.arguments?.getString("announcementId")
             val title = backStackEntry.arguments?.getString("title")
             val content = backStackEntry.arguments?.getString("content")
+            val imageUrl = backStackEntry.arguments?.getString("imageUrl")
 
-            // Debugging logs to check the values of the parameters
-            Log.d("CreateOrEditAnnouncement", "announcementId: $announcementId, title: $title, content: $content")
+            Log.d("CreateOrEditAnnouncement", "announcementId: $announcementId, title: $title, content: $content, imageUrl: $imageUrl")
 
             CreateOrEditAnnouncement(
                 navController = navController,
                 announcementId = announcementId,
                 isDarkTheme = isDarkTheme,
                 title = title,
-                content = content
+                content = content,
+                imageUrl = imageUrl
             )
         }
     }

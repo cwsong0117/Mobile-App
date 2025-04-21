@@ -45,7 +45,7 @@ class AnnouncementViewModel : ViewModel() {
         loadAnnouncements()
     }
 
-    private fun loadAnnouncements() {
+    fun loadAnnouncements() {
         viewModelScope.launch {
             val list = AnnouncementRepository.getAnnouncements()
             Log.d("DEBUG", "Fetched Announcements: $list")  // Log fetched data
@@ -72,7 +72,7 @@ class AnnouncementViewModel : ViewModel() {
             try {
                 generateNextDocId { newId ->
                     val db = FirebaseFirestore.getInstance()
-                    val ref = db.collection("User")
+                    val ref = db.collection("Announcement")
 
                     // Prepare the new announcement data
                     val newAnnouncement = hashMapOf(
@@ -84,15 +84,14 @@ class AnnouncementViewModel : ViewModel() {
                     )
 
                     // Save the new announcement with the generated ID
-                    ref.document("a999").set(newAnnouncement)
+                    ref.document(newId).set(newAnnouncement)
                         .addOnSuccessListener {
                             Log.d("CreateAnnouncement", "Announcement created successfully: $newId")
-                            // You can navigate or show a success message
+                            saveSuccessful.value = true
                         }
                         .addOnFailureListener { e ->
                             Log.e("CreateAnnouncement", "Error creating announcement: ${e.message}", e)
                         }
-
                 }
             } catch (e: Exception) {
                 Log.e("CreateAnnouncement", "Error creating announcement: ${e.message}", e)
@@ -107,12 +106,12 @@ class AnnouncementViewModel : ViewModel() {
                 val lastId = documents.mapNotNull {
                     val id = it.id
                     if (id.startsWith("a")) {
-                        id.substring(2).toLongOrNull()
+                        id.substring(1).toIntOrNull()  // Fix the substring to start from index 1
                     } else null
                 }.maxOrNull() ?: 0
 
-                // Generate the next ID based on the last one
-                val nextId = "a" + (lastId + 1).toString()
+                // Generate the next ID and pad it with 2 digits (e.g., a01, a02, ...)
+                val nextId = "a" + (lastId + 1).toString().padStart(2, '0')
                 onIdGenerated(nextId)
             }
             .addOnFailureListener {
@@ -146,7 +145,6 @@ class AnnouncementViewModel : ViewModel() {
                     .addOnFailureListener { e ->
                         Log.e("SAVE_ANNOUNCEMENT", "Error updating announcement", e)
                     }
-
             } catch (e: Exception) {
                 Log.e("SAVE_ANNOUNCEMENT", "Error updating announcement: ${e.message}", e)
             }
