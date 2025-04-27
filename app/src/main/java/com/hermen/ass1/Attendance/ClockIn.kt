@@ -48,11 +48,15 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.window.Dialog
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.repeatOnLifecycle
 import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationResult
@@ -325,6 +329,9 @@ fun ClockIn(
 @Composable
 fun AddAttendanceScreen(viewModel: AttendanceViewModel = viewModel()) {
 
+    var isCheckingAttendance by remember { mutableStateOf(true) }
+    val lifecycleOwner = LocalLifecycleOwner.current
+
     var showSuccessDialog by remember { mutableStateOf(false) }
     var showNotAtWorkplaceDialog by remember { mutableStateOf(false) }
     var clockedInToday by remember { mutableStateOf<Attendance?>(null) }
@@ -332,8 +339,13 @@ fun AddAttendanceScreen(viewModel: AttendanceViewModel = viewModel()) {
     val context = LocalContext.current
     val fusedLocationClient = remember { LocationServices.getFusedLocationProviderClient(context) }
 
-    val workplaceLat = 3.2154587237369303
-    val workplaceLng = 101.72655709533397
+// tarumt location
+//    val workplaceLat = 3.2154587237369303
+//    val workplaceLng = 101.72655709533397
+
+    //kajang location
+    val workplaceLat = 2.9935
+    val workplaceLng = 101.7870
     val allowedRadius = 200f // meters
 
     var userLocation by remember { mutableStateOf<Location?>(null) }
@@ -362,10 +374,13 @@ fun AddAttendanceScreen(viewModel: AttendanceViewModel = viewModel()) {
     }
 
     // 2. Fetch latest attendance for validation
-    LaunchedEffect(Unit) {
-        SessionManager.currentUser?.let { user ->
-            viewModel.getLatestAttendanceForToday(user.id) { attendance ->
+    LaunchedEffect(lifecycleOwner) {
+        lifecycleOwner.lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
+            SessionManager.currentUser?.let { user ->
+                isCheckingAttendance = true
+                val attendance = viewModel.getLatestAttendanceForToday(user.id)
                 clockedInToday = attendance
+                isCheckingAttendance = false
             }
         }
     }
@@ -410,54 +425,110 @@ fun AddAttendanceScreen(viewModel: AttendanceViewModel = viewModel()) {
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        if (clockedInToday != null) {
-            val clockInTime = clockedInToday!!.clockInTime?.toDate()
-            val shiftEndTime = Calendar.getInstance().apply {
-                time = clockInTime!!
-                add(Calendar.HOUR_OF_DAY, 8)
+        when {
+            isCheckingAttendance -> {
+                CircularProgressIndicator()
             }
+            clockedInToday != null -> {
+                val clockInTime = clockedInToday!!.clockInTime?.toDate()
+                val shiftEndTime = Calendar.getInstance().apply {
+                    time = clockInTime!!
+                    add(Calendar.HOUR_OF_DAY, 8)
+                }
 
-            Text("You have already clocked in.")
-            Text("Shift: ${timeFormat.format(clockInTime)} - ${timeFormat.format(shiftEndTime.time)}")
-        } else {
-            Button(onClick = {
-                val location = userLocation
-                if (location != null) {
-                    val result = FloatArray(1)
-                    Location.distanceBetween(
-                        location.latitude,
-                        location.longitude,
-                        workplaceLat,
-                        workplaceLng,
-                        result
-                    )
-                    val distanceInMeters = result[0]
+                Text("You have already clocked in.")
+                Text("Shift: ${timeFormat.format(clockInTime)} - ${timeFormat.format(shiftEndTime.time)}")
+            }
+            else -> {
+                Button(onClick = {
+                    val location = userLocation
+                    if (location != null) {
+                        val result = FloatArray(1)
+                        Location.distanceBetween(
+                            location.latitude,
+                            location.longitude,
+                            workplaceLat,
+                            workplaceLng,
+                            result
+                        )
+                        val distanceInMeters = result[0]
 
-                    if (distanceInMeters <= allowedRadius) {
-                        SessionManager.currentUser?.let { user ->
-                            viewModel.generateAttendanceID { generatedID ->
-                                val newAttendance = Attendance(
-                                    attendanceID = generatedID,
-                                    clockInTime = getMalaysiaTime(),
-                                    clockOutTime = null,
-                                    employeeID = user.id,
-                                    status = "Clocked In"
-                                )
-                                viewModel.addAttendance(newAttendance)
-                                showSuccessDialog = true
-                                clockedInToday = newAttendance // Update UI immediately
+                        if (distanceInMeters <= allowedRadius) {
+                            SessionManager.currentUser?.let { user ->
+                                viewModel.generateAttendanceID { generatedID ->
+                                    val newAttendance = Attendance(
+                                        attendanceID = generatedID,
+                                        clockInTime = getMalaysiaTime(),
+                                        clockOutTime = null,
+                                        employeeID = user.id,
+                                        status = "Clocked In"
+                                    )
+                                    viewModel.addAttendance(newAttendance)
+                                    showSuccessDialog = true
+                                    clockedInToday = newAttendance // Update UI immediately
+                                }
                             }
+                        } else {
+                            showNotAtWorkplaceDialog = true
                         }
                     } else {
-                        showNotAtWorkplaceDialog = true
+                        Toast.makeText(context, "Location not ready yet", Toast.LENGTH_SHORT).show()
                     }
-                } else {
-                    Toast.makeText(context, "Location not ready yet", Toast.LENGTH_SHORT).show()
+                }) {
+                    Text("Clock-IN")
                 }
-            }) {
-                Text("Clock-IN")
             }
         }
+
+
+//        if (clockedInToday != null) {
+//            val clockInTime = clockedInToday!!.clockInTime?.toDate()
+//            val shiftEndTime = Calendar.getInstance().apply {
+//                time = clockInTime!!
+//                add(Calendar.HOUR_OF_DAY, 8)
+//            }
+//
+//            Text("You have already clocked in.")
+//            Text("Shift: ${timeFormat.format(clockInTime)} - ${timeFormat.format(shiftEndTime.time)}")
+//        } else {
+//            Button(onClick = {
+//                val location = userLocation
+//                if (location != null) {
+//                    val result = FloatArray(1)
+//                    Location.distanceBetween(
+//                        location.latitude,
+//                        location.longitude,
+//                        workplaceLat,
+//                        workplaceLng,
+//                        result
+//                    )
+//                    val distanceInMeters = result[0]
+//
+//                    if (distanceInMeters <= allowedRadius) {
+//                        SessionManager.currentUser?.let { user ->
+//                            viewModel.generateAttendanceID { generatedID ->
+//                                val newAttendance = Attendance(
+//                                    attendanceID = generatedID,
+//                                    clockInTime = getMalaysiaTime(),
+//                                    clockOutTime = null,
+//                                    employeeID = user.id,
+//                                    status = "Clocked In"
+//                                )
+//                                viewModel.addAttendance(newAttendance)
+//                                showSuccessDialog = true
+//                                clockedInToday = newAttendance // Update UI immediately
+//                            }
+//                        }
+//                    } else {
+//                        showNotAtWorkplaceDialog = true
+//                    }
+//                } else {
+//                    Toast.makeText(context, "Location not ready yet", Toast.LENGTH_SHORT).show()
+//                }
+//            }) {
+//                Text("Clock-IN")
+//            }
+//        }
 
         if (showSuccessDialog) {
             SuccessDialog(onDismiss = { showSuccessDialog = false })
