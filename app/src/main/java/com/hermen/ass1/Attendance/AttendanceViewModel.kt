@@ -13,6 +13,7 @@ import java.util.Calendar
 import java.util.Locale
 import java.util.TimeZone
 import androidx.compose.runtime.State
+import kotlinx.coroutines.tasks.await
 
 data class Attendance(
     val attendanceID: String = "",
@@ -69,37 +70,32 @@ class AttendanceViewModel : ViewModel() {
             }
     }
 
-    fun getLatestAttendanceForToday(employeeID: String, onResult: (Attendance?) -> Unit) {
-        val todayStart = Calendar.getInstance(TimeZone.getTimeZone("Asia/Kuala_Lumpur")).apply {
-            set(Calendar.HOUR_OF_DAY, 0)
-            set(Calendar.MINUTE, 0)
-            set(Calendar.SECOND, 0)
-            set(Calendar.MILLISECOND, 0)
-        }
+    suspend fun getLatestAttendanceForToday(employeeID: String): Attendance? {
+        return try {
+            val dbSnapshot = db.collection("Attendance")
+                .whereEqualTo("employeeID", employeeID)
+                .whereEqualTo("status", "Clocked In")
+                .whereEqualTo("clockOutTime", null)
+                .get()
+                .await()
 
-        val todayEnd = Calendar.getInstance(TimeZone.getTimeZone("Asia/Kuala_Lumpur")).apply {
-            set(Calendar.HOUR_OF_DAY, 23)
-            set(Calendar.MINUTE, 59)
-            set(Calendar.SECOND, 59)
-        }
+            val today = Calendar.getInstance(TimeZone.getTimeZone("Asia/Kuala_Lumpur"))
 
-        db.collection("Attendance")
-            .whereEqualTo("employeeID", employeeID)
-            .whereGreaterThanOrEqualTo("clockInTime", Timestamp(todayStart.time))
-            .whereLessThanOrEqualTo("clockInTime", Timestamp(todayEnd.time))
-            .whereEqualTo("clockOutTime", null)
-            .get()
-            .addOnSuccessListener { documents ->
-                if (!documents.isEmpty) {
-                    val data = documents.first().toObject(Attendance::class.java)
-                    onResult(data)
-                } else {
-                    onResult(null)
+            dbSnapshot.documents
+                .mapNotNull { it.toObject(Attendance::class.java) }
+                .firstOrNull { attendance ->
+                    attendance.clockInTime?.toDate()?.let { clockInDate ->
+                        val clockInCalendar = Calendar.getInstance(TimeZone.getTimeZone("Asia/Kuala_Lumpur")).apply {
+                            time = clockInDate
+                        }
+                        clockInCalendar.get(Calendar.YEAR) == today.get(Calendar.YEAR) &&
+                                clockInCalendar.get(Calendar.MONTH) == today.get(Calendar.MONTH) &&
+                                clockInCalendar.get(Calendar.DAY_OF_MONTH) == today.get(Calendar.DAY_OF_MONTH)
+                    } ?: false
                 }
-            }
-            .addOnFailureListener {
-                onResult(null)
-            }
+        } catch (e: Exception) {
+            null
+        }
     }
 
 

@@ -119,10 +119,19 @@ fun HistoryList(
         LazyColumn(modifier = modifier.padding(8.dp)) {
             items(attendanceList.filter { it.employeeID == currentUserId }) { item ->
                 val clockInDate = item.clockInTime?.toDate()
-                val dateFormat = SimpleDateFormat("dd MMM yyyy", Locale.getDefault())
-                val dayFormat = SimpleDateFormat("EEEE", Locale.getDefault())
-                val dateStr = clockInDate?.let { dateFormat.format(it) } ?: "Unknown Date"
-                val dayStr = clockInDate?.let { dayFormat.format(it) } ?: ""
+                val clockOutDate = item.clockOutTime?.toDate()
+
+                // Set timezone to Malaysia (Asia/Kuala_Lumpur)
+                val dateFormat = SimpleDateFormat("dd MMM yyyy HH:mm:ss", Locale.getDefault()).apply {
+                    timeZone = TimeZone.getTimeZone("Asia/Kuala_Lumpur")
+                }
+                val dayFormat = SimpleDateFormat("EEEE", Locale.getDefault()).apply {
+                    timeZone = TimeZone.getTimeZone("Asia/Kuala_Lumpur")
+                }
+
+                // Format clock-in and clock-out times
+                val clockInStr = clockInDate?.let { dateFormat.format(it) } ?: "Unknown Date"
+                val clockOutStr = clockOutDate?.let { dateFormat.format(it) } ?: "Still working"
 
                 val isExpanded = expandedId == item.attendanceID
 
@@ -144,8 +153,9 @@ fun HistoryList(
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             Column {
+                                val dayStr = clockInDate?.let { dayFormat.format(it) } ?: ""
                                 Text(text = dayStr, fontWeight = FontWeight.Bold)
-                                Text(text = dateStr, style = MaterialTheme.typography.bodyMedium)
+                                Text(text = clockInStr, style = MaterialTheme.typography.bodyMedium)
                             }
                             Icon(
                                 imageVector = if (isExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
@@ -157,8 +167,8 @@ fun HistoryList(
                         AnimatedVisibility(visible = isExpanded) {
                             Column(modifier = Modifier.padding(top = 12.dp)) {
                                 Text("Attendance ID: ${item.attendanceID}")
-                                Text("Clock In: ${item.clockInTime?.toDate()}")
-                                Text("Clock Out: ${item.clockOutTime?.toDate() ?: "Still working"}")
+                                Text("Clock In: $clockInStr")
+                                Text("Clock Out: $clockOutStr")
                                 Text("Status: ${item.status}")
                             }
                         }
@@ -168,3 +178,5 @@ fun HistoryList(
         }
     }
 }
+
+
