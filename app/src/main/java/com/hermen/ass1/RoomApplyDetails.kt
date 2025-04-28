@@ -25,6 +25,7 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.AlertDialog
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
@@ -44,6 +45,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.navigation.NavController
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.hermen.ass1.MeetingRoom.MeetingRoomViewModel
 import java.text.SimpleDateFormat
@@ -98,7 +100,8 @@ fun RoomDetail(navController: NavController, roomName: String, isDarkTheme: Bool
                     customPurpose.value = ""
 
                     Toast.makeText(context, "Application submitted successfully!", Toast.LENGTH_SHORT).show()
-                }
+                },
+                navController = navController
             )
         }
     }
@@ -112,7 +115,7 @@ fun ApplyDetails(name:String, onNameChange: (String) -> Unit,
                  purpose:String, onPurposeChange: (String) -> Unit,
                  customPurpose: String, onCustomPurposeChange: (String) -> Unit,
                  roomName: String, onSuccess: () -> Unit, status: String,
-                 userId: String, isDarkTheme: Boolean) {
+                 userId: String, isDarkTheme: Boolean, navController: NavController) {
 
     val cyanInTitle = if (isDarkTheme) Color(0xFFAFEEEE) else Color(0xFF00cccc)
     val cyanInButton = if (isDarkTheme) Color(0xFF00ced1) else Color(0xFF0099cc)
@@ -120,6 +123,7 @@ fun ApplyDetails(name:String, onNameChange: (String) -> Unit,
     val viewModel: MeetingRoomViewModel = viewModel()
     val context = LocalContext.current
     val backgroundColor = if (isDarkTheme) Color.Transparent else Color(0xFFE5FFFF)
+    var isDialogOpen by remember { mutableStateOf(false) }
 
     Divider(color = Color.LightGray, thickness = 1.dp)
     Column(
@@ -261,22 +265,8 @@ fun ApplyDetails(name:String, onNameChange: (String) -> Unit,
                             Toast.makeText(context, "Invalid time format", Toast.LENGTH_SHORT).show()
                             return@Button
                         }
+                        isDialogOpen = true
 
-
-
-                        //submit the info to firebase
-                        viewModel.submitApplication(
-                            name = name,
-                            date = date,
-                            startTime = startTime,
-                            endTime = endTime,
-                            purpose = purpose,
-                            type = roomName,
-                            status = status,
-                            userId = userId,
-                            onSuccess = onSuccess,
-                            onError = { e -> Log.e("Submit", "Error submitting application", e)}
-                        )
                     },
                     colors = ButtonDefaults.buttonColors(
                         containerColor = cyanInButton,
@@ -287,6 +277,52 @@ fun ApplyDetails(name:String, onNameChange: (String) -> Unit,
                 }
             }
         }
+    }
+    if (isDialogOpen) {
+        AlertDialog(
+            onDismissRequest = { isDialogOpen = false },
+            title = { Text("Submit Application", fontWeight = FontWeight.Bold, fontSize = 18.sp) },
+            text = { Text("Are you sure you want to submit this application?") },
+            confirmButton = {
+                Button(onClick = {
+                    isDialogOpen = false
+                    //submit the info to firebase
+                    viewModel.submitApplication(
+                        name = name,
+                        date = date,
+                        startTime = startTime,
+                        endTime = endTime,
+                        purpose = purpose,
+                        type = roomName,
+                        status = status,
+                        userId = userId,
+                        onSuccess = {
+                            // Pop back stack after successful submission
+                            navController.popBackStack()
+                            onSuccess()
+                        },
+                        onError = { e ->
+                            Log.e("Submit", "Error submitting application", e)
+                        },
+                    )
+                },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = cyanInButton,
+                        contentColor = Color.White
+                    )) {
+                    Text("Confirm", )
+                }
+            },
+            dismissButton = {
+                Button(onClick = { isDialogOpen = false },
+                    colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFFAA4A44),
+                    contentColor = Color.White
+                )) {
+                    Text("Cancel")
+                }
+            }
+        )
     }
 }
 

@@ -42,6 +42,7 @@ android {
 }
 
 dependencies {
+    implementation("com.google.firebase:firebase-firestore:24.5.0")
     implementation("com.google.firebase:firebase-storage-ktx")
     implementation ("com.google.zxing:core:3.5.2")
     implementation("com.google.firebase:firebase-auth:23.2.0")

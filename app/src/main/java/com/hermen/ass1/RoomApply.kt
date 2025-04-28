@@ -56,6 +56,8 @@ import android.graphics.Color.WHITE
 import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.material.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.runtime.LaunchedEffect
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.hermen.ass1.MeetingRoom.RoomViewModel
@@ -222,20 +224,47 @@ fun Status(navController: NavController, isDarkTheme: Boolean) {
 @Composable
 fun StatusScreen(navController: NavController, viewModel: RoomViewModel = viewModel(), isDarkTheme: Boolean) {
     val requestList by viewModel.requestList.collectAsState()
-
+    var searchText by remember { mutableStateOf("") }
     // You can add a loading state if needed
     var isLoading by remember { mutableStateOf(true) }
     val user = SessionManager.currentUser!!
     val userId = user.id
-    val filteredList = if (userId.startsWith("A")) {
+    val isAdmin = userId.startsWith("A")
+    // Step 1: First, filter by visibility
+    val visibleList = if (isAdmin) {
         requestList
     } else {
         requestList.filter { it.userId == userId }
     }
+
+// Step 2: Then, apply search filter if needed
+    val filteredList = if (searchText.isNotBlank()) {
+        visibleList.filter { request ->
+            if (userId.startsWith("A")) {
+                // Admin: filter by name or roomType
+                request.name.contains(searchText, ignoreCase = true) ||
+                        request.roomType.contains(searchText, ignoreCase = true) ||
+                            request.status.contains(searchText, ignoreCase = true)
+            } else {
+                // Staff: filter only by roomType
+                request.roomType.contains(searchText, ignoreCase = true) ||
+                        request.status.contains(searchText, ignoreCase = true)
+            }
+        }
+    } else {
+        visibleList
+    }
+
     LaunchedEffect(Unit) {
         viewModel.fetchRequestList()
         isLoading = false
     }
+    //Search Bar
+    SearchBar(
+        searchText,
+        onSearchChanged = {searchText = it},
+        isAdmin = isAdmin
+    )
 
     if (isLoading) {
         // Show loading indicator
@@ -258,6 +287,36 @@ fun StatusScreen(navController: NavController, viewModel: RoomViewModel = viewMo
         }
     }
 }
+
+@Composable
+fun SearchBar(searchText: String, onSearchChanged: (String) -> Unit, isAdmin: Boolean) {
+    val placeholderText = if (isAdmin) {
+        "Search based on Name, Room Type, and Status"
+    } else {
+        "Search based on Room Type and Status"
+    }
+
+    TextField(
+        value = searchText,
+        onValueChange = onSearchChanged,
+        placeholder = { Text(placeholderText, color = Color.Gray) },
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp),
+        shape = RoundedCornerShape(20.dp),
+        singleLine = true,
+        colors = TextFieldDefaults.textFieldColors(
+            backgroundColor = Color.White, // Set the background color
+            focusedIndicatorColor = Color.Transparent,
+            unfocusedIndicatorColor = Color.Transparent,
+            disabledIndicatorColor = Color.Transparent
+        ),
+        leadingIcon = {
+            Icon(Icons.Default.Search, contentDescription = "Search Icon")
+        }
+    )
+}
+
 
 @Composable
 fun ApplicationStatusCard(navController: NavController, request: ApplicationStatus) {
