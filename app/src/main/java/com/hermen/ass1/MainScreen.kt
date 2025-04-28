@@ -81,7 +81,6 @@ fun MainScreen(
     modifier: Modifier = Modifier,
 ) {
     val navController = rememberNavController()
-    val themeViewModel: ThemeViewModel = viewModel()
     val context = LocalContext.current
     val navigationType = getNavigationType(context, context.resources.configuration.orientation)
 
@@ -90,21 +89,17 @@ fun MainScreen(
             navController = navController,
             modifier = modifier,
             isDarkTheme = isDarkTheme,
-            onToggleTheme = onToggleTheme,
-            themeViewModel = themeViewModel
+            onToggleTheme = onToggleTheme
         )
     }
 }
-
-
 
 @Composable
 fun AppNavHost(
     navController: NavHostController,
     modifier: Modifier = Modifier,
     isDarkTheme: Boolean,
-    onToggleTheme: () -> Unit,
-    themeViewModel: ThemeViewModel
+    onToggleTheme: () -> Unit
 ) {
     NavHost(
         navController = navController,
@@ -218,7 +213,8 @@ fun Home(
     onToggleTheme: () -> Unit
 ) {
     val icon = if (isDarkTheme) Icons.Filled.LightMode else Icons.Filled.DarkMode
-    val backgroundColor = if (isDarkTheme) Color.Transparent else Color(0xFFE5FFFF)
+    val backgroundColor = if (isDarkTheme) Color.Black else Color(0xFFE5FFFF)
+    val iconTint = if (isDarkTheme) Color.White else Color.Black
 
     Box(
         modifier = modifier
@@ -234,11 +230,11 @@ fun Home(
                 .padding(16.dp)
         ) {
             Spacer(modifier = Modifier.height(48.dp))
-            AppLogo(modifier = Modifier.size(200.dp))
+            AppLogo(modifier = Modifier.size(200.dp), isDarkTheme = isDarkTheme)
             Spacer(modifier = Modifier.height(16.dp))
-            ApplicationSection(navController = navController)
+            ApplicationSection(navController = navController, isDarkTheme = isDarkTheme)
             Spacer(modifier = Modifier.height(16.dp))
-            AnnouncementSection(navController = navController)
+            AnnouncementSection(navController = navController, isDarkTheme = isDarkTheme)
             Spacer(modifier = Modifier.height(16.dp))
             GotoAttendanceOverview(navController = navController)
         }
@@ -249,13 +245,20 @@ fun Home(
                 .align(Alignment.TopEnd)
                 .padding(8.dp)
         ) {
-            Icon(imageVector = icon, contentDescription = "Toggle Theme")
+            Icon(
+                imageVector = icon,
+                contentDescription = "Toggle Theme",
+                tint = iconTint
+            )
         }
     }
 }
 
 @Composable
-fun AppLogo(modifier: Modifier = Modifier) {
+fun AppLogo(
+    modifier: Modifier = Modifier,
+    isDarkTheme: Boolean
+) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Box(
             modifier = modifier
@@ -273,7 +276,7 @@ fun AppLogo(modifier: Modifier = Modifier) {
 
         Text(
             text = stringResource(R.string.app_name),
-            color = MaterialTheme.colorScheme.onBackground,
+            color = if (isDarkTheme) Color.White else Color.Black,
             fontSize = 30.sp,
             fontWeight = FontWeight.Bold,
             modifier = Modifier.align(Alignment.CenterHorizontally)
@@ -282,7 +285,10 @@ fun AppLogo(modifier: Modifier = Modifier) {
 }
 
 @Composable
-fun ApplicationSection(navController: NavController) {
+fun ApplicationSection(
+    navController: NavController,
+    isDarkTheme: Boolean
+) {
     val apps = listOf(
         AppItem("Meeting Room", R.drawable.meeting_room, "meeting_room_screen"),
         AppItem("Leave", R.drawable.leave, AppScreen.LeaveApplication.name),
@@ -294,7 +300,8 @@ fun ApplicationSection(navController: NavController) {
             text = "Application",
             fontSize = 18.sp,
             fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(horizontal = 16.dp)
+            modifier = Modifier.padding(horizontal = 16.dp),
+            color = if (isDarkTheme) Color.White else Color.Black
         )
         Spacer(modifier = Modifier.height(8.dp))
         Row(
@@ -321,7 +328,10 @@ fun ApplicationSection(navController: NavController) {
                             contentScale = ContentScale.Crop
                         )
                     }
-                    Text(text = app.name, fontSize = 14.sp)
+                    Text(text = app.name,
+                        fontSize = 14.sp,
+                        color = if (isDarkTheme) Color.White else Color.Black
+                    )
                 }
             }
         }
@@ -346,6 +356,7 @@ fun GotoAttendanceOverview(navController: NavController) {
 @Composable
 fun AnnouncementSection(
     navController: NavController,
+    isDarkTheme: Boolean,
     viewModel: AnnouncementViewModel = viewModel()
 ) {
     // Collect the announcements
@@ -353,17 +364,19 @@ fun AnnouncementSection(
 
     Column(modifier = Modifier.fillMaxWidth()) {
         Text(
-            text = "Notifications",
+            text = "Announcement",
             fontSize = 18.sp,
             fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(horizontal = 16.dp)
+            modifier = Modifier.padding(horizontal = 16.dp),
+            color = if (isDarkTheme) Color.White else Color.Black
         )
         Spacer(modifier = Modifier.height(8.dp))
         if (announcements.isEmpty()) {
             Text(
                 text = "No announcements available.",
                 modifier = Modifier.padding(horizontal = 16.dp),
-                fontSize = 14.sp
+                fontSize = 14.sp,
+                color = if (isDarkTheme) Color.White else Color.Black
             )
         } else {
             LazyRow(
@@ -376,7 +389,8 @@ fun AnnouncementSection(
                         imageUrl = announcement.imageUrl, // Pass imageUrl here
                         onClick = {
                             navController.navigate(AppScreen.AnnouncementOverview.name)
-                        }
+                        },
+                        isDarkTheme = isDarkTheme
                     )
                 }
             }
@@ -385,7 +399,7 @@ fun AnnouncementSection(
 }
 
 @Composable
-fun AnnouncementCard(title: String, imageUrl: String?, onClick: () -> Unit) {
+fun AnnouncementCard(title: String, imageUrl: String?, onClick: () -> Unit, isDarkTheme: Boolean) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
@@ -417,7 +431,8 @@ fun AnnouncementCard(title: String, imageUrl: String?, onClick: () -> Unit) {
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 4.dp)
+                .padding(horizontal = 4.dp),
+            color = if (isDarkTheme) Color.White else Color.Black
         )
     }
 }

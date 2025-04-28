@@ -322,7 +322,6 @@ fun UserProfileScreen(
                     ) {
                         Text("Logout")
                     }
-
                     Spacer(modifier = Modifier.height(32.dp))
                 }
             }

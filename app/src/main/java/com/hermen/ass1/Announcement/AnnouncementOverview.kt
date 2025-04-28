@@ -61,7 +61,7 @@ fun AnnouncementOverview(
 ) {
     val announcements = remember { mutableStateOf(emptyList<Announcement>()) }
     val isLoading = remember { mutableStateOf(true) }
-    val backgroundColor = if (isDarkTheme) Color.Transparent else Color(0xFFE5FFFF)
+    val backgroundColor = if (isDarkTheme) Color.Black else Color(0xFFE5FFFF)
 
     val currentUser = SessionManager.currentUser
     val isAdmin = currentUser?.id?.startsWith("A") == true
@@ -199,7 +199,8 @@ fun AnnouncementOverview(
                         announcement = announcement,
                         navController = navController,
                         isDeleteMode = isDeleteMode.value,
-                        selectedAnnouncementIds = selectedAnnouncementIds
+                        selectedAnnouncementIds = selectedAnnouncementIds,
+                        isDarkTheme = isDarkTheme
                     )
                 }
             }
@@ -212,7 +213,8 @@ fun AnnouncementRow(
     announcement: Announcement,
     navController: NavHostController,
     isDeleteMode: Boolean = false,
-    selectedAnnouncementIds: MutableState<List<String>>
+    selectedAnnouncementIds: MutableState<List<String>>,
+    isDarkTheme: Boolean
 ) {
     Row(
         modifier = Modifier
@@ -266,14 +268,16 @@ fun AnnouncementRow(
             Text(
                 text = announcement.title,
                 style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
+                color = if (isDarkTheme) Color.White else Color.Black
             )
 
             Text(
                 text = announcement.content,
                 style = MaterialTheme.typography.bodyLarge,
                 maxLines = 2,
-                overflow = TextOverflow.Ellipsis
+                overflow = TextOverflow.Ellipsis,
+                color = if (isDarkTheme) Color.White else Color.Black
             )
         }
     }

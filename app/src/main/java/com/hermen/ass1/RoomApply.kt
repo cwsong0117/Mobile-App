@@ -66,7 +66,7 @@ import com.hermen.ass1.User.SessionManager
 fun MeetingRoomApply(navController: NavController, isDarkTheme: Boolean) {
     var selectedTabIndex by remember { mutableIntStateOf(0) }
     val topBarTitle = if (selectedTabIndex == 0) "Meeting Room" else "Application Status"
-    val backgroundColor = if (isDarkTheme) Color.Transparent else Color(0xFFE5FFFF)
+    val backgroundColor = if (isDarkTheme) Color.Black else Color(0xFFE5FFFF)
 
     Column(
         modifier = Modifier
@@ -559,7 +559,6 @@ fun DeleteButtonWithConfirmation(
         Text("Delete", color = Color.Red)
     }
 }
-
 
 @Preview(showBackground = true)
 @Composable

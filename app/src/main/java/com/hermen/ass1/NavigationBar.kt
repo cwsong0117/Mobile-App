@@ -33,6 +33,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.Divider
 import androidx.compose.material3.*
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
@@ -89,7 +90,6 @@ fun BottomNavigationBar(navItems: List<NavItem>,navController: NavHostController
                 .padding(horizontal = 12.dp),
             horizontalArrangement = Arrangement.SpaceEvenly
         ) {
-            // Loop through nav items and add them as icon buttons
             navItems.forEach { item ->
                 IconButton(onClick = { navController.navigate(item.route) }) {
                     val isSelected = currentRoute == item.route
@@ -107,37 +107,58 @@ fun BottomNavigationBar(navItems: List<NavItem>,navController: NavHostController
     }
 }
 
-
-
 @Composable
-fun FooterRail(navItems: List<NavItem>,navController: NavHostController, currentRoute: String?, isDarkTheme: Boolean){
+fun FooterRail(
+    navItems: List<NavItem>,
+    navController: NavHostController,
+    currentRoute: String?,
+    isDarkTheme: Boolean
+) {
     val backgroundColor = if (isDarkTheme) Color.DarkGray else Color.White
+
     Column(
         modifier = Modifier
             .fillMaxHeight()
             .padding(start = 8.dp)
-            .background(backgroundColor)
     ) {
         NavigationRail(
-            modifier = Modifier
-                .width(82.dp),
-            containerColor = Color.White
+            modifier = Modifier.width(82.dp),
+            containerColor = backgroundColor
         ) {
             navItems.forEach { item ->
+                val isSelected = (currentRoute ?: navItems.first().route) == item.route
                 NavigationRailItem(
-                    selected = (currentRoute ?: navItems.first().route) == item.route,
-                    onClick = { navController.navigate(item.route) },
+                    selected = isSelected,
+                    onClick = {
+                        if (currentRoute != item.route) {
+                            navController.navigate(item.route) {
+                                launchSingleTop = true
+                                popUpTo(navController.graph.startDestinationId) {
+                                    saveState = true
+                                }
+                                restoreState = true
+                            }
+                        }
+                    },
                     icon = {
-                        IconResource(item.vectorIcon, item.label)
+                        IconResource(
+                            iconRes = item.vectorIcon,
+                            description = item.label,
+                            iconColor = when {
+                                isDarkTheme && isSelected -> Color.Black
+                                isDarkTheme && !isSelected -> Color.White
+                                !isDarkTheme && isSelected -> Color(0xFF2196F3)
+                                else -> Color.Black
+                            }
+                        )
                     },
                     alwaysShowLabel = false,
-                    colors = NavigationRailItemColors(
-                        selectedIconColor = Color.White, selectedTextColor = Color.Black,
-                        selectedIndicatorColor = Color.White,
-                        unselectedIconColor = Color.Black,
-                        unselectedTextColor = Color.Black,
-                        disabledIconColor = Color.Black,
-                        disabledTextColor = Color.Black
+                    colors = NavigationRailItemDefaults.colors(
+                        selectedIconColor = Color.Unspecified,   // we control icon color manually
+                        unselectedIconColor = Color.Unspecified,
+                        selectedTextColor = Color.Unspecified,
+                        unselectedTextColor = Color.Unspecified,
+                        indicatorColor = if (isDarkTheme) Color.White else Color(0x332196F3) // Light translucent blue in light mode
                     )
                 )
             }
@@ -146,22 +167,44 @@ fun FooterRail(navItems: List<NavItem>,navController: NavHostController, current
 }
 
 @Composable
-fun DrawerContent(navItems: List<NavItem>, navController: NavHostController, currentRoute: String?, isDarkTheme: Boolean) {
+fun DrawerContent(
+    navItems: List<NavItem>,
+    navController: NavHostController,
+    currentRoute: String?,
+    isDarkTheme: Boolean
+) {
     val backgroundColor = if (isDarkTheme) Color.DarkGray else Color.White
+    val selectedContainerColor = Color.White
+    val unselectedContainerColor = Color.Transparent
+
+    val selectedContentColor = if (isDarkTheme) Color.Black else Color(0xFF2196F3)
+    val unselectedContentColor = if (isDarkTheme) Color.White else Color.Black
+
     Column(
-        modifier = Modifier.padding(top = 30.dp).background(backgroundColor),
+        modifier = Modifier
+            .padding(top = 30.dp)
+            .background(backgroundColor),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         navItems.forEach { item ->
+            val selected = (currentRoute ?: navItems.first().route) == item.route
+            val iconColor = when {
+                isDarkTheme && selected -> Color.Black
+                isDarkTheme && !selected -> Color.White
+                !isDarkTheme && selected -> Color(0xFF2196F3)
+                else -> Color.Black
+            }
+
             NavigationDrawerItem(
-                label = { Text(
-                    text = item.label,
-                    fontSize = 16.sp,
-                    fontWeight = Bold,
-                    modifier = Modifier.padding(top = 12.dp, start = 12.dp)
-                )
+                label = {
+                    Text(
+                        text = item.label,
+                        fontSize = 16.sp,
+                        fontWeight = Bold,
+                        modifier = Modifier.padding(top = 12.dp, start = 12.dp)
+                    )
                 },
-                selected = (currentRoute ?: navItems.first().route) == item.route,
+                selected = selected,
                 onClick = {
                     if (currentRoute != item.route) {
                         navController.navigate(item.route) {
@@ -173,11 +216,17 @@ fun DrawerContent(navItems: List<NavItem>, navController: NavHostController, cur
                         }
                     }
                 },
-                icon = { IconResource(item.vectorIcon, item.label) },
+                icon = {
+                    IconResource(item.vectorIcon, item.label, iconColor = iconColor)
+                },
                 modifier = Modifier.padding(horizontal = 10.dp),
                 colors = NavigationDrawerItemDefaults.colors(
-                    unselectedContainerColor = Color.Transparent,
-                    selectedContainerColor = Color.White,
+                    selectedContainerColor = selectedContainerColor,
+                    unselectedContainerColor = unselectedContainerColor,
+                    selectedTextColor = selectedContentColor,
+                    unselectedTextColor = unselectedContentColor,
+                    selectedIconColor = selectedContentColor,
+                    unselectedIconColor = unselectedContentColor
                 )
             )
         }
@@ -185,11 +234,12 @@ fun DrawerContent(navItems: List<NavItem>, navController: NavHostController, cur
 }
 
 @Composable
-fun IconResource(iconRes: Int, description: String) {
+fun IconResource(iconRes: Int, description: String, iconColor: Color) {
     Image(
         painter = painterResource(id = iconRes),
         contentDescription = description,
         contentScale = ContentScale.Crop,
-        modifier = Modifier.size(30.dp)
+        modifier = Modifier.size(30.dp),
+        colorFilter = ColorFilter.tint(iconColor)
     )
 }
