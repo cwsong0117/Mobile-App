@@ -48,7 +48,7 @@ import com.hermen.ass1.MeetingRoom.RoomViewModel
 import com.hermen.ass1.User.UserProfileScreen
 import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.compose.composable
-import com.wx.myapplication.IndicateFooter
+import com.hermen.ass1.IndicateFooter
 import coil.compose.AsyncImage
 
 enum class AppScreen(@StringRes val title: Int) {

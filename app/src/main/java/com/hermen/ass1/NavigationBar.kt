@@ -37,7 +37,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight.Companion.Bold
-import com.wx.myapplication.NavItem
+import com.hermen.ass1.NavItem
 
 @Composable
 fun BackButton(navController: NavController, title: String, isDarkTheme: Boolean) {
