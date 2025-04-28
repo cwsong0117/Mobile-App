@@ -14,7 +14,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import android.app.DatePickerDialog
-import android.content.Context
 import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.clickable
@@ -23,6 +22,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material3.DropdownMenu
@@ -49,12 +49,12 @@ import com.hermen.ass1.MeetingRoom.MeetingRoomViewModel
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
-import java.util.concurrent.TimeUnit
 import com.hermen.ass1.User.SessionManager
-import com.hermen.ass1.User.UserProfileViewModel
+import java.time.LocalTime
+import java.time.format.DateTimeFormatter
 
 @Composable
-fun RoomDetail(navController: NavController, roomName: String, isDarkTheme: Boolean, userProfileViewModel: UserProfileViewModel = viewModel() ) {
+fun RoomDetail(navController: NavController, roomName: String, isDarkTheme: Boolean) {
     // Local state for each field
     val name = remember { mutableStateOf("") }
     val date = remember { mutableStateOf("") }
@@ -121,6 +121,7 @@ fun ApplyDetails(name:String, onNameChange: (String) -> Unit,
     val context = LocalContext.current
     val backgroundColor = if (isDarkTheme) Color.Transparent else Color(0xFFE5FFFF)
 
+    Divider(color = Color.LightGray, thickness = 1.dp)
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -218,13 +219,9 @@ fun ApplyDetails(name:String, onNameChange: (String) -> Unit,
         Row(
             modifier = Modifier
                 .fillMaxWidth(),
-            horizontalArrangement = Arrangement.Center
-
         ) {
-
             PurposeInput(purpose, onPurposeChange,  customPurpose = customPurpose, onCustomPurposeChange = onCustomPurposeChange, isDarkTheme = isDarkTheme)
         }
-
         //submit button
         Box(
             modifier = Modifier
@@ -240,13 +237,34 @@ fun ApplyDetails(name:String, onNameChange: (String) -> Unit,
                     modifier = Modifier
                         .padding(top = 50.dp, bottom = 20.dp, end = 40.dp),
                     onClick = {
-                        if (!validateSelectedDate(context, date)) {
-                            return@Button
-                        }
-                        else if (name.isBlank() || date.isBlank() || startTime.isBlank() || endTime.isBlank() || purpose.isBlank()) {
+                        if (name.isBlank() || date.isBlank() || startTime.isBlank() || endTime.isBlank() || purpose.isBlank()) {
                             Toast.makeText(context, "Please fill in all fields", Toast.LENGTH_SHORT).show()
                             return@Button
                         }
+
+                        // Check if the start time is before the end time
+                        val formatter = DateTimeFormatter.ofPattern("HH : mm")
+                        val start= LocalTime.parse(startTime.uppercase(), formatter)
+                        val end = LocalTime.parse(endTime.uppercase(), formatter)
+                        val now = LocalTime.now()
+
+                        try {
+                            if(start.isAfter(end) || start == end) {
+                                Toast.makeText(context, "Start time must be before end time", Toast.LENGTH_SHORT).show()
+                                return@Button
+                            }
+                            else if(start.isBefore(now)){
+                                 Toast.makeText(context, "Start time must be after current time", Toast.LENGTH_SHORT).show()
+                                return@Button
+                            }
+                        } catch (e: Exception) {
+                            Toast.makeText(context, "Invalid time format", Toast.LENGTH_SHORT).show()
+                            return@Button
+                        }
+
+
+
+                        //submit the info to firebase
                         viewModel.submitApplication(
                             name = name,
                             date = date,
@@ -280,14 +298,19 @@ fun NameInput(name:String, onNameChange:(String) -> Unit) {
         horizontalArrangement = Arrangement.Center
     ){
         TextField(
-        value = name,
-        onValueChange = onNameChange,
-        placeholder = { Text("ex: John") },
-        modifier = Modifier
-            .width(380.dp)
-            .padding(10.dp)
-            .clip(RoundedCornerShape(50.dp)),
-    )}
+            value = name,
+            onValueChange = onNameChange,
+            placeholder = { Text("ex: John") },
+            colors = TextFieldDefaults.textFieldColors(
+                backgroundColor = Color.White, // Set the background color
+                textColor = Color.Black // Set text color
+            ),
+            modifier = Modifier
+                .width(380.dp)
+                .padding(10.dp)
+                .background(Color.White, RoundedCornerShape(36.dp))
+                .clip(RoundedCornerShape(50.dp)),
+        )}
 }
 
 @Composable
@@ -307,14 +330,15 @@ fun DateInput(date: String, onDateChange: (String) -> Unit) {
                 set(Calendar.SECOND, 0)
                 set(Calendar.MILLISECOND, 0)
             }
-            onDateChange(dateFormat.format(selectedCalendar.time))
+            val selectedDate = dateFormat.format(selectedCalendar.time)
+
+            onDateChange(selectedDate)
         },
         calendar.get(Calendar.YEAR),
         calendar.get(Calendar.MONTH),
         calendar.get(Calendar.DAY_OF_MONTH)
     )
 
-    // Allow selecting today or future, not past
     datePickerDialog.datePicker.minDate = calendar.timeInMillis
 
     Row(
@@ -345,7 +369,9 @@ fun DateInput(date: String, onDateChange: (String) -> Unit) {
                     } else {
                         innerTextField()
                     }
-                    IconButton(onClick = { datePickerDialog.show() }) {
+                    IconButton(onClick = {
+                        datePickerDialog.show()
+                    }) {
                         Icon(
                             painter = painterResource(id = R.drawable.baseline_calendar_month_24),
                             contentDescription = "Select Date"
@@ -356,23 +382,6 @@ fun DateInput(date: String, onDateChange: (String) -> Unit) {
         )
     }
 }
-
-fun validateSelectedDate(context: Context, selectedDateStr: String): Boolean {
-    val dateFormat = SimpleDateFormat("dd-MM-yyyy", Locale.getDefault())
-    val selectedDate = dateFormat.parse(selectedDateStr)
-    val currentTime = Calendar.getInstance().time
-
-    val diffInMillis = selectedDate.time - currentTime.time
-    val diffInHours = TimeUnit.MILLISECONDS.toHours(diffInMillis)
-
-    return if (diffInHours < 24) {
-        Toast.makeText(context, "You must reserve at least 1 day in advance.", Toast.LENGTH_SHORT).show()
-        false
-    } else {
-        true
-    }
-}
-
 
 @Composable
 fun StartTimeInput(startTime: String, onStartTimeChange:(String) -> Unit) {
@@ -476,7 +485,6 @@ fun EndTimeInput(endTime: String, onEndTimeChange: (String) -> Unit) {
     )
 }
 
-
 @Composable
 fun PurposeInput(purpose: String, onPurposeChange: (String) -> Unit, customPurpose: String, onCustomPurposeChange: (String) -> Unit, isDarkTheme: Boolean) {
     val purposeList = listOf("Meeting", "Conference", "Training", "Discussion", "Interview", "Project Planning", "Other")
@@ -486,26 +494,34 @@ fun PurposeInput(purpose: String, onPurposeChange: (String) -> Unit, customPurpo
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
     ) {
         // Main Purpose Dropdown (read-only)
-        TextField(
-            value = customPurpose,
-            onValueChange = {},
-            readOnly = true,
-            placeholder = { Text("Select purpose") },
-            modifier = Modifier
-                .width(380.dp)
-                .padding(10.dp)
-                .clip(RoundedCornerShape(50.dp)),
-            trailingIcon = {
-                Icon(
-                    Icons.Default.ArrowDropDown,
-                    contentDescription = "Dropdown icon",
-                    modifier = Modifier.clickable { expanded = !expanded }
-                )
-            }
-        )
+        Row(
+            //make it align center
+            modifier = Modifier.align(Alignment.CenterHorizontally)
+        ) {
+            TextField(
+                value = customPurpose,
+                onValueChange = {},
+                readOnly = true,
+                placeholder = { Text("Select purpose") },
+                colors = TextFieldDefaults.textFieldColors(
+                    backgroundColor = Color.White, // Set the background color
+                    textColor = Color.Black // Set text color
+                ),
+                modifier = Modifier
+                    .width(380.dp)
+                    .padding(10.dp)
+                    .clip(RoundedCornerShape(50.dp)) ,
+                trailingIcon = {
+                    Icon(
+                        Icons.Default.ArrowDropDown,
+                        contentDescription = "Dropdown icon",
+                        modifier = Modifier.clickable { expanded = !expanded }
+                    )
+                }
+            )
+        }
 
         // Dropdown List
         DropdownMenu(
@@ -536,16 +552,25 @@ fun PurposeInput(purpose: String, onPurposeChange: (String) -> Unit, customPurpo
             val cyanInTitle = if (isDarkTheme) Color(0xFFAFEEEE) else Color(0xFF00cccc)
             Spacer(modifier = Modifier.height(8.dp))
             Text(text = "Enter Your Purpose: ",
-                color = cyanInTitle)
-            TextField(
-                value = purpose,
-                onValueChange = onPurposeChange,
-                placeholder = { Text("Enter your reservation purpose") },
-                modifier = Modifier
-                    .width(380.dp)
-                    .padding(10.dp)
-                    .clip(RoundedCornerShape(50.dp))
-            )
+                color = cyanInTitle,
+                modifier = Modifier.padding(start = 24.dp, top = 10.dp))
+            Row(
+                modifier = Modifier.align(Alignment.CenterHorizontally)
+            ) {
+                TextField(
+                    value = purpose,
+                    onValueChange = onPurposeChange,
+                    placeholder = { Text("Enter your reservation purpose") },
+                    colors = TextFieldDefaults.textFieldColors(
+                        backgroundColor = Color.White, // Set the background color
+                        textColor = Color.Black // Set text color
+                    ),
+                    modifier = Modifier
+                        .width(380.dp)
+                        .padding(10.dp)
+                        .clip(RoundedCornerShape(50.dp))
+                )
+            }
         }
         else if (purpose.isNotEmpty()) {
             onPurposeChange(customPurpose)

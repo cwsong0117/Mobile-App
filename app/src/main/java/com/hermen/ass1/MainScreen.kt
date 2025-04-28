@@ -85,7 +85,7 @@ fun MainScreen(
     val context = LocalContext.current
     val navigationType = getNavigationType(context, context.resources.configuration.orientation)
 
-    IndicateFooter(navigationType = navigationType, navController = navController) {
+    IndicateFooter(isDarkTheme = isDarkTheme, navigationType = navigationType, navController = navController) {
         AppNavHost(
             navController = navController,
             modifier = modifier,
@@ -224,6 +224,7 @@ fun Home(
         modifier = modifier
             .fillMaxSize()
             .background(backgroundColor)
+            .padding(top = 16.dp)
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,

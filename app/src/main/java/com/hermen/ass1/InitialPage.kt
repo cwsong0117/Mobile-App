@@ -1,11 +1,13 @@
 package com.hermen.ass1
 
+import android.content.res.Configuration
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -37,6 +39,7 @@ import androidx.navigation.compose.NavHost
 import com.hermen.ass1.ui.theme.Screen
 import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.material3.windowsizeclass.calculateWindowSizeClass
+import androidx.compose.ui.platform.LocalConfiguration
 
 @Composable
 fun Navigation(
@@ -69,112 +72,171 @@ fun Navigation(
 }
 
 @Composable
-fun InitialPage(navController: NavController, isDarkTheme:Boolean) {
+fun InitialPage(navController: NavController, isDarkTheme: Boolean) {
+
+    val configuration = LocalConfiguration.current
+    val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
 
     val backgroundColor = if (isDarkTheme) Color.Transparent else Color(0xFFE5FFFF)
     val signUpButtonColor = if (isDarkTheme) Color.Transparent else Color(0xFF89CFF0)
-    val logInButtonColor = if (isDarkTheme) Color.Transparent else Color(0xFF89CFF0	)
+    val logInButtonColor = if (isDarkTheme) Color.Transparent else Color(0xFF89CFF0)
 
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(backgroundColor),
-        contentAlignment = Alignment.TopCenter
+        contentAlignment = Alignment.Center
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(horizontal = 32.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Top
-        ) {
-            // 文字部分
-            Spacer(modifier = Modifier.height(100.dp)) // 调整高度，推开顶部
-
-            Box(
-                modifier = Modifier.fillMaxWidth(),
-                contentAlignment = Alignment.CenterStart
+        if (isLandscape) {
+            // 💡 Landscape Mode: Horizontal layout (everything shown in one screen)
+            Row(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceEvenly
             ) {
+
+                // Logo and App Name
                 Column(
-                    modifier = Modifier
-                        .align(Alignment.CenterStart)
-                        .padding(start = 60.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Text(
-                        text = "GOOD",
-                        fontSize = 24.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.Black
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ){
+                    Image(
+                        painter = painterResource(id = R.drawable.app_logo),
+                        contentDescription = "App Logo",
+                        contentScale = ContentScale.Fit,
+                        modifier = Modifier.size(150.dp)
                     )
                     Text(
-                        text = "  DAY!",
-                        fontSize = 24.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.Black
+                        text = stringResource(R.string.app_name),
+                        color = Color.Black,
+                        fontSize = 26.sp,
+                        fontWeight = FontWeight.Bold
                     )
                 }
-            }
 
-            // 在文字和图标之间增加间隔
-            Spacer(modifier = Modifier.height(50.dp))
-
-            // 图标部分
-            Box(
-                modifier = Modifier
-                    .size(200.dp) // 方形 Box
-                    .clip(RoundedCornerShape(12.dp))
-            ) {
-                Image(
-                    painter = painterResource(id = R.drawable.app_logo), // 记得添加资源
-                    contentDescription = "App Logo",
-                    contentScale = ContentScale.Fit,
-                    modifier = Modifier.fillMaxSize()
-                )
-
-            }
-            Text(
-                text = stringResource(R.string.app_name),
-                color = Color.Black,
-                fontSize = 30.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.align(Alignment.CenterHorizontally)
-            )
-
-            // 在图标和按钮之间增加间距
-            Spacer(modifier = Modifier.height(50.dp))
-
-            // 按钮部分
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(200.dp), // 设置 Box 高度
-                contentAlignment = Alignment.Center // 让 Box 内部内容居中
-            ) {
+                // Buttons
                 Column(
-                    horizontalAlignment = Alignment.CenterHorizontally
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
                 ) {
                     Button(
                         onClick = { navController.navigate(Screen.Signup.route) },
                         modifier = Modifier
-                            .fillMaxWidth(0.7f) // 按钮宽度 70% 屏幕宽度
+                            .fillMaxWidth(0.5f)
                             .height(50.dp),
                         colors = ButtonDefaults.buttonColors(signUpButtonColor)
                     ) {
                         Text(text = "Sign In", fontSize = 18.sp)
                     }
 
-                    Spacer(modifier = Modifier.height(20.dp)) // 按钮间距
+                    Spacer(modifier = Modifier.height(16.dp))
 
                     Button(
                         onClick = { navController.navigate("login") },
                         modifier = Modifier
-                            .fillMaxWidth(0.7f)
+                            .fillMaxWidth(0.5f)
                             .height(50.dp),
                         colors = ButtonDefaults.buttonColors(Color.White),
                         border = BorderStroke(2.dp, logInButtonColor)
                     ) {
                         Text(text = "Login", fontSize = 18.sp, color = logInButtonColor)
+                    }
+                }
+            }
+        } else {
+            // 📱 Portrait Mode: Default (Vertical layout with scrollable height)
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 32.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Top
+            ) {
+                Spacer(modifier = Modifier.height(100.dp))
+
+                Box(
+                    modifier = Modifier.fillMaxWidth(),
+                    contentAlignment = Alignment.CenterStart
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .align(Alignment.CenterStart)
+                            .padding(start = 60.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            text = "GOOD",
+                            fontSize = 24.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.Black
+                        )
+                        Text(
+                            text = "  DAY!",
+                            fontSize = 24.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.Black
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(50.dp))
+
+                Box(
+                    modifier = Modifier
+                        .size(200.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                ) {
+                    Image(
+                        painter = painterResource(id = R.drawable.app_logo),
+                        contentDescription = "App Logo",
+                        contentScale = ContentScale.Fit,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                }
+
+                Text(
+                    text = stringResource(R.string.app_name),
+                    color = Color.Black,
+                    fontSize = 30.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.align(Alignment.CenterHorizontally)
+                )
+
+                Spacer(modifier = Modifier.height(50.dp))
+
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(200.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Button(
+                            onClick = { navController.navigate(Screen.Signup.route) },
+                            modifier = Modifier
+                                .fillMaxWidth(0.7f)
+                                .height(50.dp),
+                            colors = ButtonDefaults.buttonColors(signUpButtonColor)
+                        ) {
+                            Text(text = "Sign In", fontSize = 18.sp)
+                        }
+
+                        Spacer(modifier = Modifier.height(20.dp))
+
+                        Button(
+                            onClick = { navController.navigate("login") },
+                            modifier = Modifier
+                                .fillMaxWidth(0.7f)
+                                .height(50.dp),
+                            colors = ButtonDefaults.buttonColors(Color.White),
+                            border = BorderStroke(2.dp, logInButtonColor)
+                        ) {
+                            Text(text = "Login", fontSize = 18.sp, color = logInButtonColor)
+                        }
                     }
                 }
             }

@@ -29,48 +29,15 @@ import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.material.Divider
 import androidx.compose.material3.*
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight.Companion.Bold
 import com.wx.myapplication.NavItem
-
-@Composable
-fun BottomNavigationBar(navItems: List<NavItem>,navController: NavHostController, currentRoute: String?) {
-
-    Box(
-        Modifier
-            .fillMaxWidth()
-            .height(80.dp)
-            .padding(bottom = 28.dp)
-//            .background(FooterBackground)
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .align(Alignment.BottomCenter)
-                .padding(horizontal = 12.dp),
-            horizontalArrangement = Arrangement.SpaceEvenly
-        ) {
-            // Loop through nav items and add them as icon buttons
-            navItems.forEach { item ->
-                IconButton(onClick = { navController.navigate(item.route) }) {
-                    val isSelected = currentRoute == item.route
-                    val iconModifier =
-                        if (isSelected) Modifier.size(40.dp) else Modifier.size(35.dp)
-                    Image(
-                        painter = painterResource(id = item.vectorIcon),
-                        contentDescription = item.label,
-                        contentScale = ContentScale.Crop,
-                        modifier = iconModifier
-                    )
-                }
-            }
-        }
-    }
-}
 
 @Composable
 fun BackButton(navController: NavController, title: String, isDarkTheme: Boolean) {
@@ -99,17 +66,55 @@ fun BackButton(navController: NavController, title: String, isDarkTheme: Boolean
                 color = textColor
             )
         }
-
         Divider(color = Color.LightGray, thickness = 1.dp)
     }
 }
 
 @Composable
-fun FooterRail(navItems: List<NavItem>,navController: NavHostController, currentRoute: String?){
+fun BottomNavigationBar(navItems: List<NavItem>,navController: NavHostController, currentRoute: String?, isDarkTheme: Boolean) {
+    val backgroundColor = if (isDarkTheme) Color.DarkGray else Color.White
+    Box(
+        Modifier
+            .fillMaxWidth()
+            .height(80.dp)
+            .padding(bottom = 28.dp)
+            .background(backgroundColor)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .align(Alignment.BottomCenter)
+                .padding(horizontal = 12.dp),
+            horizontalArrangement = Arrangement.SpaceEvenly
+        ) {
+            // Loop through nav items and add them as icon buttons
+            navItems.forEach { item ->
+                IconButton(onClick = { navController.navigate(item.route) }) {
+                    val isSelected = currentRoute == item.route
+                    val iconModifier =
+                        if (isSelected) Modifier.size(40.dp) else Modifier.size(35.dp)
+                    Image(
+                        painter = painterResource(id = item.vectorIcon),
+                        contentDescription = item.label,
+                        contentScale = ContentScale.Crop,
+                        modifier = iconModifier
+                    )
+                }
+            }
+        }
+    }
+}
+
+
+
+@Composable
+fun FooterRail(navItems: List<NavItem>,navController: NavHostController, currentRoute: String?, isDarkTheme: Boolean){
+    val backgroundColor = if (isDarkTheme) Color.DarkGray else Color.White
     Column(
         modifier = Modifier
             .fillMaxHeight()
             .padding(start = 8.dp)
+            .background(backgroundColor)
     ) {
         NavigationRail(
             modifier = Modifier
@@ -139,9 +144,10 @@ fun FooterRail(navItems: List<NavItem>,navController: NavHostController, current
 }
 
 @Composable
-fun DrawerContent(navItems: List<NavItem>, navController: NavHostController, currentRoute: String?) {
+fun DrawerContent(navItems: List<NavItem>, navController: NavHostController, currentRoute: String?, isDarkTheme: Boolean) {
+    val backgroundColor = if (isDarkTheme) Color.DarkGray else Color.White
     Column(
-        modifier = Modifier.padding(top = 30.dp, ),
+        modifier = Modifier.padding(top = 30.dp).background(backgroundColor),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         navItems.forEach { item ->

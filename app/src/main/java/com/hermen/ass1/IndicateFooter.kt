@@ -1,4 +1,4 @@
-package com.wx.myapplication
+package com.hermen.ass1
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -13,11 +13,6 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.compose.runtime.getValue
-import com.hermen.ass1.AppScreen
-import com.hermen.ass1.BottomNavigationBar
-import com.hermen.ass1. DrawerContent
-import com.hermen.ass1.FooterRail
-import com.hermen.ass1.R
 import com.hermen.ass1.ui.theme.utils.NavigationType
 
 data class NavItem(
@@ -34,9 +29,10 @@ val NavItems = listOf(
 )
 @Composable
 fun IndicateFooter(
+    isDarkTheme: Boolean,
     navigationType: NavigationType,
     navController: NavHostController,
-    content: @Composable () -> Unit
+    content: @Composable () -> Unit,
 ) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
@@ -45,7 +41,7 @@ fun IndicateFooter(
         NavigationType.BOTTOM_NAVIGATION -> {
             Scaffold(
                 bottomBar = {
-                    BottomNavigationBar(NavItems, navController, currentRoute)
+                    BottomNavigationBar(NavItems, navController, currentRoute,isDarkTheme)
                 }
             ) {
                 Box(modifier = Modifier.padding(it)) {
@@ -56,7 +52,7 @@ fun IndicateFooter(
 
         NavigationType.NAVIGATION_RAIL -> {
             Row {
-                FooterRail(NavItems, navController, currentRoute)
+                FooterRail(NavItems, navController, currentRoute, isDarkTheme)
                 content()
             }
         }
@@ -65,7 +61,7 @@ fun IndicateFooter(
             PermanentNavigationDrawer(
                 drawerContent = {
                     PermanentDrawerSheet(modifier = Modifier.width(220.dp)) {
-                        DrawerContent(NavItems, navController, currentRoute)
+                        DrawerContent(NavItems, navController, currentRoute, isDarkTheme)
                     }
                 }
             ) {

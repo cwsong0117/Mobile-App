@@ -47,6 +47,8 @@ import androidx.compose.ui.text.input.VisualTransformation
 import com.google.firebase.auth.FirebaseAuth
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
 
 @Composable
 fun SignupScreen(navController: NavController, isDarkTheme: Boolean) {
@@ -105,15 +107,28 @@ fun SignupScreen(navController: NavController, isDarkTheme: Boolean) {
                 Column(
                     modifier = Modifier
                         .align(Alignment.CenterStart)
-                        .padding(start = 230.dp),
+                        .padding(start = 6.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Text(
-                        text = "Signup",
-                        fontSize = 30.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.Black
-                    )
+                    Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                        IconButton(
+                            onClick = { navController.popBackStack() },
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.ArrowBack,
+                                contentDescription = "Back",
+                                tint = Color.Black
+                            )
+                        }
+                        Text(
+                            text = "Signup",
+                            fontSize = 30.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.Black
+                        )
+                    }
                 }
             }
 

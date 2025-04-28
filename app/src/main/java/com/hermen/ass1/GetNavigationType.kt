@@ -2,7 +2,6 @@ package com.hermen.ass1
 
 import android.content.Context
 import android.content.res.Configuration
-import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import com.hermen.ass1.ui.theme.utils.NavigationType
 
 

@@ -36,6 +36,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.material3.Text
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Row
 import androidx.compose.material3.TextField
 import androidx.compose.material3.Button
 import androidx.compose.material3.SnackbarHostState
@@ -51,11 +52,13 @@ import com.google.firebase.firestore.ktx.firestore
 import com.hermen.ass1.User.SessionManager
 import com.hermen.ass1.ui.theme.Screen
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Icon
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.TextButton
 
 @Composable
@@ -86,20 +89,33 @@ fun LoginScreen(navController: NavController, isDarkTheme: Boolean) {
             verticalArrangement = Arrangement.Top
         ) {
             // Header section
-            Spacer(modifier = Modifier.height(100.dp)) // Adjust height, push down
+            Spacer(modifier = Modifier.height(60.dp)) // Adjust height, push down
             Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.CenterStart) {
                 Column(
                     modifier = Modifier
                         .align(Alignment.CenterStart)
-                        .padding(start = 30.dp),
+                        .padding(start = 12.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Text(
-                        text = "Login",
-                        fontSize = 30.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.Black
-                    )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        IconButton(
+                            onClick = { navController.popBackStack() },
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.ArrowBack,
+                                contentDescription = "Back",
+                                tint = Color.Black
+                            )
+                        }
+                        Text(
+                            text = "Login",
+                            fontSize = 30.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.Black
+                        )
+                    }
                 }
             }
 

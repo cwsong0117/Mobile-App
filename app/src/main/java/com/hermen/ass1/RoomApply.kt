@@ -30,8 +30,6 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material.Button
-import androidx.compose.material.Divider
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
@@ -55,11 +53,14 @@ import com.google.zxing.common.BitMatrix
 import com.hermen.ass1.ApplicationStatusModel.ApplicationStatus
 import android.graphics.Color.BLACK
 import android.graphics.Color.WHITE
-import androidx.compose.material.ButtonDefaults
+import android.widget.Toast
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.material.*
 import androidx.compose.runtime.LaunchedEffect
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.hermen.ass1.MeetingRoom.RoomViewModel
 import androidx.compose.ui.graphics.Color
+import com.hermen.ass1.User.SessionManager
 
 @Composable
 fun MeetingRoomApply(navController: NavController, isDarkTheme: Boolean) {
@@ -125,7 +126,8 @@ fun MeetingRoomCard(
                    .height(200.dp)
                    .clickable {
                        val rawName = context.getString(meetingRoom.meetingRoomStringResourceId)
-                       navController.navigate("roomDetail/$rawName")
+                       navController.navigate("roomDetail/${rawName}")
+                       Log.d("TEST", "Navigating to: $rawName")
                    },
                contentScale = ContentScale.Crop
 
@@ -223,7 +225,13 @@ fun StatusScreen(navController: NavController, viewModel: RoomViewModel = viewMo
 
     // You can add a loading state if needed
     var isLoading by remember { mutableStateOf(true) }
-
+    val user = SessionManager.currentUser!!
+    val userId = user.id
+    val filteredList = if (userId.startsWith("A")) {
+        requestList
+    } else {
+        requestList.filter { it.userId == userId }
+    }
     LaunchedEffect(Unit) {
         viewModel.fetchRequestList()
         isLoading = false
@@ -236,14 +244,14 @@ fun StatusScreen(navController: NavController, viewModel: RoomViewModel = viewMo
             Text("Loading...")
         }
     } else {
-        if (requestList.isEmpty()) {
+        if (filteredList.isEmpty()) {
             // Show empty state
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Text("No requests found")
             }
         } else {
             LazyColumn {
-                items(requestList) { request ->
+                items(filteredList) { request ->
                     ApplicationStatusCard(navController, request)
                 }
             }
@@ -320,10 +328,12 @@ fun StatusDetails(navController: NavController, applyId: String, viewModel: Room
     val selectedRequest = requestList.value.firstOrNull { it.applyId == applyId }
     var qrBitmap by remember { mutableStateOf<Bitmap?>(null) }
     val cyanInButton = Color(0xFF0099cc)
-    val userId = "A001"
+    val user = SessionManager.currentUser!!
+    val userId = user.id
     val isAdmin = userId.startsWith("A") == true
     var isQrCodeVisible by remember { mutableStateOf(true) }
     val background = if (isDarkTheme) Color.Transparent else Color(0xFFE5FFFF)
+    val context = LocalContext.current
 
     Box(
         modifier = Modifier
@@ -407,6 +417,11 @@ fun StatusDetails(navController: NavController, applyId: String, viewModel: Room
                                     ) {
                                         Text("Approve",color = Color.White)
                                     }
+
+                                    DeleteButtonWithConfirmation(
+                                        applyId = selectedRequest.applyId,
+                                        viewModel = viewModel
+                                    )
 
                                     Button(
                                         colors = ButtonDefaults.buttonColors(
@@ -494,6 +509,57 @@ fun generateQRCode(text: String, size: Int = 512): Bitmap? {
         null
     }
 }
+
+@Composable
+fun DeleteButtonWithConfirmation(
+    applyId: String,
+    viewModel: RoomViewModel
+) {
+    val context = LocalContext.current
+    var showDialog by remember { mutableStateOf(false) }
+
+    if (showDialog) {
+        AlertDialog(
+            onDismissRequest = { showDialog = false },
+            title = { Text("Confirm Deletion") },
+            text = { Text("Are you sure you want to delete this application?") },
+            confirmButton = {
+                TextButton(onClick = {
+                    viewModel.deleteApplication(
+                        applyId,
+                        onSuccess = {
+                            Toast.makeText(context, "Application deleted", Toast.LENGTH_SHORT).show()
+                            showDialog = false
+                        },
+                        onFailure = {
+                            Toast.makeText(context, "Failed to delete", Toast.LENGTH_SHORT).show()
+                            showDialog = false
+                        }
+                    )
+                }) {
+                    Text("Delete", color = Color.Red)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDialog = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+
+    Button(
+        onClick = { showDialog = true },
+        colors = ButtonDefaults.buttonColors(
+            backgroundColor = Color.White,
+            contentColor = Color.Red
+        ),
+        border = BorderStroke(2.dp, Color.Red)
+    ) {
+        Text("Delete", color = Color.Red)
+    }
+}
+
 
 @Preview(showBackground = true)
 @Composable

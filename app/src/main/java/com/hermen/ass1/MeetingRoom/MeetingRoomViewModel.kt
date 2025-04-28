@@ -151,4 +151,32 @@ class RoomViewModel : ViewModel() {
                 Log.e("Firebase", "Failed to fetch document for status update", e)
             }
     }
+    fun deleteApplication(applyId: String, onSuccess: () -> Unit, onFailure: (Exception) -> Unit) {
+        db.collection("Room")
+            .whereEqualTo("applyId", applyId)
+            .get()
+            .addOnSuccessListener { documents ->
+                if (!documents.isEmpty) {
+                    val docId = documents.first().id
+                    db.collection("Room")
+                        .document(docId)
+                        .delete()
+                        .addOnSuccessListener {
+                            Log.d("Firebase", "Application with applyId $applyId deleted successfully")
+                            onSuccess()
+                        }
+                        .addOnFailureListener { e ->
+                            Log.e("Firebase", "Error deleting document", e)
+                            onFailure(e)
+                        }
+                } else {
+                    Log.e("Firebase", "No application found with applyId: $applyId")
+                    onFailure(Exception("Application not found"))
+                }
+            }
+            .addOnFailureListener { e ->
+                Log.e("Firebase", "Error querying application to delete", e)
+                onFailure(e)
+            }
+    }
 }
