@@ -33,4 +33,14 @@ object AnnouncementRepository {
             null
         }
     }
+
+    suspend fun deleteAnnouncement(id: String) {
+        try {
+            announcementRef.document(id).delete().await()
+            Log.d("RepoDebug", "Deleted successfully: $id")
+        } catch (e: Exception) {
+            Log.e("RepoDebug", "Error deleting announcement: ${e.message}", e)
+            throw e // Re-throw so UI knows it failed
+        }
+    }
 }

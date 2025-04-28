@@ -116,8 +116,8 @@ fun AttendanceOverview(
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier
+                        .height(56.dp)
                         .fillMaxWidth()
-                        .padding(start = 8.dp, top = 12.dp, bottom = 12.dp)
                 ) {
                     IconButton(onClick = onBackButtonClicked) {
                         Icon(
@@ -130,7 +130,7 @@ fun AttendanceOverview(
                         text = "ATTENDANCE",
                         fontSize = 20.sp,
                         fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(start = 4.dp)
+                        modifier = Modifier.padding(start = 8.dp)
                     )
                 }
             }

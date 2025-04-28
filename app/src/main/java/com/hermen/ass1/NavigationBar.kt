@@ -45,28 +45,30 @@ fun BackButton(navController: NavController, title: String, isDarkTheme: Boolean
     val textColor = if (isDarkTheme) Color.White else Color.Black
     val iconColor = if (isDarkTheme) Color.White else Color.Black
 
-    Surface(modifier = Modifier.fillMaxWidth(), color = backgroundColor) {
-        Row(
-            modifier = Modifier.height(46.dp).fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            IconButton(onClick = { navController.popBackStack() }) {
-                Icon(
-                    painter = painterResource(id = R.drawable.baseline_arrow_back_ios_new_24),
-                    contentDescription = "Back",
-                    modifier = Modifier.size(24.dp),
-                    tint = iconColor
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Surface(modifier = Modifier.fillMaxWidth(), color = backgroundColor) {
+            Row(
+                modifier = Modifier.height(52.dp).fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                IconButton(onClick = { navController.popBackStack() }) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.baseline_arrow_back_ios_new_24),
+                        contentDescription = "Back",
+                        modifier = Modifier.size(24.dp),
+                        tint = iconColor
+                    )
+                }
+                Text(
+                    text = title,
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(start = 8.dp),
+                    color = textColor
                 )
             }
-            Text(
-                text = title,
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(start = 8.dp),
-                color = textColor
-            )
         }
-        Divider(color = Color.LightGray, thickness = 1.dp)
+        Divider(color = Color.LightGray, thickness = 2.dp) // Divider now after the surface
     }
 }
 
