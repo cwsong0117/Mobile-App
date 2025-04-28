@@ -292,7 +292,7 @@ fun ApplicationSection(
     val apps = listOf(
         AppItem("Meeting Room", R.drawable.meeting_room, "meeting_room_screen"),
         AppItem("Leave", R.drawable.leave, AppScreen.LeaveApplication.name),
-        AppItem("Attendance Panel", R.drawable.attendance, "attendance_screen")
+        AppItem("Attendance Panel", R.drawable.attendance, AppScreen.Attendance.name)
     )
 
     Column(modifier = Modifier.fillMaxWidth()) {
