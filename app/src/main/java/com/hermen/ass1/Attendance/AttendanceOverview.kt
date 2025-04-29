@@ -42,14 +42,17 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.vectorResource
+import androidx.navigation.NavController
 import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.TimeZone
 import com.google.firebase.Timestamp
+import com.hermen.ass1.BackButton
 
 fun getMalaysiaTime(): Timestamp {
     val malaysiaTimeZone = TimeZone.getTimeZone("Asia/Kuala_Lumpur")
@@ -59,12 +62,16 @@ fun getMalaysiaTime(): Timestamp {
 
 @Composable
 fun AttendanceOverview(
+    navController: NavController,
     gotoHistoryScreen: () -> Unit,
     gotoClockInScreen: () -> Unit,
     gotoClockOutScreen: () -> Unit,
-    onBackButtonClicked: () -> Unit,
+//    onBackButtonClicked: () -> Unit,
+    isDarkTheme: Boolean,
     modifier: Modifier = Modifier,
 ) {
+    //background color
+    val backgroundColor = if (isDarkTheme) Color.Black else Color(0xFFE5FFFF)
 
     val malaysiaTimeZone = TimeZone.getTimeZone("Asia/Kuala_Lumpur")
 
@@ -98,49 +105,15 @@ fun AttendanceOverview(
     val amPm = if (calendar.get(Calendar.AM_PM) == Calendar.AM) "AM" else "PM"
     //Get current time function
 
-    Scaffold(
-        topBar = {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth() // makes the box span full width
-                    .drawBehind {
-                        // draw a shadow-like effect only at the bottom
-                        val shadowHeight = 4.dp.toPx()
-                        drawRect(
-                            color = Color(0x33000000), // translucent black
-                            topLeft = Offset(0f, size.height - shadowHeight),
-                            size = Size(size.width, shadowHeight)
-                        )
-                    }
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier
-                        .height(56.dp)
-                        .fillMaxWidth()
-                ) {
-                    IconButton(onClick = onBackButtonClicked) {
-                        Icon(
-                            imageVector = ImageVector.vectorResource(id = R.drawable.baseline_arrow_back_ios_new_24),
-                            contentDescription = "Back"
-                        )
-                    }
-
-                    Text(
-                        text = "ATTENDANCE",
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(start = 8.dp)
-                    )
-                }
-            }
-        }
-
-    ) { innerPadding ->
+    Column(
+        modifier = Modifier
+            .background(backgroundColor)
+            .fillMaxSize()
+    ){
+        BackButton(navController = navController, title = "ATTENDANCE", isDarkTheme = isDarkTheme)
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding)
                 .verticalScroll(rememberScrollState()), // <-- Make it scrollable,
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center,
@@ -152,7 +125,7 @@ fun AttendanceOverview(
                         .size(100.dp)
                         .clip(RoundedCornerShape(32.dp))
                         .background(colorResource(id = R.color.teal_200))
-                ){
+                ) {
                     Text(
                         text = "%02d".format(hour),
                         color = Color.Black,
@@ -164,7 +137,6 @@ fun AttendanceOverview(
 
                 Text(
                     text = ":",
-                    color = Color.Black,
                     fontSize = 30.sp,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.padding(top = 32.dp) // Add padding here (change value as needed)
@@ -176,7 +148,7 @@ fun AttendanceOverview(
                         .size(100.dp)
                         .clip(RoundedCornerShape(32.dp))
                         .background(colorResource(id = R.color.teal_200))
-                ){
+                ) {
                     Text(
                         text = "%02d".format(minute),
                         color = Color.Black,
@@ -222,7 +194,10 @@ fun AttendanceOverview(
                             painter = painterResource(id = R.drawable.baseline_access_time_24),
                             contentDescription = "clock-in",
                             contentScale = ContentScale.Fit,
-                            modifier = Modifier.fillMaxSize()
+                            modifier = Modifier.fillMaxSize(),
+                            colorFilter = ColorFilter.tint(
+                                if (isDarkTheme) Color.White else Color.Black
+                            )
                         )
                     }
 
@@ -251,7 +226,10 @@ fun AttendanceOverview(
                             painter = painterResource(id = R.drawable.clock_out_logo),
                             contentDescription = "clock-out",
                             contentScale = ContentScale.Fit,
-                            modifier = Modifier.fillMaxSize()
+                            modifier = Modifier.fillMaxSize(),
+                            colorFilter = ColorFilter.tint(
+                                if (isDarkTheme) Color.White else Color.Black
+                            )
                         )
                     }
 
@@ -265,17 +243,19 @@ fun AttendanceOverview(
                 }
             }
 
-       Spacer(modifier = Modifier.height(50.dp))
+            Spacer(modifier = Modifier.height(50.dp))
 
             Button(
                 onClick = gotoHistoryScreen
-            ){
+            ) {
                 Text(text = "History")
             }
 
         }
     }
+
 }
+
 
 
 

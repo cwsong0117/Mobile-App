@@ -37,57 +37,33 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.hermen.ass1.R
 import com.hermen.ass1.User.SessionManager
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material3.*
+import androidx.navigation.NavController
+import com.hermen.ass1.BackButton
 import java.text.SimpleDateFormat
 import java.util.*
 
 
 @Composable
-fun AttendanceHistory(onBackButtonClicked: () -> Unit){
-    Scaffold(
-        topBar = {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth() // makes the box span full width
-                    .drawBehind {
-                        // draw a shadow-like effect only at the bottom
-                        val shadowHeight = 4.dp.toPx()
-                        drawRect(
-                            color = Color(0x33000000), // translucent black
-                            topLeft = Offset(0f, size.height - shadowHeight),
-                            size = Size(size.width, shadowHeight)
-                        )
-                    }
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(start = 8.dp, top = 12.dp, bottom = 12.dp)
-                ) {
-                    IconButton(onClick = onBackButtonClicked) {
-                        Icon(
-                            imageVector = ImageVector.vectorResource(id = R.drawable.baseline_arrow_back_ios_new_24),
-                            contentDescription = "Back"
-                        )
-                    }
+fun AttendanceHistory(
+    navController: NavController,
+    isDarkTheme: Boolean
+    ){
+    val backgroundColor = if (isDarkTheme) Color.Black else Color(0xFFE5FFFF)
 
-                    Text(
-                        text = "HISTORY",
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(start = 4.dp)
-                    )
-                }
-            }
-        }
-    ) { innerPadding ->
-        HistoryList(modifier = Modifier.padding(innerPadding))
+    Column(
+        modifier = Modifier
+            .background(backgroundColor)
+            .fillMaxSize()
+    ){
+        BackButton(navController = navController, title = "HISTORY", isDarkTheme = isDarkTheme)
+        HistoryList()
     }
 }
 

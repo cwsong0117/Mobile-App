@@ -116,6 +116,7 @@ fun AppNavHost(
         }
         composable(route = AppScreen.Attendance.name) {
             AttendanceOverview(
+                navController = navController,
                 gotoHistoryScreen = {
                     navController.navigate("attendanceHistory")
                 },
@@ -125,14 +126,12 @@ fun AppNavHost(
                 gotoClockOutScreen = {
                     navController.navigate(AppScreen.ClockOut.name)
                 },
-                onBackButtonClicked = {
-                    navController.popBackStack()
-                },
+                isDarkTheme = isDarkTheme,
                 modifier = modifier
             )
         }
         composable("attendanceHistory") {
-            AttendanceHistory(onBackButtonClicked = { navController.popBackStack() })
+            AttendanceHistory(isDarkTheme = isDarkTheme, navController = navController)
         }
         composable(AppScreen.LeaveApplication.name) {
             LeaveApplication(navController = navController, isDarkTheme = isDarkTheme)
@@ -141,10 +140,10 @@ fun AppNavHost(
             ApproveLeave(navController = navController, isDarkTheme = isDarkTheme)
         }
         composable(AppScreen.ClockIn.name) {
-            ClockIn(onBackButtonClicked = { navController.popBackStack() }, modifier = modifier)
+            ClockIn(navController = navController, isDarkTheme = isDarkTheme, modifier = modifier)
         }
         composable(AppScreen.ClockOut.name) {
-            ClockOut(onBackButtonClicked = { navController.popBackStack() }, modifier = modifier)
+            ClockOut(navController = navController, isDarkTheme = isDarkTheme, modifier = modifier)
         }
         composable(AppScreen.AnnouncementOverview.name) {
             AnnouncementOverview(navController = navController, isDarkTheme = isDarkTheme)
