@@ -138,6 +138,8 @@ fun ClockOutScreen(
     employeeID: String,
     viewModel: AttendanceViewModel = viewModel()
 ) {
+    var showSuccessDialog by remember { mutableStateOf(false) }
+
     var message by remember { mutableStateOf("") }
     var showEarlyLeaveDialog by remember { mutableStateOf(false) }
     var isEarlyLeaveConfirmed by remember { mutableStateOf(false) }
@@ -148,6 +150,10 @@ fun ClockOutScreen(
     }
 
     val latestClockIn = viewModel.latestClockIn.value
+    val malaysiaTimeZone = TimeZone.getTimeZone("Asia/Kuala_Lumpur")
+    val todayFormatter = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).apply {
+        timeZone = malaysiaTimeZone
+    }
 
     val timeFormat = remember {
         SimpleDateFormat("HH:mm:ss dd-MM-yyyy", Locale.getDefault()).apply {
@@ -180,6 +186,14 @@ fun ClockOutScreen(
 
         Button(onClick = {
             if (latestClockIn != null && shiftEnd != null) {
+                val clockInDateStr = todayFormatter.format(latestClockIn!!.toDate())
+                val todayDateStr = todayFormatter.format(Date())
+
+                if (clockInDateStr != todayDateStr) {
+                    message = "No clock-in found for today. Nothing to clock out from."
+                    return@Button
+                }
+
                 if (now.before(shiftEnd)) {
                     showEarlyLeaveDialog = true
                 } else {
@@ -196,6 +210,8 @@ fun ClockOutScreen(
                         }
                     )
                 }
+            } else {
+                message = "Clock-in record not found."
             }
         }) {
             Text("Clock Out")
