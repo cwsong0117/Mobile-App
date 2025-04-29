@@ -50,6 +50,7 @@ import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
@@ -69,15 +70,15 @@ import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
 import java.util.Locale
 import com.google.android.gms.location.Priority
+import com.google.firebase.firestore.FirebaseFirestore
+import com.hermen.ass1.ui.theme.LeaveRequest
+import android.util.Log
 
 @Composable
 fun ClockIn(
     onBackButtonClicked: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-//    //check leaves list
-
-//    //check leaves list
 
     //location function
     val context = LocalContext.current
@@ -201,11 +202,6 @@ fun ClockIn(
     val amPm = if (calendar.get(Calendar.AM_PM) == Calendar.AM) "AM" else "PM"
     //Get current time function
 
-    var clockInTimeString by remember { mutableStateOf("") }
-
-    val clockInTime = clockInTimeString.toIntOrNull() ?: 0
-    val clockOutTime = clockInTimeString.toIntOrNull()?.plus(9) ?: ""
-
     Column(
         modifier = Modifier.fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -269,23 +265,11 @@ fun ClockIn(
 
         Spacer(modifier = Modifier.height(30.dp))
 
-//        TextField(
-//            value = clockInTimeString,
-//            onValueChange = { newText ->
-//                // Only allow digits
-//                if (newText.all { it.isDigit() }) {
-//                    clockInTimeString = newText
-//                }
-//            },
-//            label = { Text("Enter clock-in time") } ,
-//            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
-//        )
-
         Spacer(modifier = Modifier.height(50.dp))
 
-        Text(
-            text = "Expected clock-out time: $clockOutTime",
-        )
+//        Text(
+//            text = "Expected clock-out time: $clockOutTime",
+//        )
 
         Text(text = "Current Location: $currentLocation")
         Text(text = "Current Address: $currentAddress")
@@ -410,6 +394,55 @@ fun AddAttendanceScreen(viewModel: AttendanceViewModel = viewModel()) {
         }
     }
 
+    //    //check leaves list
+    val firestore = FirebaseFirestore.getInstance()
+    val leaveList = remember { mutableStateListOf<LeaveRequest>() }
+    var onLeaveToday by remember { mutableStateOf(false) } // <-- add this to store leave status
+
+    LaunchedEffect(Unit) {
+        firestore.collection("Leave")
+            .whereEqualTo("status", "approve")
+            .whereEqualTo("id", SessionManager.currentUser?.id)
+            .get()
+            .addOnSuccessListener { result ->
+                leaveList.clear()
+                onLeaveToday = false
+
+                val malaysiaTimeZone = TimeZone.getTimeZone("Asia/Kuala_Lumpur")
+                val calendar = Calendar.getInstance(malaysiaTimeZone).apply {
+                    set(Calendar.HOUR_OF_DAY, 0)
+                    set(Calendar.MINUTE, 0)
+                    set(Calendar.SECOND, 0)
+                    set(Calendar.MILLISECOND, 0)
+                }
+
+                val formatter = SimpleDateFormat("dd-MM-yyyy", Locale.getDefault()).apply {
+                    timeZone = malaysiaTimeZone
+                }
+
+                val todayMalaysia = formatter.format(calendar.time)
+                Log.d("LeaveCheck", "Today's Malaysia Date: $todayMalaysia") // 👈 Log today's date
+
+                for (document in result) {
+                    val leave = document.toObject(LeaveRequest::class.java)
+                    leaveList.add(leave)
+
+                    Log.d("LeaveCheck", "Leave Dates from Firestore: ${leave.leaveDates.joinToString()}") // 👈 Log leave dates
+
+                    if (leave.leaveDates.any { it.trim() == todayMalaysia }) {
+                        Log.d("LeaveCheck", "Match found! Today is a leave day.") // 👈 Log if matched
+                        onLeaveToday = true
+                        break
+                    }
+                }
+            }
+
+    }
+
+
+//    //check leaves list
+
+
     val timeFormat = remember {
         SimpleDateFormat("HH:mm", Locale.getDefault()).apply {
             timeZone = TimeZone.getTimeZone("Asia/Kuala_Lumpur")
@@ -428,6 +461,12 @@ fun AddAttendanceScreen(viewModel: AttendanceViewModel = viewModel()) {
         when {
             isCheckingAttendance -> {
                 CircularProgressIndicator()
+            }
+            onLeaveToday -> {
+                Text(
+                    text = "You are on approved leave today. No clock-in required.",
+                    color = Color.Red
+                )
             }
             clockedInToday != null -> {
                 val clockInTime = clockedInToday!!.clockInTime?.toDate()
@@ -480,55 +519,6 @@ fun AddAttendanceScreen(viewModel: AttendanceViewModel = viewModel()) {
             }
         }
 
-
-//        if (clockedInToday != null) {
-//            val clockInTime = clockedInToday!!.clockInTime?.toDate()
-//            val shiftEndTime = Calendar.getInstance().apply {
-//                time = clockInTime!!
-//                add(Calendar.HOUR_OF_DAY, 8)
-//            }
-//
-//            Text("You have already clocked in.")
-//            Text("Shift: ${timeFormat.format(clockInTime)} - ${timeFormat.format(shiftEndTime.time)}")
-//        } else {
-//            Button(onClick = {
-//                val location = userLocation
-//                if (location != null) {
-//                    val result = FloatArray(1)
-//                    Location.distanceBetween(
-//                        location.latitude,
-//                        location.longitude,
-//                        workplaceLat,
-//                        workplaceLng,
-//                        result
-//                    )
-//                    val distanceInMeters = result[0]
-//
-//                    if (distanceInMeters <= allowedRadius) {
-//                        SessionManager.currentUser?.let { user ->
-//                            viewModel.generateAttendanceID { generatedID ->
-//                                val newAttendance = Attendance(
-//                                    attendanceID = generatedID,
-//                                    clockInTime = getMalaysiaTime(),
-//                                    clockOutTime = null,
-//                                    employeeID = user.id,
-//                                    status = "Clocked In"
-//                                )
-//                                viewModel.addAttendance(newAttendance)
-//                                showSuccessDialog = true
-//                                clockedInToday = newAttendance // Update UI immediately
-//                            }
-//                        }
-//                    } else {
-//                        showNotAtWorkplaceDialog = true
-//                    }
-//                } else {
-//                    Toast.makeText(context, "Location not ready yet", Toast.LENGTH_SHORT).show()
-//                }
-//            }) {
-//                Text("Clock-IN")
-//            }
-//        }
 
         if (showSuccessDialog) {
             SuccessDialog(onDismiss = { showSuccessDialog = false })
