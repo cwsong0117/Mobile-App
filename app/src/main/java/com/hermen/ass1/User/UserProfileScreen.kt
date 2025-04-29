@@ -359,7 +359,7 @@ fun EditableProfileField(
                 textStyle = TextStyle(fontSize = 16.sp, color = textColor),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 12.dp, vertical = 12.dp) // Match NonEditable padding
+                    .padding(horizontal = 12.dp, vertical = 12.dp)
             )
         }
 
