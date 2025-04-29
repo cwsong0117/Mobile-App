@@ -36,7 +36,7 @@ class UserProfileViewModel : ViewModel() {
     var hasChanges by mutableStateOf(false)
         private set
 
-    private lateinit var originalUser: User
+        private lateinit var originalUser: User
 
     fun initializeUserData(user: User) {
         // Initialize only if the data is not already set

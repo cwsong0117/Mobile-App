@@ -1,6 +1,7 @@
 package com.hermen.ass1.MeetingRoom
 
 import android.util.Log
+import androidx.compose.runtime.*
 import androidx.lifecycle.ViewModel
 import com.google.firebase.Firebase
 import com.google.firebase.firestore.Query
@@ -179,4 +180,13 @@ class RoomViewModel : ViewModel() {
                 onFailure(e)
             }
     }
+}
+
+class MeetingRoomFormViewModel : ViewModel() {
+    var name by mutableStateOf("")
+    var date by mutableStateOf("")
+    var startTime by mutableStateOf("")
+    var endTime by mutableStateOf("")
+    var purpose by mutableStateOf("")
+    var customPurpose by mutableStateOf("")
 }

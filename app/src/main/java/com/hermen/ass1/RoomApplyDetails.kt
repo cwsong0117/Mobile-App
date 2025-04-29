@@ -45,8 +45,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.navigation.NavController
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.hermen.ass1.MeetingRoom.MeetingRoomFormViewModel
 import com.hermen.ass1.MeetingRoom.MeetingRoomViewModel
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -57,13 +57,7 @@ import java.time.format.DateTimeFormatter
 
 @Composable
 fun RoomDetail(navController: NavController, roomName: String, isDarkTheme: Boolean) {
-    // Local state for each field
-    val name = remember { mutableStateOf("") }
-    val date = remember { mutableStateOf("") }
-    val startTime = remember { mutableStateOf("") }
-    val endTime = remember { mutableStateOf("") }
-    val purpose = remember { mutableStateOf("") }
-    val customPurpose = remember { mutableStateOf("") }
+    val viewModel: MeetingRoomFormViewModel = viewModel()
 
     //later need to read the user id that user used to login
     val user = SessionManager.currentUser!!
@@ -83,21 +77,21 @@ fun RoomDetail(navController: NavController, roomName: String, isDarkTheme: Bool
         ) {
             BackButton(navController, title = roomName, isDarkTheme = isDarkTheme)
             ApplyDetails(
-                name = name.value, onNameChange = { name.value = it },
-                date = date.value, onDateChange = { date.value = it },
-                startTime = startTime.value, onStartTimeChange = { startTime.value = it },
-                endTime = endTime.value, onEndTimeChange = { endTime.value = it },
-                purpose = purpose.value, onPurposeChange = { purpose.value = it },
-                customPurpose = customPurpose.value, onCustomPurposeChange = { customPurpose.value = it },
+                name = viewModel.name, onNameChange = { viewModel.name = it },
+                date = viewModel.date, onDateChange = { viewModel.date = it },
+                startTime = viewModel.startTime, onStartTimeChange = { viewModel.startTime = it },
+                endTime = viewModel.endTime, onEndTimeChange = { viewModel.endTime = it },
+                purpose = viewModel.purpose, onPurposeChange = { viewModel.purpose = it },
+                customPurpose = viewModel.customPurpose, onCustomPurposeChange = { viewModel.customPurpose = it },
                 status = "Pending", roomName = roomName,userId = userId,
                 isDarkTheme = isDarkTheme, onSuccess = {
                     // Clear all input fields after successful submission
-                    name.value = ""
-                    date.value = ""
-                    startTime.value = ""
-                    endTime.value = ""
-                    purpose.value = ""
-                    customPurpose.value = ""
+                    viewModel.name = ""
+                    viewModel.date = ""
+                    viewModel.startTime = ""
+                    viewModel.endTime = ""
+                    viewModel.purpose = ""
+                    viewModel.customPurpose = ""
 
                     Toast.makeText(context, "Application submitted successfully!", Toast.LENGTH_SHORT).show()
                 },
@@ -328,6 +322,7 @@ fun ApplyDetails(name:String, onNameChange: (String) -> Unit,
 
 @Composable
 fun NameInput(name:String, onNameChange:(String) -> Unit) {
+
     Row(
         modifier = Modifier
             .fillMaxWidth(),
