@@ -43,12 +43,15 @@ import com.hermen.ass1.R
 import kotlinx.coroutines.delay
 import java.util.*
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
 import com.hermen.ass1.User.SessionManager
 import java.text.SimpleDateFormat
 
 @Composable
 fun ClockOut(
-    onBackButtonClicked: () -> Unit,
+    navController: NavController,
+    isDarkTheme: Boolean,
+//    onBackButtonClicked: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     //Get current time function
@@ -117,14 +120,13 @@ fun ClockOut(
         Spacer(modifier = Modifier.height(20.dp))
 
         TextButton(
-            onClick = onBackButtonClicked // 🔹 Now it correctly goes back
+            onClick = { navController.popBackStack() } // 🔹 Now it correctly goes back
         ) {
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
                     text = "Back",
-                    color = Color.Black,
                     fontSize = 30.sp,
                     fontWeight = FontWeight.Bold
                 )

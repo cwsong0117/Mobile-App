@@ -73,10 +73,13 @@ import com.google.android.gms.location.Priority
 import com.google.firebase.firestore.FirebaseFirestore
 import com.hermen.ass1.ui.theme.LeaveRequest
 import android.util.Log
+import androidx.navigation.NavController
 
 @Composable
 fun ClockIn(
-    onBackButtonClicked: () -> Unit,
+    navController: NavController,
+    isDarkTheme: Boolean,
+//    onBackButtonClicked: () -> Unit,
     modifier: Modifier = Modifier
 ) {
 
@@ -277,7 +280,7 @@ fun ClockIn(
         Spacer(modifier = Modifier.height(30.dp))
 
         TextButton(
-            onClick = onBackButtonClicked // 🔹 Now it correctly goes back
+            onClick = { navController.popBackStack() }// 🔹 Now it correctly goes back
         ) {
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally
