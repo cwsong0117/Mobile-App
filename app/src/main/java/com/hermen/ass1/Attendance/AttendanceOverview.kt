@@ -33,20 +33,12 @@ import androidx.compose.ui.unit.sp
 import com.hermen.ass1.R
 import kotlinx.coroutines.delay
 import java.util.Calendar
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.vectorResource
 import androidx.navigation.NavController
 import java.text.SimpleDateFormat
 import java.util.Locale
@@ -66,6 +58,7 @@ fun AttendanceOverview(
     gotoHistoryScreen: () -> Unit,
     gotoClockInScreen: () -> Unit,
     gotoClockOutScreen: () -> Unit,
+    gotoAdminScreen: () -> Unit,
 //    onBackButtonClicked: () -> Unit,
     isDarkTheme: Boolean,
     modifier: Modifier = Modifier,
@@ -111,6 +104,31 @@ fun AttendanceOverview(
             .fillMaxSize()
     ){
         BackButton(navController = navController, title = "ATTENDANCE", isDarkTheme = isDarkTheme)
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 8.dp, end = 16.dp),
+            horizontalArrangement = Arrangement.End
+        ) {
+            Box(
+                modifier = Modifier.size(32.dp)
+                    .clickable { gotoAdminScreen() }
+            ) {
+                Image(
+                    painter = painterResource(id = R.drawable.more_vertical),
+                    contentDescription = "more for admin",
+                    contentScale = ContentScale.Fit,
+                    modifier = Modifier.fillMaxSize(),
+                    colorFilter = ColorFilter.tint(
+                        if (isDarkTheme) Color.White else Color.Black
+                    )
+                )
+            }
+        }
+
         Column(
             modifier = Modifier
                 .fillMaxSize()

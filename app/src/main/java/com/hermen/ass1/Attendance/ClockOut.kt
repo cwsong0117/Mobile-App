@@ -17,9 +17,7 @@ import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -44,6 +42,7 @@ import kotlinx.coroutines.delay
 import java.util.*
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.hermen.ass1.BackButton
 import com.hermen.ass1.User.SessionManager
 import java.text.SimpleDateFormat
 
@@ -54,6 +53,8 @@ fun ClockOut(
 //    onBackButtonClicked: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val backgroundColor = if (isDarkTheme) Color.Black else Color(0xFFE5FFFF)
+
     //Get current time function
     var currentTime by remember { mutableStateOf(Calendar.getInstance()) }
 
@@ -70,67 +71,59 @@ fun ClockOut(
     //Get current time function
 
     Column(
-        modifier = Modifier.fillMaxSize(),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        Row {
-            Box(
-                modifier = Modifier
-                    .padding(5.dp)
-                    .size(100.dp)
-                    .background(colorResource(id = R.color.teal_200))
-            ){
-                Text(
-                    text = "%02d".format(hour),
-                    color = Color.Black,
-                    fontSize = 30.sp,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.align(Alignment.Center) // Add padding here (change value as needed)
-                )
-            }
-
-            Text(
-                text = ":",
-                fontSize = 30.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(top = 32.dp) // Add padding here (change value as needed)
-            )
-
-            Box(
-                modifier = Modifier
-                    .padding(5.dp)
-                    .size(100.dp)
-                    .background(colorResource(id = R.color.teal_200))
-            ){
-                Text(
-                    text = "%02d".format(minute),
-                    color = Color.Black,
-                    fontSize = 30.sp,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.align(Alignment.Center)
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier.height(20.dp))
-
-        SessionManager.currentUser?.let { ClockOutScreen(employeeID = it.id) }
-
-        Spacer(modifier = Modifier.height(20.dp))
-
-        TextButton(
-            onClick = { navController.popBackStack() } // 🔹 Now it correctly goes back
+        modifier = Modifier
+            .background(backgroundColor)
+            .fillMaxSize()
+    ){
+        BackButton(navController = navController, title = "CLOCK OUT", isDarkTheme = isDarkTheme)
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
         ) {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
+            Row {
+                Box(
+                    modifier = Modifier
+                        .padding(5.dp)
+                        .size(100.dp)
+                        .background(colorResource(id = R.color.teal_200))
+                ){
+                    Text(
+                        text = "%02d".format(hour),
+                        color = Color.Black,
+                        fontSize = 30.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.align(Alignment.Center) // Add padding here (change value as needed)
+                    )
+                }
+
                 Text(
-                    text = "Back",
+                    text = ":",
                     fontSize = 30.sp,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(top = 32.dp) // Add padding here (change value as needed)
                 )
+
+                Box(
+                    modifier = Modifier
+                        .padding(5.dp)
+                        .size(100.dp)
+                        .background(colorResource(id = R.color.teal_200))
+                ){
+                    Text(
+                        text = "%02d".format(minute),
+                        color = Color.Black,
+                        fontSize = 30.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.align(Alignment.Center)
+                    )
+                }
             }
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            SessionManager.currentUser?.let { ClockOutScreen(employeeID = it.id) }
+
         }
     }
 }

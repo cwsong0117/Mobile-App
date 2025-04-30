@@ -50,6 +50,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.compose.composable
 import com.hermen.ass1.IndicateFooter
 import coil.compose.AsyncImage
+import com.hermen.ass1.Attendance.AdminScreen
 
 enum class AppScreen(@StringRes val title: Int) {
     Home(title = R.string.app_name),
@@ -126,12 +127,18 @@ fun AppNavHost(
                 gotoClockOutScreen = {
                     navController.navigate(AppScreen.ClockOut.name)
                 },
+                gotoAdminScreen = {
+                    navController.navigate("admin_screen")
+                },
                 isDarkTheme = isDarkTheme,
                 modifier = modifier
             )
         }
         composable("attendanceHistory") {
             AttendanceHistory(isDarkTheme = isDarkTheme, navController = navController)
+        }
+        composable("admin_screen") {
+            AdminScreen(isDarkTheme = isDarkTheme, navController = navController)
         }
         composable(AppScreen.LeaveApplication.name) {
             LeaveApplication(navController = navController, isDarkTheme = isDarkTheme)
