@@ -73,7 +73,11 @@ import com.google.android.gms.location.Priority
 import com.google.firebase.firestore.FirebaseFirestore
 import com.hermen.ass1.ui.theme.LeaveRequest
 import android.util.Log
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.style.TextAlign
 import androidx.navigation.NavController
+import com.hermen.ass1.BackButton
 
 @Composable
 fun ClockIn(
@@ -82,91 +86,7 @@ fun ClockIn(
 //    onBackButtonClicked: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-
-    //location function
-    val context = LocalContext.current
-
-    // Define workplace location (e.g., Kajang home)
-    val workplaceLat = 2.981085096711732
-    val workplaceLng = 101.79936946524971
-    val allowedRadius = 100f // meters
-
-    val locationPermissionLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.RequestPermission()
-    ) { isGranted ->
-        Toast.makeText(context, if (isGranted) "Permission Granted" else "Permission Denied", Toast.LENGTH_SHORT).show()
-    }
-
-    // Request permission on launch
-    LaunchedEffect(Unit) {
-        if (ContextCompat.checkSelfPermission(
-                context,
-                Manifest.permission.ACCESS_FINE_LOCATION
-            ) != PackageManager.PERMISSION_GRANTED
-        ) {
-            locationPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
-        }
-    }
-
-    var currentLocation by remember { mutableStateOf("Fetching...") }
-    var currentAddress by remember { mutableStateOf("Fetching address...") }
-    var isAtWorkplace by remember { mutableStateOf<Boolean?>(null) }
-
-    // Get user's location
-    LaunchedEffect(Unit) {
-        val fusedLocationClient = LocationServices.getFusedLocationProviderClient(context)
-
-        if (ContextCompat.checkSelfPermission(
-                context,
-                Manifest.permission.ACCESS_FINE_LOCATION
-            ) == PackageManager.PERMISSION_GRANTED
-        ) {
-            fusedLocationClient.lastLocation.addOnSuccessListener { location ->
-                location?.let {
-                    val lat = it.latitude
-                    val lng = it.longitude
-                    currentLocation = "Lat: $lat, Lng: $lng"
-
-                    // Distance check
-                    val result = FloatArray(1)
-                    Location.distanceBetween(lat, lng, workplaceLat, workplaceLng, result)
-                    val distanceInMeters = result[0]
-
-                    isAtWorkplace = distanceInMeters <= allowedRadius
-
-                    Toast.makeText(
-                        context,
-                        if (isAtWorkplace == true) "You are at the workplace" else "You are not at the workplace",
-                        Toast.LENGTH_SHORT
-                    ).show()
-
-                    // Reverse geocode
-                    CoroutineScope(Dispatchers.IO).launch {
-                        try {
-                            val geocoder = Geocoder(context, Locale.getDefault())
-                            val addresses = geocoder.getFromLocation(lat, lng, 1)
-
-                            withContext(Dispatchers.Main) {
-                                currentAddress = addresses?.firstOrNull()?.getAddressLine(0)
-                                    ?: "Address not found"
-                            }
-                        } catch (e: Exception) {
-                            withContext(Dispatchers.Main) {
-                                currentAddress = "Geocoder failed: ${e.message}"
-                            }
-                        }
-                    }
-                } ?: run {
-                    currentLocation = "Location not available"
-                    currentAddress = "No address (location null)"
-                }
-            }
-        } else {
-            currentLocation = "Permission not granted"
-            currentAddress = "No address (permission missing)"
-        }
-    }
-
+    val backgroundColor = if (isDarkTheme) Color.Black else Color(0xFFE5FFFF)
 
     //Get current time function
     val malaysiaTimeZone = TimeZone.getTimeZone("Asia/Kuala_Lumpur")
@@ -206,108 +126,88 @@ fun ClockIn(
     //Get current time function
 
     Column(
-        modifier = Modifier.fillMaxSize(),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        Row {
-            Box(
-                modifier = Modifier
-                    .padding(5.dp)
-                    .size(100.dp)
-                    .clip(RoundedCornerShape(32.dp))
-                    .background(colorResource(id = R.color.teal_200))
-            ){
-                Text(
-                    text = "%02d".format(hour),
-                    color = Color.Black,
-                    fontSize = 30.sp,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.align(Alignment.Center) // Add padding here (change value as needed)
-                )
-            }
-
-            Text(
-                text = ":",
-                color = Color.Black,
-                fontSize = 30.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(top = 32.dp) // Add padding here (change value as needed)
-            )
-
-            Box(
-                modifier = Modifier
-                    .padding(5.dp)
-                    .size(100.dp)
-                    .clip(RoundedCornerShape(32.dp))
-                    .background(colorResource(id = R.color.teal_200))
-            ){
-                Text(
-                    text = "%02d".format(minute),
-                    color = Color.Black,
-                    fontSize = 30.sp,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.align(Alignment.Center)
-                )
-            }
-
-            Text(
-                text = amPm,
-                fontSize = 30.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(top = 32.dp) // Add padding here (change value as needed)
-            )
-        }
-
-        Text(
-            text = currentDate,
-            fontSize = 30.sp,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(top = 32.dp) // Add padding here (change value as needed)
-        )
-
-        Spacer(modifier = Modifier.height(30.dp))
-
-        Spacer(modifier = Modifier.height(50.dp))
-
-//        Text(
-//            text = "Expected clock-out time: $clockOutTime",
-//        )
-
-        Text(text = "Current Location: $currentLocation")
-        Text(text = "Current Address: $currentAddress")
-
-        Spacer(modifier = Modifier.height(30.dp))
-
-        TextButton(
-            onClick = { navController.popBackStack() }// 🔹 Now it correctly goes back
+        modifier = Modifier
+            .background(backgroundColor)
+            .fillMaxSize()
+    ){
+        BackButton(navController = navController, title = "CLOCK IN", isDarkTheme = isDarkTheme)
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
         ) {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
+            Row {
+                Box(
+                    modifier = Modifier
+                        .padding(5.dp)
+                        .size(100.dp)
+                        .clip(RoundedCornerShape(32.dp))
+                        .background(colorResource(id = R.color.teal_200))
+                ){
+                    Text(
+                        text = "%02d".format(hour),
+                        color = Color.Black,
+                        fontSize = 30.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.align(Alignment.Center) // Add padding here (change value as needed)
+                    )
+                }
+
                 Text(
-                    text = "Back",
+                    text = ":",
+                    color = Color.Black,
                     fontSize = 30.sp,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(top = 32.dp) // Add padding here (change value as needed)
+                )
+
+                Box(
+                    modifier = Modifier
+                        .padding(5.dp)
+                        .size(100.dp)
+                        .clip(RoundedCornerShape(32.dp))
+                        .background(colorResource(id = R.color.teal_200))
+                ){
+                    Text(
+                        text = "%02d".format(minute),
+                        color = Color.Black,
+                        fontSize = 30.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.align(Alignment.Center)
+                    )
+                }
+
+                Text(
+                    text = amPm,
+                    fontSize = 30.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(top = 32.dp) // Add padding here (change value as needed)
                 )
             }
-        }
 
-        Spacer(modifier = Modifier.height(10.dp))
+            Text(
+                text = currentDate,
+                fontSize = 30.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(top = 32.dp) // Add padding here (change value as needed)
+            )
 
-        if (currentDay != Calendar.SATURDAY && currentDay != Calendar.SUNDAY) {
-            AddAttendanceScreen()
-        } else {
-            // Optional: Show a message if it's weekend
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = "Hooray! It's the weekend.",
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Medium
-                )
+            Spacer(modifier = Modifier.height(30.dp))
+
+            if (currentDay != Calendar.SATURDAY && currentDay != Calendar.SUNDAY) {
+                AddAttendanceScreen()
+            } else {
+                // Optional: Show a message if it's weekend
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "Hooray! It's the weekend.",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
             }
         }
     }
@@ -336,6 +236,7 @@ fun AddAttendanceScreen(viewModel: AttendanceViewModel = viewModel()) {
     val allowedRadius = 200f // meters
 
     var userLocation by remember { mutableStateOf<Location?>(null) }
+    var userAddress by remember { mutableStateOf("Fetching address...") }
     var permissionGranted by remember { mutableStateOf(false) }
 
     val locationPermissionLauncher = rememberLauncherForActivityResult(
@@ -386,6 +287,23 @@ fun AddAttendanceScreen(viewModel: AttendanceViewModel = viewModel()) {
             val locationCallback = object : LocationCallback() {
                 override fun onLocationResult(result: LocationResult) {
                     userLocation = result.lastLocation
+                    if (result.lastLocation != null) {
+                        userLocation = result.lastLocation
+
+                        val geocoder = Geocoder(context, Locale.getDefault())
+                        val addresses = geocoder.getFromLocation(
+                            userLocation!!.latitude,
+                            userLocation!!.longitude,
+                            1
+                        )
+
+                        if (!addresses.isNullOrEmpty()) {
+                            userAddress = addresses[0].getAddressLine(0)
+                        } else {
+                            userAddress = "Address not found"
+                        }
+                    }
+
                 }
             }
 
@@ -397,7 +315,7 @@ fun AddAttendanceScreen(viewModel: AttendanceViewModel = viewModel()) {
         }
     }
 
-    //    //check leaves list
+    //check leaves list
     val firestore = FirebaseFirestore.getInstance()
     val leaveList = remember { mutableStateListOf<LeaveRequest>() }
     var onLeaveToday by remember { mutableStateOf(false) } // <-- add this to store leave status
@@ -441,9 +359,7 @@ fun AddAttendanceScreen(viewModel: AttendanceViewModel = viewModel()) {
             }
 
     }
-
-
-//    //check leaves list
+//    check leaves list
 
 
     val timeFormat = remember {
@@ -452,11 +368,28 @@ fun AddAttendanceScreen(viewModel: AttendanceViewModel = viewModel()) {
         }
     }
 
-    Column(modifier = Modifier.padding(16.dp)) {
+    Column(
+        modifier = Modifier.padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally) {
+
+        Text(
+            text = "Your current location"
+        )
+
         Text(
             text = userLocation?.let {
                 "Lat: ${it.latitude}, Lng: ${it.longitude}"
             } ?: "Fetching location..."
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Text(
+            text = userAddress,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp),
+            textAlign = TextAlign.Center
         )
 
         Spacer(modifier = Modifier.height(16.dp))
