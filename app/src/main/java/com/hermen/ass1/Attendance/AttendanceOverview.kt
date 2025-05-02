@@ -45,6 +45,7 @@ import java.util.Locale
 import java.util.TimeZone
 import com.google.firebase.Timestamp
 import com.hermen.ass1.BackButton
+import com.hermen.ass1.User.SessionManager
 
 fun getMalaysiaTime(): Timestamp {
     val malaysiaTimeZone = TimeZone.getTimeZone("Asia/Kuala_Lumpur")
@@ -98,6 +99,8 @@ fun AttendanceOverview(
     val amPm = if (calendar.get(Calendar.AM_PM) == Calendar.AM) "AM" else "PM"
     //Get current time function
 
+    val currentUserId = SessionManager.currentUser?.id
+
     Column(
         modifier = Modifier
             .background(backgroundColor)
@@ -105,27 +108,30 @@ fun AttendanceOverview(
     ){
         BackButton(navController = navController, title = "ATTENDANCE", isDarkTheme = isDarkTheme)
 
-        Spacer(modifier = Modifier.height(8.dp))
+        if (currentUserId?.startsWith("A") == true) {
+            Spacer(modifier = Modifier.height(8.dp))
 
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 8.dp, end = 16.dp),
-            horizontalArrangement = Arrangement.End
-        ) {
-            Box(
-                modifier = Modifier.size(32.dp)
-                    .clickable { gotoAdminScreen() }
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 8.dp, end = 16.dp),
+                horizontalArrangement = Arrangement.End
             ) {
-                Image(
-                    painter = painterResource(id = R.drawable.more_vertical),
-                    contentDescription = "more for admin",
-                    contentScale = ContentScale.Fit,
-                    modifier = Modifier.fillMaxSize(),
-                    colorFilter = ColorFilter.tint(
-                        if (isDarkTheme) Color.White else Color.Black
+                Box(
+                    modifier = Modifier
+                        .size(32.dp)
+                        .clickable { gotoAdminScreen() }
+                ) {
+                    Image(
+                        painter = painterResource(id = R.drawable.more_vertical),
+                        contentDescription = "more for admin",
+                        contentScale = ContentScale.Fit,
+                        modifier = Modifier.fillMaxSize(),
+                        colorFilter = ColorFilter.tint(
+                            if (isDarkTheme) Color.White else Color.Black
+                        )
                     )
-                )
+                }
             }
         }
 

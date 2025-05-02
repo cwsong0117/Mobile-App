@@ -1,22 +1,491 @@
 package com.hermen.ass1.Attendance
 
+import android.util.Log
+import android.widget.Toast
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.Divider
+import androidx.compose.material.LocalContentColor
+import androidx.compose.material.TextButton
+import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateMapOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.google.firebase.Firebase
+import com.google.firebase.firestore.firestore
 import com.hermen.ass1.BackButton
+import com.hermen.ass1.R
+import com.hermen.ass1.User.SessionManager
+import com.hermen.ass1.User.User
+import com.hermen.ass1.User.toUser
+import java.util.Locale
+import java.util.TimeZone
+import android.app.DatePickerDialog
+import android.app.TimePickerDialog
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import com.google.firebase.Timestamp
+import java.text.SimpleDateFormat
+import java.util.*
+
 
 @Composable
-fun AdminScreen(isDarkTheme: Boolean, navController: NavController){
+fun AdminScreen(
+    viewModel: AttendanceViewModel = viewModel(),
+    isDarkTheme: Boolean,
+    navController: NavController,
+    modifier: Modifier = Modifier
+) {
     val backgroundColor = if (isDarkTheme) Color.Black else Color(0xFFE5FFFF)
+
+    val attendanceList = viewModel.attendance
+    var isLoading by remember { mutableStateOf(true) }
+
+    LaunchedEffect(Unit) {
+        isLoading = true
+        viewModel.getAttendance {
+            isLoading = false
+        }
+    }
+
+    val usersMap = remember { mutableStateMapOf<String, User>() }
+
+    LaunchedEffect(Unit) {
+        Firebase.firestore.collection("User")
+            .get()
+            .addOnSuccessListener { result ->
+                result.documents.forEach { doc ->
+                    val user = doc.toUser()
+                    usersMap[user.id] = user
+                }
+            }
+    }
+
+    val groupedAttendance = attendanceList.groupBy { it.employeeID }
+
+    val malaysiaTimeZone = TimeZone.getTimeZone("Asia/Kuala_Lumpur")
+    val dateFormat = SimpleDateFormat("dd MMM yyyy", Locale.getDefault()).apply {
+        timeZone = malaysiaTimeZone
+    }
+    val timeFormat = SimpleDateFormat("hh:mm a", Locale.getDefault()).apply {
+        timeZone = malaysiaTimeZone
+    }
+
+    var showEditDialog by remember { mutableStateOf(false) }
+
+    var showRemoveDialog by remember { mutableStateOf(false) }
+    var selectedAttendance by remember { mutableStateOf<Attendance?>(null) }
+
     Column(
         modifier = Modifier
             .background(backgroundColor)
             .fillMaxSize()
     ) {
         BackButton(navController = navController, title = "ADMIN PANEL", isDarkTheme = isDarkTheme)
+
+        if (isLoading) {
+            Box(
+                modifier = modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator()
+            }
+        } else {
+            LazyColumn(modifier = modifier.padding(8.dp)) {
+                groupedAttendance.forEach { (employeeID, records) ->
+                    item {
+                        var expanded by remember { mutableStateOf(false) }
+                        val userName = usersMap[employeeID]?.name ?: "Unknown User"
+
+                        Card(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(8.dp)
+                                .clickable { expanded = !expanded },
+                            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                        ) {
+                            Column(modifier = Modifier.padding(16.dp)) {
+                                Text(
+                                    text = userName,
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 20.sp
+                                )
+
+                                AnimatedVisibility(visible = expanded) {
+                                    Column {
+                                        records.sortedByDescending { it.clockInTime?.toDate() }.forEach { attendance ->
+                                            val clockInDate = attendance.clockInTime?.toDate()
+                                            val clockOutDate = attendance.clockOutTime?.toDate()
+
+                                            Row(
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .padding(vertical = 8.dp),
+                                                horizontalArrangement = Arrangement.SpaceBetween,
+                                                verticalAlignment = Alignment.CenterVertically
+                                            ) {
+                                                // Left: Attendance details
+                                                Column(modifier = Modifier.weight(1f)) {
+                                                    Text(
+                                                        text = "Date: ${clockInDate?.let { dateFormat.format(it) } ?: "N/A"}",
+                                                        fontWeight = FontWeight.Bold
+                                                    )
+                                                    Text("Clock In: ${clockInDate?.let { timeFormat.format(it) } ?: "N/A"}")
+                                                    Text("Clock Out: ${clockOutDate?.let { timeFormat.format(it) } ?: "N/A"}")
+                                                    Text(
+                                                        text = "Status: ${attendance.status ?: "-"}",
+                                                        color = if (attendance.status == "Left Early") Color.Red else LocalContentColor.current
+                                                    )
+                                                }
+
+                                                // Right: Edit & Remove buttons
+                                                Column(
+                                                    horizontalAlignment = Alignment.End,
+                                                    verticalArrangement = Arrangement.Center,
+                                                ) {
+                                                    Box(
+                                                        modifier = Modifier
+                                                            .size(32.dp)
+                                                            .clickable {
+                                                                selectedAttendance = attendance
+                                                                showEditDialog = true
+                                                            }
+                                                    ) {
+                                                        Image(
+                                                            painter = painterResource(id = R.drawable.edit),
+                                                            contentDescription = "edit",
+                                                            contentScale = ContentScale.Fit,
+                                                            modifier = Modifier.fillMaxSize(),
+                                                            colorFilter = ColorFilter.tint(
+                                                                if (isDarkTheme) Color.White else Color.Black
+                                                            )
+                                                        )
+                                                    }
+
+                                                    Spacer(modifier = Modifier.height(16.dp))
+
+                                                    Box(
+                                                        modifier = Modifier
+                                                            .size(32.dp)
+                                                            .clickable {
+                                                                selectedAttendance = attendance
+                                                                showRemoveDialog = true
+                                                            }
+                                                    ) {
+                                                        Image(
+                                                            painter = painterResource(id = R.drawable.delete),
+                                                            contentDescription = "remove",
+                                                            contentScale = ContentScale.Fit,
+                                                            modifier = Modifier.fillMaxSize(),
+                                                            colorFilter = ColorFilter.tint(
+                                                                if (isDarkTheme) Color.Red else Color.Red
+                                                            )
+                                                        )
+                                                    }
+                                                }
+                                            }
+
+                                            Divider(thickness = 1.5.dp)
+                                        }
+                                    }
+
+                                }
+
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // Show Dialogs
+    if (showEditDialog && selectedAttendance != null) {
+        EditDialog(
+            attendance = selectedAttendance!!,
+            onDismiss = {
+                selectedAttendance = null
+                showEditDialog = false
+            }
+        )
+    }
+
+
+    if (showRemoveDialog && selectedAttendance != null) {
+        RemoveDialog(
+            attendance = selectedAttendance!!,
+            onDismiss = {
+                selectedAttendance = null
+                showRemoveDialog = false
+            }
+        )
     }
 }
+
+@Composable
+fun EditDialog(
+    attendance: Attendance,
+    onDismiss: () -> Unit,
+    viewModel: AttendanceViewModel = viewModel()
+) {
+    val context = LocalContext.current
+
+    var clockIn by remember { mutableStateOf(attendance.clockInTime?.toDate() ?: Date()) }
+    var clockOut by remember { mutableStateOf(attendance.clockOutTime?.toDate() ?: Date()) }
+    var status by remember { mutableStateOf(attendance.status ?: "") }
+
+    val dateFormat = SimpleDateFormat("dd-MM-yyyy", Locale.getDefault())
+    val timeFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
+
+    // Malaysia timezone
+    dateFormat.timeZone = TimeZone.getTimeZone("Asia/Kuala_Lumpur")
+    timeFormat.timeZone = TimeZone.getTimeZone("Asia/Kuala_Lumpur")
+
+    val openTimePicker = remember { mutableStateOf(false) }
+    val targetTime = remember { mutableStateOf<Date?>(null) }
+
+    val editingClockIn = remember { mutableStateOf(true) }
+
+    if (openTimePicker.value && targetTime.value != null) {
+        val calendar = Calendar.getInstance().apply {
+            timeZone = TimeZone.getTimeZone("Asia/Kuala_Lumpur")
+            time = targetTime.value!!
+        }
+
+        TimePickerDialog(context, { _, hour, minute ->
+            val cal = Calendar.getInstance().apply {
+                timeZone = TimeZone.getTimeZone("Asia/Kuala_Lumpur")
+                time = targetTime.value!!
+                set(Calendar.HOUR_OF_DAY, hour)
+                set(Calendar.MINUTE, minute)
+            }
+
+            targetTime.value = cal.time
+
+            if (editingClockIn.value) {
+                clockIn = cal.time
+            } else {
+                clockOut = cal.time
+            }
+
+            openTimePicker.value = false
+        }, calendar.get(Calendar.HOUR_OF_DAY), calendar.get(Calendar.MINUTE), true).show()
+    }
+
+    Dialog(onDismissRequest = onDismiss) {
+        Box(
+            modifier = Modifier
+                .width(320.dp)
+                .wrapContentHeight()
+                .background(Color.White, shape = RoundedCornerShape(16.dp))
+                .padding(24.dp)
+        ) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text("Edit Attendance", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+
+                Spacer(Modifier.height(16.dp))
+
+                Text("Clock In: ${dateFormat.format(clockIn)} ${timeFormat.format(clockIn)}")
+                Button(onClick = {
+                    editingClockIn.value = true
+                    targetTime.value = clockIn
+                    openTimePicker.value = true
+
+                }) { Text("Edit") }
+
+
+                Spacer(Modifier.height(8.dp))
+
+                Text("Clock Out: ${dateFormat.format(clockOut)} ${timeFormat.format(clockOut)}")
+                Button(onClick = {
+                    editingClockIn.value = false
+                    targetTime.value = clockOut
+                    openTimePicker.value = true
+                }) { Text("Edit") }
+
+                Spacer(Modifier.height(8.dp))
+
+                OutlinedTextField(
+                    value = status,
+                    onValueChange = { status = it },
+                    label = { Text("Status") }
+                )
+
+                Spacer(Modifier.height(16.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End
+                ){
+                    Button(onClick = onDismiss) {
+                        Text("Cancel")
+                    }
+
+                    Spacer(Modifier.width(8.dp))
+
+                    Button(
+                        onClick = {
+                        // Recombine original date with edited time
+                        fun combineDateTime(originalDate: Date, selectedTime: Date): Date {
+                            val dateCal = Calendar.getInstance().apply {
+                                timeZone = TimeZone.getTimeZone("Asia/Kuala_Lumpur")
+                                time = originalDate
+                            }
+                            val timeCal = Calendar.getInstance().apply {
+                                timeZone = TimeZone.getTimeZone("Asia/Kuala_Lumpur")
+                                time = selectedTime
+                            }
+
+                            dateCal.set(Calendar.HOUR_OF_DAY, timeCal.get(Calendar.HOUR_OF_DAY))
+                            dateCal.set(Calendar.MINUTE, timeCal.get(Calendar.MINUTE))
+                            return dateCal.time
+                        }
+
+
+                        val finalClockIn = combineDateTime(attendance.clockInTime?.toDate() ?: Date(), clockIn)
+                        val clockOutBaseDate = attendance.clockOutTime?.toDate() ?: attendance.clockInTime?.toDate() ?: Date()
+                        val finalClockOut = combineDateTime(clockOutBaseDate, clockOut)
+
+                        if (finalClockOut.before(finalClockIn)) {
+                            Toast.makeText(context, "Clock-out time cannot be before clock-in time.", Toast.LENGTH_SHORT).show()
+                            return@Button
+                        }
+
+                        val updatedData = mapOf(
+                            "clockInTime" to Timestamp(finalClockIn),
+                            "clockOutTime" to Timestamp(finalClockOut),
+                            "status" to status
+                        )
+                        viewModel.editAttendance(attendance.attendanceID, updatedData) {
+                            Toast.makeText(context, "Attendance updated", Toast.LENGTH_SHORT).show()
+                            viewModel.getAttendance {
+                                onDismiss()
+                            }
+                        }
+                    },
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50))
+
+                    ) {
+                        Text("Save Changes")
+                    }
+
+                }
+
+            }
+        }
+    }
+}
+
+
+@Composable
+fun RemoveDialog(
+    attendance: Attendance,
+    onDismiss: () -> Unit,
+    viewModel: AttendanceViewModel = viewModel()
+) {
+    val timeFormat = SimpleDateFormat("hh:mm a", Locale.getDefault()).apply {
+        timeZone = TimeZone.getTimeZone("Asia/Kuala_Lumpur")
+    }
+
+    val clockIn = attendance.clockInTime?.toDate()
+    val clockOut = attendance.clockOutTime?.toDate()
+
+    Log.d("RemoveDialog", "Deleting ID: ${attendance.attendanceID}")
+
+    val context = LocalContext.current
+
+    Dialog(onDismissRequest = onDismiss) {
+        Box(
+            modifier = Modifier
+                .width(320.dp)
+                .wrapContentHeight()
+                .background(Color.White, shape = RoundedCornerShape(16.dp))
+                .padding(24.dp)
+        ) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                Text(
+                    text = "Are you sure you want to delete ${attendance.employeeID}'s record?",
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center
+                )
+
+                Text(
+                    text = attendance.attendanceID,
+                    color = Color.Blue
+                )
+
+                Text(
+                    text = "Clock In Time: ${clockIn?.let { timeFormat.format(it) } ?: "-"}",
+                    color = Color.Blue
+                )
+
+                Text(
+                    text = "Clock Out Time: ${clockOut?.let { timeFormat.format(it) } ?: "-"}",
+                    color = Color.Blue
+                )
+
+                Spacer(Modifier.height(16.dp))
+
+                Button(onClick = {
+                    viewModel.deleteAttendance(attendance.attendanceID) {
+                        viewModel.getAttendance {
+                            Toast.makeText(context, "Record removed successfully", Toast.LENGTH_SHORT).show()
+                            onDismiss()
+                        }
+                    }
+                }) {
+                    Text("Remove")
+                }
+
+                Spacer(Modifier.height(8.dp))
+
+                Button(onClick = onDismiss) {
+                    Text("Cancel")
+                }
+            }
+        }
+    }
+}
+
