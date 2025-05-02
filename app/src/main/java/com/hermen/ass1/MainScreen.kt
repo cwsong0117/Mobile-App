@@ -63,6 +63,7 @@ enum class AppScreen(@StringRes val title: Int) {
     LeaveApplication(title = R.string.leave_application),
     ApproveLeave(title = R.string.approve_leave),
     CreateOrEditAnnouncement(title = R.string.create_or_edit_announcement),
+    ShowLeave(title = R.string.approve_leave),
 }
 
 data class AppItem(
@@ -145,6 +146,9 @@ fun AppNavHost(
         }
         composable(AppScreen.ApproveLeave.name) {
             ApproveLeave(navController = navController, isDarkTheme = isDarkTheme)
+        }
+        composable(AppScreen.ShowLeave.name) {
+            ShowLeave(navController = navController, isDarkTheme = isDarkTheme)
         }
         composable(AppScreen.ClockIn.name) {
             ClockIn(navController = navController, isDarkTheme = isDarkTheme, modifier = modifier)
