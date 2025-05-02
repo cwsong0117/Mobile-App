@@ -200,51 +200,65 @@ fun LoginScreen(navController: NavController, isDarkTheme: Boolean) {
             }
             Spacer(modifier = Modifier.height(30.dp))
 
-            // Login Button
             Button(onClick = {
                 scope.launch {
-                    // Simulate user fetching from Firestore
-                    val users = UserRepository.getUsers()
-                    userList.value = users
-
-                    // Find the matching user from the list (by username)
-                    val matchedUser = users.find {
-                        if (useEmail.value) {
-                            it.email == username.value && it.password == password.value
-                        } else {
-                            it.name == username.value && it.password == password.value
-                        }
-                    }
-
-                    if (matchedUser != null) {
-                        // Authenticate using Firebase
-                        FirebaseAuth.getInstance().signInWithEmailAndPassword(matchedUser.email, password.value)
-                            .addOnCompleteListener { task ->
-                                if (task.isSuccessful) {
-                                    // Save logged-in state
-                                    scope.launch {
+                    if (useEmail.value) {
+                        // 🔐 Firebase email login
+                        FirebaseAuth.getInstance().signInWithEmailAndPassword(
+                            username.value.trim().lowercase(),
+                            password.value
+                        ).addOnCompleteListener { task ->
+                            if (task.isSuccessful) {
+                                scope.launch {
+                                    val currentEmail = FirebaseAuth.getInstance().currentUser?.email
+                                    val matchedUser = UserRepository.getUsers().find {
+                                        it.email.trim().lowercase() == currentEmail
+                                    }
+                                    if (matchedUser != null) {
+                                        SessionManager.currentUser = matchedUser
                                         DataStoreManager.setLoggedIn(context, true)
-                                    }
-
-                                    // Successful login
-                                    SessionManager.currentUser = matchedUser
-                                    loginResult.value = "✅ Login Successful"
-
-                                    // Navigate to main screen
-                                    navController.navigate(Screen.Main.route) {
-                                        popUpTo(Screen.Login.route) { inclusive = true }
-                                    }
-                                } else {
-                                    // Handle failed login
-                                    loginResult.value = "❌ Invalid credentials or authentication failed."
-                                    if (!useEmail.value) {
-                                        showDialog.value = true // 只在用用户名失败时弹窗
+                                        loginResult.value = "✅ Login Successful"
+                                        navController.navigate(Screen.Main.route) {
+                                            popUpTo(Screen.Login.route) { inclusive = true }
+                                        }
+                                    } else {
+                                        loginResult.value = "❌ User email not found in Firestore."
                                     }
                                 }
+                            } else {
+                                loginResult.value = "❌ Authentication failed."
                             }
+                        }
                     } else {
-                        // Handle case when no user is found in the list
-                        loginResult.value = "❌ User not found in database."
+                        // 👤 Username login (custom logic)
+                        val users = UserRepository.getUsers()
+                        val matchedUser = users.find {
+                            it.name == username.value.trim() && it.password == password.value
+                        }
+
+                        if (matchedUser != null) {
+                            FirebaseAuth.getInstance().signInWithEmailAndPassword(
+                                matchedUser.email,
+                                password.value
+                            ).addOnCompleteListener { task ->
+                                if (task.isSuccessful) {
+                                    scope.launch {
+                                        DataStoreManager.setLoggedIn(context, true)
+                                        SessionManager.currentUser = matchedUser
+                                        loginResult.value = "✅ Login Successful"
+                                        navController.navigate(Screen.Main.route) {
+                                            popUpTo(Screen.Login.route) { inclusive = true }
+                                        }
+                                    }
+                                } else {
+                                    loginResult.value = "❌ Invalid credentials or authentication failed."
+                                    showDialog.value = true
+                                }
+                            }
+                        } else {
+                            loginResult.value = "❌ User not found in database."
+                            showDialog.value = true
+                        }
                     }
                 }
             }) {
