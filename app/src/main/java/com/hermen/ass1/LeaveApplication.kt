@@ -59,24 +59,26 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.foundation.Image
 import androidx.activity.compose.rememberLauncherForActivityResult
 import com.hermen.ass1.User.SessionManager
+import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LeaveApplication(navController: NavController, isDarkTheme: Boolean) {
     val backgroundColor = if (isDarkTheme) Color.Transparent else Color(0xFFE5FFFF)
     val user = SessionManager.currentUser
-    var leaveReason by remember { mutableStateOf("") }
-    val selectedDates = remember { mutableStateListOf<Date>() }
-    val leaveDate by remember { mutableStateOf("") }
-    val leaveType by remember { mutableStateOf("") }
-    val reason by remember { mutableStateOf("") }
+    var leaveReason by rememberSaveable { mutableStateOf("") }
+    val selectedDates = rememberSaveable { mutableStateListOf<Date>() }
+    val leaveDate by rememberSaveable { mutableStateOf("") }
+    val leaveType by rememberSaveable { mutableStateOf("") }
+    val reason by rememberSaveable { mutableStateOf("") }
 
 
     // 使用 Calendar 代替 LocalDate
     val calendar = Calendar.getInstance()
 
     // 当前日期，初始化为今天
-    val currentMonth = remember { mutableStateOf(calendar.clone() as Calendar) }
+    val currentMonth = rememberSaveable { mutableStateOf(calendar.clone() as Calendar) }
 
     // 计算当前月份的天数
     fun getDaysInMonth(calendar: Calendar): Int {
@@ -99,7 +101,7 @@ fun LeaveApplication(navController: NavController, isDarkTheme: Boolean) {
     }
 
     // 初始时获取当前月份的日期列表
-    val dayList = remember { mutableStateOf(getDaysOfMonth(currentMonth.value)) }
+    val dayList = rememberSaveable { mutableStateOf(getDaysOfMonth(currentMonth.value)) }
 
     // 🧾 Leave Type Dropdown
     val leaveTypes = listOf(
@@ -113,11 +115,11 @@ fun LeaveApplication(navController: NavController, isDarkTheme: Boolean) {
         "Marriage Leave"
     )
 
-    var expanded by remember { mutableStateOf(false) }
-    var selectedLeaveType by remember { mutableStateOf("") }
+    var expanded by rememberSaveable { mutableStateOf(false) }
+    var selectedLeaveType by rememberSaveable { mutableStateOf("") }
 
     val context = LocalContext.current
-    var selectedFileUri by remember { mutableStateOf<Uri?>(null) }
+    var selectedFileUri by rememberSaveable { mutableStateOf<Uri?>(null) }
 
     // Launcher for file selection
     val filePickerLauncher = rememberLauncherForActivityResult(
