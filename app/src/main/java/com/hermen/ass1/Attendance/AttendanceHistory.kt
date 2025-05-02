@@ -93,7 +93,11 @@ fun HistoryList(
         }
     } else {
         LazyColumn(modifier = modifier.padding(8.dp)) {
-            items(attendanceList.filter { it.employeeID == currentUserId }) { item ->
+            items(
+                attendanceList
+                    .filter { it.employeeID == currentUserId }
+                    .sortedByDescending { it.clockInTime?.toDate() }
+            ) { item ->
                 val clockInDate = item.clockInTime?.toDate()
                 val clockOutDate = item.clockOutTime?.toDate()
 
