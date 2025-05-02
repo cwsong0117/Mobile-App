@@ -36,6 +36,7 @@ class AnnouncementViewModel : ViewModel() {
     val content = mutableStateOf("")
     val imageUrl = mutableStateOf<String?>(null)
     val saveSuccessful = mutableStateOf(false)
+    val uploadSuccessful = mutableStateOf(false)
 
     private val _announcements = MutableStateFlow<List<Announcement>>(emptyList())
     val announcements: StateFlow<List<Announcement>> = _announcements
@@ -67,23 +68,28 @@ class AnnouncementViewModel : ViewModel() {
         }
     }
 
-    fun createAnnouncementWithCustomId() {
+    fun createAnnouncementWithCustomId(imageUri: Uri?) {
         viewModelScope.launch {
             try {
+                var imageUrlToSave: String? = null
+
+                if (imageUri != null) {
+                    imageUrlToSave = uploadImageAndGetUrl(imageUri)
+                    imageUrl.value = imageUrlToSave
+                }
+
                 generateNextDocId { newId ->
                     val db = FirebaseFirestore.getInstance()
                     val ref = db.collection("Announcement")
 
-                    // Prepare the new announcement data
                     val newAnnouncement = hashMapOf(
                         "title" to title.value,
                         "content" to content.value,
                         "employeeID" to SessionManager.currentUser?.id,
                         "created_at" to SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH).format(Date()),
-                        "imageUrl" to imageUrl.value
+                        "imageUrl" to imageUrlToSave
                     )
 
-                    // Save the new announcement with the generated ID
                     ref.document(newId).set(newAnnouncement)
                         .addOnSuccessListener {
                             Log.d("CreateAnnouncement", "Announcement created successfully: $newId")
@@ -124,9 +130,12 @@ class AnnouncementViewModel : ViewModel() {
             try {
                 var imageUrlToSave = imageUrl.value ?: ""
 
-                if (imageUri != null) {
+                if (imageUri != null && uploadSuccessful.value ) {
                     imageUrlToSave = uploadImageAndGetUrl(imageUri)
                     imageUrl.value = imageUrlToSave
+                }else{
+                    imageUrl.value = imageUri.toString()
+                    Log.d("Passed URL TEST","URL Passed HAHAHA:${imageUrl.value}")
                 }
 
                 val dataToSave = mapOf(
@@ -134,7 +143,7 @@ class AnnouncementViewModel : ViewModel() {
                     "content" to content.value,
                     "employeeID" to SessionManager.currentUser?.id,
                     "created_at" to SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH).format(Date()),
-                    "imageUrl" to imageUrlToSave
+                    "imageUrl" to imageUrl.value
                 )
 
                 collectionRef.document(id).set(dataToSave)
@@ -153,8 +162,8 @@ class AnnouncementViewModel : ViewModel() {
 
     suspend fun uploadImageAndGetUrl(uri: Uri): String {
         val storageRef = FirebaseStorage.getInstance().reference
-        val announcementId = UUID.randomUUID().toString()
-        val imageRef = storageRef.child("announcement/$announcementId.jpg")
+        val imageId = UUID.randomUUID().toString()
+        val imageRef = storageRef.child("images/$imageId.jpg")
 
         imageRef.putFile(uri).await()
         return imageRef.downloadUrl.await().toString()

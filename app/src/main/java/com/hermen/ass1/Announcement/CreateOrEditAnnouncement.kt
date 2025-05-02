@@ -49,6 +49,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import coil.compose.rememberAsyncImagePainter
+import com.hermen.ass1.AppScreen
 import com.hermen.ass1.R
 import java.net.URLDecoder
 
@@ -77,7 +78,9 @@ fun CreateOrEditAnnouncement(
     LaunchedEffect(viewModel.saveSuccessful.value){
         if (viewModel.saveSuccessful.value) {
             viewModel.saveSuccessful.value = false
-            navController.popBackStack()
+            navController.navigate(AppScreen.AnnouncementOverview.name){
+                popUpTo("CreateOrEditAnnouncement") { inclusive = true }
+            }
         }
     }
 
@@ -119,9 +122,30 @@ fun CreateOrEditAnnouncement(
         uri?.let {
             imageUri.value = it
             uploadedState.value = true  // Mark that user has uploaded an image
+            viewModel.uploadSuccessful.value = true
             Log.d("Upload Debug", "URL:${it}")
         }
     }
+
+    val titleError = remember { mutableStateOf(false) }
+    val contentError = remember { mutableStateOf(false) }
+
+    val saveEnabled = savedTitle.value.isNotBlank() && savedContent.value.isNotBlank()
+
+    val saveButtonBackgroundColor = when {
+        saveEnabled && isDarkTheme -> Color(0xFF80CBC4)
+        saveEnabled && !isDarkTheme -> Color(0xFF009688)
+        !saveEnabled && isDarkTheme -> Color.DarkGray
+        else -> Color.Gray
+    }
+
+    val saveButtonTextColor = when {
+        saveEnabled && isDarkTheme -> Color.Black
+        saveEnabled && !isDarkTheme -> Color.White
+        !saveEnabled && isDarkTheme -> Color.Gray
+        else -> Color.DarkGray
+    }
+
 
     Column(
         modifier = Modifier
@@ -170,22 +194,27 @@ fun CreateOrEditAnnouncement(
                     modifier = Modifier
                         .padding(end = 8.dp, top = 8.dp)
                         .height(36.dp)
-                        .background(buttonBackground, shape = RoundedCornerShape(8.dp))
+                        .background(saveButtonBackgroundColor, shape = RoundedCornerShape(8.dp))
                 ) {
                     IconButton(
                         onClick = {
-                            if (!announcementId.isNullOrEmpty()) {
-                                Log.d("DEBUG", "announcementId is NOT null or empty: $announcementId")
-                                viewModel.updateAnnouncement(announcementId, imageUri.value)
-                            } else {
-                                Log.d("DEBUG", "announcementId is null or empty")
-                                viewModel.createAnnouncementWithCustomId()
+                            titleError.value = savedTitle.value.isBlank()
+                            contentError.value = savedContent.value.isBlank()
+
+                            if (!titleError.value && !contentError.value) {
+                                if (!announcementId.isNullOrEmpty()) {
+                                    viewModel.updateAnnouncement(announcementId, imageUri.value)
+                                    viewModel.uploadSuccessful.value = false
+                                } else {
+                                    viewModel.createAnnouncementWithCustomId(imageUri.value)
+                                }
                             }
-                        }
+                        },
+                        enabled = saveEnabled
                     ) {
                         Text(
                             text = "Save",
-                            color = buttonTextColor,
+                            color = saveButtonTextColor,
                             fontWeight = FontWeight.Bold
                         )
                     }
@@ -200,50 +229,72 @@ fun CreateOrEditAnnouncement(
         Column(modifier = Modifier.padding(horizontal = 16.dp)) {
             Text("Title", color = textColor, fontWeight = FontWeight.Medium)
             Spacer(modifier = Modifier.height(4.dp))
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(Color.White, shape = RoundedCornerShape(16.dp))
-                    .padding(horizontal = 12.dp, vertical = 4.dp)
-            ) {
+            Column {
                 TextField(
                     value = savedTitle.value,
                     onValueChange = {
                         savedTitle.value = it
                         viewModel.title.value = it
+                        titleError.value = it.isBlank()
                     },
-                    colors = TextFieldDefaults.textFieldColors(backgroundColor = Color.Transparent),
-                    modifier = Modifier.fillMaxWidth(),
+                    isError = titleError.value,
+                    colors = TextFieldDefaults.textFieldColors(
+                        backgroundColor = Color.Transparent,
+                        errorIndicatorColor = Color.Red
+                    ),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(Color.White, shape = RoundedCornerShape(16.dp))
+                        .padding(horizontal = 12.dp, vertical = 4.dp),
                     maxLines = 3,
                     placeholder = { Text("Enter title") }
                 )
+
+                if (titleError.value) {
+                    Text(
+                        text = "Title cannot be empty",
+                        color = Color.Red,
+                        fontSize = 12.sp,
+                        modifier = Modifier.padding(start = 12.dp, top = 4.dp)
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(24.dp))
 
             Text("Content", color = textColor, fontWeight = FontWeight.Medium)
             Spacer(modifier = Modifier.height(4.dp))
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(Color.White, shape = RoundedCornerShape(16.dp))
-                    .padding(horizontal = 12.dp, vertical = 4.dp)
-            ) {
+            Column {
                 TextField(
                     value = savedContent.value,
                     onValueChange = {
                         savedContent.value = it
                         viewModel.content.value = it
+                        contentError.value = it.isBlank()
                     },
-                    colors = TextFieldDefaults.textFieldColors(backgroundColor = Color.Transparent),
+                    isError = contentError.value,
+                    colors = TextFieldDefaults.textFieldColors(
+                        backgroundColor = Color.Transparent,
+                        errorIndicatorColor = Color.Red
+                    ),
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(200.dp),
+                        .height(200.dp)
+                        .background(Color.White, shape = RoundedCornerShape(16.dp))
+                        .padding(horizontal = 12.dp, vertical = 4.dp),
                     maxLines = 10,
                     placeholder = { Text("Enter content") }
                 )
-            }
 
+                if (contentError.value) {
+                    Text(
+                        text = "Content cannot be empty",
+                        color = Color.Red,
+                        fontSize = 12.sp,
+                        modifier = Modifier.padding(start = 12.dp, top = 4.dp)
+                    )
+                }
+            }
             Log.d("Debug","image url: ${imageUri.value}")
             if (imageUri.value != null) {
                 Spacer(modifier = Modifier.height(16.dp))

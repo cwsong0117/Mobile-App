@@ -61,7 +61,6 @@ fun AnnouncementDetailScreen(
     val decodedTitle = URLDecoder.decode(announcement.title, "UTF-8")
     val decodedContent = URLDecoder.decode(announcement.content, "UTF-8")
     val textColor = if (isDarkTheme) MaterialTheme.colorScheme.onBackground else MaterialTheme.colorScheme.onSurface
-    val iconColor = if (isDarkTheme) Color.White else Color.Black
     val backgroundColor = if (isDarkTheme) Color(0xFF121212) else Color(0xFFE6F4F1)
     val saveButtonColor = if (isDarkTheme) Color(0xFF80CBC4) else Color(0xFF009688)
     val buttonTextColor = if (isDarkTheme) Color.Black else Color.White
@@ -92,7 +91,10 @@ fun AnnouncementDetailScreen(
                         .padding(end = 12.dp, top = 6.dp, bottom = 8.dp)
                         .height(36.dp)
                 ) {
-                    Text("EDIT", color = buttonTextColor)
+                    Text(text = "EDIT",
+                        color = buttonTextColor,
+                        fontWeight = FontWeight.Bold
+                    )
                 }
             }
         }
