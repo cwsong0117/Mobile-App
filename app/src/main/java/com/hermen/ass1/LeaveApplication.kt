@@ -146,7 +146,7 @@ fun LeaveApplication(navController: NavController, isDarkTheme: Boolean) {
             ) {
 
                 if (user?.id?.startsWith("A") == true) {
-                    Spacer(modifier = Modifier.height(30.dp))
+                    Spacer(modifier = Modifier.height(20.dp))
                     Text(
                         text = "Approve leave of absence →",
                         color = Color.Blue,
@@ -161,21 +161,19 @@ fun LeaveApplication(navController: NavController, isDarkTheme: Boolean) {
                     )
                 }
 
-                if (user?.id?.startsWith("S") == true) {
-                    Spacer(modifier = Modifier.height(30.dp))
-                    Text(
-                        text = "Show leave of absence →",
-                        color = Color.Blue,
-                        fontWeight = FontWeight.SemiBold,
-                        fontSize = 16.sp,
-                        modifier = Modifier
-                            .padding(top = 12.dp)
-                            .clickable {
-                                // Navigate to ApproveLeave screen
-                                navController.navigate(AppScreen.ShowLeave.name)
-                            }
-                    )
-                }
+                Spacer(modifier = Modifier.height(20.dp))
+                Text(
+                    text = "Show leave of absence →",
+                    color = Color.Blue,
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 16.sp,
+                    modifier = Modifier
+                        .padding(top = 12.dp)
+                        .clickable {
+                            // Navigate to ApproveLeave screen
+                            navController.navigate(AppScreen.ShowLeave.name)
+                        }
+                )
 
                 Spacer(modifier = Modifier.height(50.dp))
 

@@ -49,6 +49,8 @@ import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.remember
 import android.content.Intent
 import android.net.Uri
+import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 
 @Composable
 fun ApproveLeave(navController: NavController, isDarkTheme: Boolean) {

@@ -49,6 +49,9 @@ import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.remember
 import android.content.Intent
 import android.net.Uri
+import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
+import kotlinx.coroutines.tasks.await
 
 @Composable
 fun ShowLeave(navController: NavController, isDarkTheme: Boolean) {
@@ -58,18 +61,39 @@ fun ShowLeave(navController: NavController, isDarkTheme: Boolean) {
     val scrollState = rememberScrollState()
     val user = SessionManager.currentUser
     val approveStatusMap = remember { mutableStateMapOf<LeaveRequest, String?>() }
+    var leaveMessage by remember { mutableStateOf("") }
 
     // 获取数据
     LaunchedEffect(Unit) {
-        firestore.collection("Leave")
-            .get()
-            .addOnSuccessListener { result ->
-                leaveList.clear()
-                for (document in result) {
-                    val leave = document.toObject(LeaveRequest::class.java)
-                    leaveList.add(leave)
+        val userName = SessionManager.currentUser?.name
+        if (userName != null) {
+            firestore.collection("Leave")
+                .whereEqualTo("name", userName)
+                .get()
+                .addOnSuccessListener { result ->
+                    leaveList.clear()
+                    if (!result.isEmpty) {
+                        for (document in result) {
+                            val leave = document.toObject(LeaveRequest::class.java)
+                            leaveList.add(leave)
+                        }
+                        leaveMessage = "" // 加上这句：有数据时就不显示 message
+                    } else {
+                        leaveMessage = "There is no record of leave."
+                    }
                 }
-            }
+        } else {
+            leaveMessage = "No user information found."
+        }
+    }
+
+    // 在 Composable 中显示文字
+    if (leaveMessage.isNotEmpty()) {
+        Text(
+            text = leaveMessage,
+            color = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.padding(top = 8.dp)
+        )
     }
 
     val context = LocalContext.current
