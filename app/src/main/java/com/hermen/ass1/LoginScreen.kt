@@ -60,19 +60,30 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.TextButton
+import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
+import com.hermen.ass1.ui.theme.DataStoreManager
+import android.content.Context
+import androidx.datastore.preferences.core.*
+import androidx.datastore.preferences.preferencesDataStore
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.Flow
+import androidx.compose.ui.platform.LocalContext
+import kotlinx.coroutines.launch
 
 @Composable
 fun LoginScreen(navController: NavController, isDarkTheme: Boolean) {
-    val username = remember { mutableStateOf("") }
-    val password = remember { mutableStateOf("") }
+    val username = rememberSaveable { mutableStateOf("") }
+    val password = rememberSaveable { mutableStateOf("") }
     val scope = rememberCoroutineScope()
-    val loginResult = remember { mutableStateOf("") }
-    val userList = remember { mutableStateOf<List<User>>(emptyList()) }
+    val loginResult = rememberSaveable { mutableStateOf("") }
+    val userList = rememberSaveable { mutableStateOf<List<User>>(emptyList()) }
     val user = SessionManager.currentUser
     val backgroundColor = if (isDarkTheme) Color.Transparent else Color(0xFFE5FFFF)
-    val showPassword = remember { mutableStateOf(false) }
-    val showDialog = remember { mutableStateOf(false) }
-    val useEmail = remember { mutableStateOf(false) }
+    val showPassword = rememberSaveable { mutableStateOf(false) }
+    val showDialog = rememberSaveable { mutableStateOf(false) }
+    val useEmail = rememberSaveable { mutableStateOf(false) }
+    val context = LocalContext.current
 
     Box(
         modifier = Modifier
@@ -210,6 +221,11 @@ fun LoginScreen(navController: NavController, isDarkTheme: Boolean) {
                         FirebaseAuth.getInstance().signInWithEmailAndPassword(matchedUser.email, password.value)
                             .addOnCompleteListener { task ->
                                 if (task.isSuccessful) {
+                                    // Save logged-in state
+                                    scope.launch {
+                                        DataStoreManager.setLoggedIn(context, true)
+                                    }
+
                                     // Successful login
                                     SessionManager.currentUser = matchedUser
                                     loginResult.value = "✅ Login Successful"

@@ -49,6 +49,8 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 
 @Composable
 fun SignupScreen(navController: NavController, isDarkTheme: Boolean) {
@@ -57,20 +59,20 @@ fun SignupScreen(navController: NavController, isDarkTheme: Boolean) {
     val year = calendar.get(Calendar.YEAR)
     val month = calendar.get(Calendar.MONTH)
     val day = calendar.get(Calendar.DAY_OF_MONTH)
-    val email = remember { mutableStateOf("") }
-    val birthday = remember { mutableStateOf("") }
-    val username = remember { mutableStateOf("") }
-    val password = remember { mutableStateOf("") }
-    val confirmpassword = remember { mutableStateOf("") }
+    val email = rememberSaveable { mutableStateOf("") }
+    val birthday = rememberSaveable { mutableStateOf("") }
+    val username = rememberSaveable { mutableStateOf("") }
+    val password = rememberSaveable { mutableStateOf("") }
+    val confirmpassword = rememberSaveable { mutableStateOf("") }
     val backgroundColor = if (isDarkTheme) Color.Transparent else Color(0xFFE5FFFF)
-    val role = remember { mutableStateOf("") } // "admin" 或 "staff"
+    val role = rememberSaveable { mutableStateOf("") } // "admin" 或 "staff"
     val emailPattern = "[a-zA-Z0-9._-]+@[a-z]+\\.+[a-z]+"
     val isEmailValid = email.value.matches(emailPattern.toRegex())
     val isPasswordStrong = password.value.length >= 6
-    val passwordVisible = remember { mutableStateOf(false) }
-    val confirmPasswordVisible = remember { mutableStateOf(false) }
-    val position = remember { mutableStateOf("") }
-    val department = remember { mutableStateOf("") }
+    val passwordVisible = rememberSaveable { mutableStateOf(false) }
+    val confirmPasswordVisible = rememberSaveable { mutableStateOf(false) }
+    val position = rememberSaveable { mutableStateOf("") }
+    val department = rememberSaveable { mutableStateOf("") }
     val scrollState = rememberScrollState()
 
     val datePickerDialog = DatePickerDialog(
