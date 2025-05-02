@@ -1,5 +1,7 @@
 package com.hermen.ass1.Attendance
 
+import android.util.Log
+import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -38,8 +40,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
@@ -52,9 +56,17 @@ import com.hermen.ass1.R
 import com.hermen.ass1.User.SessionManager
 import com.hermen.ass1.User.User
 import com.hermen.ass1.User.toUser
-import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.TimeZone
+import android.app.DatePickerDialog
+import android.app.TimePickerDialog
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import com.google.firebase.Timestamp
+import java.text.SimpleDateFormat
+import java.util.*
+
 
 @Composable
 fun AdminScreen(
@@ -99,7 +111,9 @@ fun AdminScreen(
     }
 
     var showEditDialog by remember { mutableStateOf(false) }
+
     var showRemoveDialog by remember { mutableStateOf(false) }
+    var selectedAttendance by remember { mutableStateOf<Attendance?>(null) }
 
     Column(
         modifier = Modifier
@@ -171,7 +185,10 @@ fun AdminScreen(
                                                     Box(
                                                         modifier = Modifier
                                                             .size(32.dp)
-                                                            .clickable { showEditDialog = true }
+                                                            .clickable {
+                                                                selectedAttendance = attendance
+                                                                showEditDialog = true
+                                                            }
                                                     ) {
                                                         Image(
                                                             painter = painterResource(id = R.drawable.edit),
@@ -189,7 +206,10 @@ fun AdminScreen(
                                                     Box(
                                                         modifier = Modifier
                                                             .size(32.dp)
-                                                            .clickable { showRemoveDialog = true }
+                                                            .clickable {
+                                                                selectedAttendance = attendance
+                                                                showRemoveDialog = true
+                                                            }
                                                     ) {
                                                         Image(
                                                             painter = painterResource(id = R.drawable.delete),
@@ -219,21 +239,204 @@ fun AdminScreen(
     }
 
     // Show Dialogs
-    if (showEditDialog) {
-        EditDialog(onDismiss = { showEditDialog = false })
+    if (showEditDialog && selectedAttendance != null) {
+        EditDialog(
+            attendance = selectedAttendance!!,
+            onDismiss = {
+                selectedAttendance = null
+                showEditDialog = false
+            }
+        )
     }
 
-    if (showRemoveDialog) {
-        RemoveDialog(onDismiss = { showRemoveDialog = false })
+
+    if (showRemoveDialog && selectedAttendance != null) {
+        RemoveDialog(
+            attendance = selectedAttendance!!,
+            onDismiss = {
+                selectedAttendance = null
+                showRemoveDialog = false
+            }
+        )
     }
 }
 
 @Composable
-fun EditDialog(onDismiss: () -> Unit) {
+fun EditDialog(
+    attendance: Attendance,
+    onDismiss: () -> Unit,
+    viewModel: AttendanceViewModel = viewModel()
+) {
+    val context = LocalContext.current
+
+    var clockIn by remember { mutableStateOf(attendance.clockInTime?.toDate() ?: Date()) }
+    var clockOut by remember { mutableStateOf(attendance.clockOutTime?.toDate() ?: Date()) }
+    var status by remember { mutableStateOf(attendance.status ?: "") }
+
+    val dateFormat = SimpleDateFormat("dd-MM-yyyy", Locale.getDefault())
+    val timeFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
+
+    // Malaysia timezone
+    dateFormat.timeZone = TimeZone.getTimeZone("Asia/Kuala_Lumpur")
+    timeFormat.timeZone = TimeZone.getTimeZone("Asia/Kuala_Lumpur")
+
+    val openTimePicker = remember { mutableStateOf(false) }
+    val targetTime = remember { mutableStateOf<Date?>(null) }
+
+    val editingClockIn = remember { mutableStateOf(true) }
+
+    if (openTimePicker.value && targetTime.value != null) {
+        val calendar = Calendar.getInstance().apply {
+            timeZone = TimeZone.getTimeZone("Asia/Kuala_Lumpur")
+            time = targetTime.value!!
+        }
+
+        TimePickerDialog(context, { _, hour, minute ->
+            val cal = Calendar.getInstance().apply {
+                timeZone = TimeZone.getTimeZone("Asia/Kuala_Lumpur")
+                time = targetTime.value!!
+                set(Calendar.HOUR_OF_DAY, hour)
+                set(Calendar.MINUTE, minute)
+            }
+
+            targetTime.value = cal.time
+
+            if (editingClockIn.value) {
+                clockIn = cal.time
+            } else {
+                clockOut = cal.time
+            }
+
+            openTimePicker.value = false
+        }, calendar.get(Calendar.HOUR_OF_DAY), calendar.get(Calendar.MINUTE), true).show()
+    }
+
     Dialog(onDismissRequest = onDismiss) {
         Box(
             modifier = Modifier
-                .width(320.dp) // 👈 Adjust the width as needed
+                .width(320.dp)
+                .wrapContentHeight()
+                .background(Color.White, shape = RoundedCornerShape(16.dp))
+                .padding(24.dp)
+        ) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text("Edit Attendance", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+
+                Spacer(Modifier.height(16.dp))
+
+                Text("Clock In: ${dateFormat.format(clockIn)} ${timeFormat.format(clockIn)}")
+                Button(onClick = {
+                    editingClockIn.value = true
+                    targetTime.value = clockIn
+                    openTimePicker.value = true
+
+                }) { Text("Edit") }
+
+
+                Spacer(Modifier.height(8.dp))
+
+                Text("Clock Out: ${dateFormat.format(clockOut)} ${timeFormat.format(clockOut)}")
+                Button(onClick = {
+                    editingClockIn.value = false
+                    targetTime.value = clockOut
+                    openTimePicker.value = true
+                }) { Text("Edit") }
+
+                Spacer(Modifier.height(8.dp))
+
+                OutlinedTextField(
+                    value = status,
+                    onValueChange = { status = it },
+                    label = { Text("Status") }
+                )
+
+                Spacer(Modifier.height(16.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End
+                ){
+                    Button(onClick = onDismiss) {
+                        Text("Cancel")
+                    }
+
+                    Spacer(Modifier.width(8.dp))
+
+                    Button(
+                        onClick = {
+                        // Recombine original date with edited time
+                        fun combineDateTime(originalDate: Date, selectedTime: Date): Date {
+                            val dateCal = Calendar.getInstance().apply {
+                                timeZone = TimeZone.getTimeZone("Asia/Kuala_Lumpur")
+                                time = originalDate
+                            }
+                            val timeCal = Calendar.getInstance().apply {
+                                timeZone = TimeZone.getTimeZone("Asia/Kuala_Lumpur")
+                                time = selectedTime
+                            }
+
+                            dateCal.set(Calendar.HOUR_OF_DAY, timeCal.get(Calendar.HOUR_OF_DAY))
+                            dateCal.set(Calendar.MINUTE, timeCal.get(Calendar.MINUTE))
+                            return dateCal.time
+                        }
+
+
+                        val finalClockIn = combineDateTime(attendance.clockInTime?.toDate() ?: Date(), clockIn)
+                        val clockOutBaseDate = attendance.clockOutTime?.toDate() ?: attendance.clockInTime?.toDate() ?: Date()
+                        val finalClockOut = combineDateTime(clockOutBaseDate, clockOut)
+
+                        if (finalClockOut.before(finalClockIn)) {
+                            Toast.makeText(context, "Clock-out time cannot be before clock-in time.", Toast.LENGTH_SHORT).show()
+                            return@Button
+                        }
+
+                        val updatedData = mapOf(
+                            "clockInTime" to Timestamp(finalClockIn),
+                            "clockOutTime" to Timestamp(finalClockOut),
+                            "status" to status
+                        )
+                        viewModel.editAttendance(attendance.attendanceID, updatedData) {
+                            Toast.makeText(context, "Attendance updated", Toast.LENGTH_SHORT).show()
+                            viewModel.getAttendance {
+                                onDismiss()
+                            }
+                        }
+                    },
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50))
+
+                    ) {
+                        Text("Save Changes")
+                    }
+
+                }
+
+            }
+        }
+    }
+}
+
+
+@Composable
+fun RemoveDialog(
+    attendance: Attendance,
+    onDismiss: () -> Unit,
+    viewModel: AttendanceViewModel = viewModel()
+) {
+    val timeFormat = SimpleDateFormat("hh:mm a", Locale.getDefault()).apply {
+        timeZone = TimeZone.getTimeZone("Asia/Kuala_Lumpur")
+    }
+
+    val clockIn = attendance.clockInTime?.toDate()
+    val clockOut = attendance.clockOutTime?.toDate()
+
+    Log.d("RemoveDialog", "Deleting ID: ${attendance.attendanceID}")
+
+    val context = LocalContext.current
+
+    Dialog(onDismissRequest = onDismiss) {
+        Box(
+            modifier = Modifier
+                .width(320.dp)
                 .wrapContentHeight()
                 .background(Color.White, shape = RoundedCornerShape(16.dp))
                 .padding(24.dp)
@@ -242,36 +445,47 @@ fun EditDialog(onDismiss: () -> Unit) {
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
+                Text(
+                    text = "Are you sure you want to delete ${attendance.employeeID}'s record?",
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center
+                )
 
+                Text(
+                    text = attendance.attendanceID,
+                    color = Color.Blue
+                )
+
+                Text(
+                    text = "Clock In Time: ${clockIn?.let { timeFormat.format(it) } ?: "-"}",
+                    color = Color.Blue
+                )
+
+                Text(
+                    text = "Clock Out Time: ${clockOut?.let { timeFormat.format(it) } ?: "-"}",
+                    color = Color.Blue
+                )
+
+                Spacer(Modifier.height(16.dp))
+
+                Button(onClick = {
+                    viewModel.deleteAttendance(attendance.attendanceID) {
+                        viewModel.getAttendance {
+                            Toast.makeText(context, "Record removed successfully", Toast.LENGTH_SHORT).show()
+                            onDismiss()
+                        }
+                    }
+                }) {
+                    Text("Remove")
+                }
+
+                Spacer(Modifier.height(8.dp))
 
                 Button(onClick = onDismiss) {
-                    Text("Confirm")
+                    Text("Cancel")
                 }
             }
         }
     }
 }
 
-@Composable
-fun RemoveDialog(onDismiss: () -> Unit) {
-    Dialog(onDismissRequest = onDismiss) {
-        Box(
-            modifier = Modifier
-                .width(320.dp) // 👈 Adjust the width as needed
-                .wrapContentHeight()
-                .background(Color.White, shape = RoundedCornerShape(16.dp))
-                .padding(24.dp)
-        ) {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
-            ) {
-
-
-                Button(onClick = onDismiss) {
-                    Text("Delete")
-                }
-            }
-        }
-    }
-}

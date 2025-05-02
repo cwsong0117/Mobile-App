@@ -147,6 +147,34 @@ class AttendanceViewModel : ViewModel() {
             }
     }
 
+    fun deleteAttendance(attendanceID: String, onComplete: () -> Unit) {
+        db.collection("Attendance")
+            .whereEqualTo("attendanceID", attendanceID)
+            .get()
+            .addOnSuccessListener { querySnapshot ->
+                for (doc in querySnapshot) {
+                    db.collection("Attendance").document(doc.id).delete()
+                }
+                onComplete()
+            }
+            .addOnFailureListener {
+                Log.e("DeleteAttendance", "Failed to delete", it)
+            }
+    }
+
+    fun editAttendance(attendanceID: String, updatedData: Map<String, Any>, onComplete: () -> Unit) {
+        db.collection("Attendance")
+            .whereEqualTo("attendanceID", attendanceID)
+            .get()
+            .addOnSuccessListener { querySnapshot ->
+                for (doc in querySnapshot) {
+                    db.collection("Attendance").document(doc.id)
+                        .update(updatedData)
+                        .addOnSuccessListener { onComplete() }
+                }
+            }
+    }
+
 }
 
 private fun getStartOfDayTimestamp(calendar: Calendar): Timestamp {

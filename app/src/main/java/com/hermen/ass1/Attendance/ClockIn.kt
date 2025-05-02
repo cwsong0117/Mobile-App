@@ -194,7 +194,7 @@ fun ClockIn(
 
             Spacer(modifier = Modifier.height(30.dp))
 
-            if (currentDay != Calendar.SATURDAY && currentDay != Calendar.SUNDAY) {
+            if ( currentDay != Calendar.SUNDAY) {
                 AddAttendanceScreen()
             } else {
                 // Optional: Show a message if it's weekend
