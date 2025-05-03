@@ -209,7 +209,7 @@ fun InitialPage(navController: NavController, isDarkTheme: Boolean) {
                             .height(50.dp),
                         colors = ButtonDefaults.buttonColors(signUpButtonColor)
                     ) {
-                        Text(text = "Sign In", fontSize = 18.sp)
+                        Text(text = "Signup", fontSize = 18.sp)
                     }
 
                     Spacer(modifier = Modifier.height(16.dp))
