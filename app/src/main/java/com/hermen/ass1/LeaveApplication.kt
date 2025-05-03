@@ -525,10 +525,6 @@ fun LeaveApplication(navController: NavController, isDarkTheme: Boolean) {
                     }
                 }
 
-
-
-
-
             }
         }
     }
