@@ -8,32 +8,33 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
@@ -50,98 +51,219 @@ import java.text.SimpleDateFormat
 fun ClockOut(
     navController: NavController,
     isDarkTheme: Boolean,
-//    onBackButtonClicked: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val landscape = isLandscape()
+
+    //background color
     val backgroundColor = if (isDarkTheme) Color.Black else Color(0xFFE5FFFF)
 
-    //Get current time function
-    var currentTime by remember { mutableStateOf(Calendar.getInstance()) }
+    val malaysiaTimeZone = TimeZone.getTimeZone("Asia/Kuala_Lumpur")
+
+    // Mutable state holding the current Firebase timestamp
+    var currentTimestamp by remember { mutableStateOf(getMalaysiaTime()) }
 
     // Update every second
     LaunchedEffect(Unit) {
         while (true) {
-            currentTime = Calendar.getInstance()
+            currentTimestamp = getMalaysiaTime()
             delay(1000L)
         }
     }
 
-    val hour = (currentTime.get(Calendar.HOUR_OF_DAY) + 8) % 24
-    val minute = currentTime.get(Calendar.MINUTE)
+    // Convert the timestamp to Calendar
+    val calendar = Calendar.getInstance(malaysiaTimeZone).apply {
+        time = currentTimestamp.toDate()
+    }
+
+    // Format date (e.g., 19/04/2025)
+    val dateFormat = remember {
+        SimpleDateFormat("EEEE, dd/MM/yyyy", Locale.getDefault()).apply {
+            timeZone = malaysiaTimeZone
+        }
+    }
+    val currentDate = dateFormat.format(calendar.time)
+
+    // Extract hour, minute, AM/PM
+    val hour = calendar.get(Calendar.HOUR_OF_DAY)
+    val minute = calendar.get(Calendar.MINUTE)
+    val amPm = if (calendar.get(Calendar.AM_PM) == Calendar.AM) "AM" else "PM"
     //Get current time function
 
-    Column(
-        modifier = Modifier
-            .background(backgroundColor)
-            .fillMaxSize()
-    ){
-        BackButton(navController = navController, title = "CLOCK OUT", isDarkTheme = isDarkTheme)
+    val employeeID = SessionManager.currentUser?.id
+
+    if(landscape){
         Column(
-            modifier = Modifier.fillMaxSize(),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
-        ) {
-            Row {
-                Box(
-                    modifier = Modifier
-                        .padding(5.dp)
-                        .size(100.dp)
-                        .background(colorResource(id = R.color.teal_200))
-                ){
+            modifier = Modifier
+                .background(backgroundColor)
+                .fillMaxSize()
+        ){
+            BackButton(navController = navController, title = "CLOCK OUT", isDarkTheme = isDarkTheme)
+
+            Row(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState()), // <-- Make it scrollable,
+                horizontalArrangement = Arrangement.SpaceEvenly,
+                verticalAlignment = Alignment.CenterVertically,
+            ){
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    Row {
+                        Box(
+                            modifier = Modifier
+                                .padding(5.dp)
+                                .size(100.dp)
+                                .clip(RoundedCornerShape(32.dp))
+                                .background(colorResource(id = R.color.teal_200))
+                        ) {
+                            Text(
+                                text = "%02d".format(hour),
+                                color = Color.Black,
+                                fontSize = 30.sp,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier.align(Alignment.Center) // Add padding here (change value as needed)
+                            )
+                        }
+
+                        Text(
+                            text = ":",
+                            fontSize = 30.sp,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.padding(top = 32.dp) // Add padding here (change value as needed)
+                        )
+
+                        Box(
+                            modifier = Modifier
+                                .padding(5.dp)
+                                .size(100.dp)
+                                .clip(RoundedCornerShape(32.dp))
+                                .background(colorResource(id = R.color.teal_200))
+                        ) {
+                            Text(
+                                text = "%02d".format(minute),
+                                color = Color.Black,
+                                fontSize = 30.sp,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier.align(Alignment.Center)
+                            )
+                        }
+
+                        Text(
+                            text = amPm,
+                            fontSize = 30.sp,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.padding(top = 40.dp) // Add padding here (change value as needed)
+                        )
+                    }
+
                     Text(
-                        text = "%02d".format(hour),
-                        color = Color.Black,
+                        text = currentDate,
                         fontSize = 30.sp,
                         fontWeight = FontWeight.Bold,
-                        modifier = Modifier.align(Alignment.Center) // Add padding here (change value as needed)
+                        modifier = Modifier.padding(top = 32.dp) // Add padding here (change value as needed)
+                    )
+
+                }
+                ClockOutScreen()
+            }
+        }
+
+    }else{
+        Column(
+            modifier = Modifier
+                .background(backgroundColor)
+                .fillMaxSize()
+        ){
+            BackButton(navController = navController, title = "CLOCK OUT", isDarkTheme = isDarkTheme)
+            Column(
+                modifier = Modifier.fillMaxSize(),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                Row {
+                    Box(
+                        modifier = Modifier
+                            .padding(5.dp)
+                            .size(100.dp)
+                            .clip(RoundedCornerShape(32.dp))
+                            .background(colorResource(id = R.color.teal_200))
+                    ) {
+                        Text(
+                            text = "%02d".format(hour),
+                            color = Color.Black,
+                            fontSize = 30.sp,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.align(Alignment.Center) // Add padding here (change value as needed)
+                        )
+                    }
+
+                    Text(
+                        text = ":",
+                        fontSize = 30.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(top = 32.dp) // Add padding here (change value as needed)
+                    )
+
+                    Box(
+                        modifier = Modifier
+                            .padding(5.dp)
+                            .size(100.dp)
+                            .clip(RoundedCornerShape(32.dp))
+                            .background(colorResource(id = R.color.teal_200))
+                    ) {
+                        Text(
+                            text = "%02d".format(minute),
+                            color = Color.Black,
+                            fontSize = 30.sp,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.align(Alignment.Center)
+                        )
+                    }
+
+                    Text(
+                        text = amPm,
+                        fontSize = 30.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(top = 40.dp) // Add padding here (change value as needed)
                     )
                 }
 
                 Text(
-                    text = ":",
+                    text = currentDate,
                     fontSize = 30.sp,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.padding(top = 32.dp) // Add padding here (change value as needed)
                 )
 
-                Box(
-                    modifier = Modifier
-                        .padding(5.dp)
-                        .size(100.dp)
-                        .background(colorResource(id = R.color.teal_200))
-                ){
-                    Text(
-                        text = "%02d".format(minute),
-                        color = Color.Black,
-                        fontSize = 30.sp,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.align(Alignment.Center)
-                    )
-                }
+                Spacer(modifier = Modifier.height(16.dp))
+
+                ClockOutScreen()
+
             }
-
-            Spacer(modifier = Modifier.height(20.dp))
-
-            SessionManager.currentUser?.let { ClockOutScreen(employeeID = it.id) }
-
         }
     }
+
 }
 
 @Composable
 fun ClockOutScreen(
-    employeeID: String,
     viewModel: AttendanceViewModel = viewModel()
 ) {
-    var showSuccessDialog by remember { mutableStateOf(false) }
+    val employeeID = SessionManager.currentUser?.id
 
-    var message by remember { mutableStateOf("") }
-    var showEarlyLeaveDialog by remember { mutableStateOf(false) }
-    var isEarlyLeaveConfirmed by remember { mutableStateOf(false) }
+    var isEarlyLeaveConfirmed by rememberSaveable(employeeID) { mutableStateOf(false) }
+    var message by rememberSaveable(employeeID) { mutableStateOf("") }
+    val showEarlyLeaveDialog = viewModel.showEarlyLeaveDialog
+    val showSuccessDialog = viewModel.showSuccessDialog
 
     // Fetch latest clock-in when screen is first shown
     LaunchedEffect(Unit) {
-        viewModel.fetchLatestClockIn(employeeID)
+        if (employeeID != null) {
+            viewModel.fetchLatestClockIn(employeeID)
+        }
     }
 
     val latestClockIn = viewModel.latestClockIn.value
@@ -164,14 +286,18 @@ fun ClockOutScreen(
         }
     }
 
-    Column(modifier = Modifier.padding(16.dp)) {
+    Column(
+        modifier = Modifier.padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
+        ) {
         Text(text = "Clock Out", fontSize = 24.sp, fontWeight = FontWeight.Bold)
 
         Spacer(modifier = Modifier.height(8.dp))
 
         Text(
             text = if (latestClockIn != null)
-                "Latest Clock-In: ${timeFormat.format(latestClockIn.toDate())}"
+                "Last Clock-In: ${timeFormat.format(latestClockIn.toDate())}"
             else "Fetching clock-in info...",
             fontSize = 16.sp,
             fontWeight = FontWeight.Medium
@@ -179,31 +305,49 @@ fun ClockOutScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
+        Text(
+            text = if (shiftEnd != null)
+                "Shift Ends At: ${timeFormat.format(shiftEnd.time)}"
+            else "Calculating shift end...",
+            fontSize = 16.sp,
+            fontWeight = FontWeight.Medium
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
         Button(onClick = {
             if (latestClockIn != null && shiftEnd != null) {
-                val clockInDateStr = todayFormatter.format(latestClockIn!!.toDate())
-                val todayDateStr = todayFormatter.format(Date())
+                val clockInCal = Calendar.getInstance(malaysiaTimeZone).apply {
+                    time = latestClockIn.toDate()
+                }
+                val todayCal = Calendar.getInstance(malaysiaTimeZone)
 
-                if (clockInDateStr != todayDateStr) {
+                val sameDay = clockInCal.get(Calendar.YEAR) == todayCal.get(Calendar.YEAR) &&
+                        clockInCal.get(Calendar.DAY_OF_YEAR) == todayCal.get(Calendar.DAY_OF_YEAR)
+
+                if (!sameDay) {
                     message = "No clock-in found for today. Nothing to clock out from."
                     return@Button
                 }
 
                 if (now.before(shiftEnd)) {
-                    showEarlyLeaveDialog = true
+                    viewModel.showEarlyLeaveDialog = true
                 } else {
                     // Normal clock out
-                    viewModel.clockOut(
-                        employeeID = employeeID,
-                        isEarlyLeave = false,
-                        onSuccess = {
-                            message = "Clocked out successfully"
-                            viewModel.fetchLatestClockIn(employeeID)
-                        },
-                        onError = {
-                            message = "Error: ${it.message}"
-                        }
-                    )
+                    if (employeeID != null) {
+                        viewModel.clockOut(
+                            employeeID = employeeID,
+                            isEarlyLeave = false,
+                            onSuccess = {
+                                message = "Clocked out successfully"
+                                viewModel.fetchLatestClockIn(employeeID)
+                                viewModel.showSuccessDialog = true
+                            },
+                            onError = {
+                                message = "Error: ${it.message}"
+                            }
+                        )
+                    }
                 }
             } else {
                 message = "Clock-in record not found."
@@ -220,30 +364,40 @@ fun ClockOutScreen(
     }
 
     if (showEarlyLeaveDialog) {
+
         LeaveEarlyDialog(
             onConfirm = {
-                showEarlyLeaveDialog = false
+                viewModel.showEarlyLeaveDialog = false
                 isEarlyLeaveConfirmed = true
-                viewModel.clockOut(
-                    employeeID = employeeID,
-                    isEarlyLeave = true,
-                    onSuccess = {
-                        message = "Clocked out early successfully"
-                        viewModel.fetchLatestClockIn(employeeID)
-                    },
-                    onError = {
-                        message = "Error: ${it.message}"
-                    }
-                )
+                if (employeeID != null) {
+                    viewModel.clockOut(
+                        employeeID = employeeID,
+                        isEarlyLeave = true,
+                        onSuccess = {
+                            message = "Clocked out early successfully"
+                            viewModel.fetchLatestClockIn(employeeID)
+                        },
+                        onError = {
+                            message = "Error: ${it.message}"
+                        }
+                    )
+                }
             },
-            onDismiss = { showEarlyLeaveDialog = false }
+            onDismiss = { viewModel.showEarlyLeaveDialog = false }
         )
+    }
+
+    if (showSuccessDialog) {
+        ClockOutSuccessDialog(onDismiss = { viewModel.showSuccessDialog = false })
     }
 }
 
 
 @Composable
 fun ClockOutSuccessDialog(onDismiss: () -> Unit) {
+
+    val landscape = isLandscape()
+
     Dialog(onDismissRequest = onDismiss) {
         Box(
             modifier = Modifier
@@ -262,16 +416,16 @@ fun ClockOutSuccessDialog(onDismiss: () -> Unit) {
                     fontSize = 20.sp
                 )
 
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(if (landscape) 8.dp else 16.dp))
 
                 Image(
                     painter = painterResource(id = R.drawable.tick),
                     contentDescription = "success",
-                    modifier = Modifier.size(150.dp),
+                    modifier = Modifier.size(if (landscape) 100.dp else 150.dp),
                     contentScale = ContentScale.Fit
                 )
 
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(if (landscape) 8.dp else 16.dp))
 
                 Text("You have successfully clock-out.")
                 Text("Goodbye")
@@ -291,6 +445,9 @@ fun LeaveEarlyDialog(
     onConfirm: () -> Unit,
     onDismiss: () -> Unit
 ) {
+
+    val landscape = isLandscape()
+
     Dialog(onDismissRequest = onDismiss) {
         Box(
             modifier = Modifier
@@ -309,21 +466,27 @@ fun LeaveEarlyDialog(
                     fontSize = 20.sp
                 )
 
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(if (landscape) 8.dp else 16.dp))
 
                 Image(
                     painter = painterResource(id = R.drawable.exit),
                     contentDescription = "Leave Early",
-                    modifier = Modifier.size(150.dp),
+                    modifier = Modifier.size(if (landscape) 100.dp else 150.dp),
                     contentScale = ContentScale.Fit
                 )
 
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(if (landscape) 8.dp else 16.dp))
 
-                Text("Your shift hasn't ended yet.")
-                Text("Are you sure you want to clock out early?")
+                Text(
+                    text = "Your shift hasn't ended yet.",
+                    textAlign = TextAlign.Center
+                    )
+                Text(
+                    text ="Are you sure you want to clock out early?",
+                    textAlign = TextAlign.Center
+                )
 
-                Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(if (landscape) 16.dp else 24.dp))
 
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(16.dp)

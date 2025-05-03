@@ -73,9 +73,8 @@ fun HistoryList(
     modifier: Modifier = Modifier
 ) {
     val attendanceList = viewModel.attendance
-    var isLoading by remember { mutableStateOf(true) }
     val currentUserId = SessionManager.currentUser?.id
-    var expandedId by remember { mutableStateOf<String?>(null) }
+    var isLoading by remember { mutableStateOf(true) }
 
     LaunchedEffect(Unit) {
         isLoading = true
@@ -101,7 +100,6 @@ fun HistoryList(
                 val clockInDate = item.clockInTime?.toDate()
                 val clockOutDate = item.clockOutTime?.toDate()
 
-                // Set timezone to Malaysia (Asia/Kuala_Lumpur)
                 val dateFormat = SimpleDateFormat("dd MMM yyyy HH:mm:ss", Locale.getDefault()).apply {
                     timeZone = TimeZone.getTimeZone("Asia/Kuala_Lumpur")
                 }
@@ -109,11 +107,10 @@ fun HistoryList(
                     timeZone = TimeZone.getTimeZone("Asia/Kuala_Lumpur")
                 }
 
-                // Format clock-in and clock-out times
                 val clockInStr = clockInDate?.let { dateFormat.format(it) } ?: "Unknown Date"
                 val clockOutStr = clockOutDate?.let { dateFormat.format(it) } ?: "Still working"
 
-                val isExpanded = expandedId == item.attendanceID
+                val isExpanded = viewModel.isHistoryExpanded(item.attendanceID)
 
                 Card(
                     shape = RoundedCornerShape(16.dp),
@@ -122,11 +119,11 @@ fun HistoryList(
                         .fillMaxWidth()
                         .padding(vertical = 6.dp)
                         .clickable {
-                            expandedId = if (isExpanded) null else item.attendanceID
+                            viewModel.toggleHistoryExpansion(item.attendanceID)
                         }
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
-                        // Header (collapsed view)
+                        // Header
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.SpaceBetween,
@@ -143,7 +140,7 @@ fun HistoryList(
                             )
                         }
 
-                        // Expanded view
+                        // Expanded details
                         AnimatedVisibility(visible = isExpanded) {
                             Column(modifier = Modifier.padding(top = 12.dp)) {
                                 Text("Attendance ID: ${item.attendanceID}")
@@ -158,5 +155,6 @@ fun HistoryList(
         }
     }
 }
+
 
 

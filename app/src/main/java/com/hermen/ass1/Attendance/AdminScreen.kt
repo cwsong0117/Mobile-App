@@ -110,10 +110,9 @@ fun AdminScreen(
         timeZone = malaysiaTimeZone
     }
 
-    var showEditDialog by remember { mutableStateOf(false) }
-
-    var showRemoveDialog by remember { mutableStateOf(false) }
-    var selectedAttendance by remember { mutableStateOf<Attendance?>(null) }
+    val showEditDialog by remember { derivedStateOf { viewModel.showEditDialog } }
+    val showRemoveDialog = viewModel.showRemoveDialog
+    val selectedAttendance = viewModel.selectedAttendance
 
     Column(
         modifier = Modifier
@@ -133,14 +132,14 @@ fun AdminScreen(
             LazyColumn(modifier = modifier.padding(8.dp)) {
                 groupedAttendance.forEach { (employeeID, records) ->
                     item {
-                        var expanded by remember { mutableStateOf(false) }
+                        val expanded = viewModel.isExpanded(employeeID)
                         val userName = usersMap[employeeID]?.name ?: "Unknown User"
 
                         Card(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(8.dp)
-                                .clickable { expanded = !expanded },
+                                .clickable { viewModel.toggleExpanded(employeeID) },
                             elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
                         ) {
                             Column(modifier = Modifier.padding(16.dp)) {
@@ -163,12 +162,9 @@ fun AdminScreen(
                                                 horizontalArrangement = Arrangement.SpaceBetween,
                                                 verticalAlignment = Alignment.CenterVertically
                                             ) {
-                                                // Left: Attendance details
+                                                // Attendance info
                                                 Column(modifier = Modifier.weight(1f)) {
-                                                    Text(
-                                                        text = "Date: ${clockInDate?.let { dateFormat.format(it) } ?: "N/A"}",
-                                                        fontWeight = FontWeight.Bold
-                                                    )
+                                                    Text("Date: ${clockInDate?.let { dateFormat.format(it) } ?: "N/A"}", fontWeight = FontWeight.Bold)
                                                     Text("Clock In: ${clockInDate?.let { timeFormat.format(it) } ?: "N/A"}")
                                                     Text("Clock Out: ${clockOutDate?.let { timeFormat.format(it) } ?: "N/A"}")
                                                     Text(
@@ -177,7 +173,7 @@ fun AdminScreen(
                                                     )
                                                 }
 
-                                                // Right: Edit & Remove buttons
+                                                // Edit & Delete buttons
                                                 Column(
                                                     horizontalAlignment = Alignment.End,
                                                     verticalArrangement = Arrangement.Center,
@@ -186,8 +182,9 @@ fun AdminScreen(
                                                         modifier = Modifier
                                                             .size(32.dp)
                                                             .clickable {
-                                                                selectedAttendance = attendance
-                                                                showEditDialog = true
+                                                                viewModel.selectedAttendance = attendance
+                                                                viewModel.setEditableState(attendance)
+                                                                viewModel.showEditDialog = true
                                                             }
                                                     ) {
                                                         Image(
@@ -195,9 +192,7 @@ fun AdminScreen(
                                                             contentDescription = "edit",
                                                             contentScale = ContentScale.Fit,
                                                             modifier = Modifier.fillMaxSize(),
-                                                            colorFilter = ColorFilter.tint(
-                                                                if (isDarkTheme) Color.White else Color.Black
-                                                            )
+                                                            colorFilter = ColorFilter.tint(if (isDarkTheme) Color.White else Color.Black)
                                                         )
                                                     }
 
@@ -207,8 +202,8 @@ fun AdminScreen(
                                                         modifier = Modifier
                                                             .size(32.dp)
                                                             .clickable {
-                                                                selectedAttendance = attendance
-                                                                showRemoveDialog = true
+                                                                viewModel.selectedAttendance = attendance
+                                                                viewModel.showRemoveDialog = true
                                                             }
                                                     ) {
                                                         Image(
@@ -216,9 +211,7 @@ fun AdminScreen(
                                                             contentDescription = "remove",
                                                             contentScale = ContentScale.Fit,
                                                             modifier = Modifier.fillMaxSize(),
-                                                            colorFilter = ColorFilter.tint(
-                                                                if (isDarkTheme) Color.Red else Color.Red
-                                                            )
+                                                            colorFilter = ColorFilter.tint(Color.Red)
                                                         )
                                                     }
                                                 }
@@ -227,35 +220,34 @@ fun AdminScreen(
                                             Divider(thickness = 1.5.dp)
                                         }
                                     }
-
                                 }
-
                             }
                         }
                     }
                 }
             }
+
         }
     }
 
     // Show Dialogs
     if (showEditDialog && selectedAttendance != null) {
         EditDialog(
-            attendance = selectedAttendance!!,
+            attendance = selectedAttendance,
             onDismiss = {
-                selectedAttendance = null
-                showEditDialog = false
+                viewModel.clearEditableState()
+                viewModel.selectedAttendance = null
+                viewModel.showEditDialog = false
             }
         )
     }
-
 
     if (showRemoveDialog && selectedAttendance != null) {
         RemoveDialog(
             attendance = selectedAttendance!!,
             onDismiss = {
-                selectedAttendance = null
-                showRemoveDialog = false
+                viewModel.selectedAttendance = null
+                viewModel.showRemoveDialog = false
             }
         )
     }
@@ -269,9 +261,10 @@ fun EditDialog(
 ) {
     val context = LocalContext.current
 
-    var clockIn by remember { mutableStateOf(attendance.clockInTime?.toDate() ?: Date()) }
-    var clockOut by remember { mutableStateOf(attendance.clockOutTime?.toDate() ?: Date()) }
-    var status by remember { mutableStateOf(attendance.status ?: "") }
+    val editable = viewModel.editableState ?: return  // Prevent crash if null
+    val clockIn = editable.clockIn
+    val clockOut = editable.clockOut
+    val status = editable.status
 
     val dateFormat = SimpleDateFormat("dd-MM-yyyy", Locale.getDefault())
     val timeFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
@@ -302,9 +295,9 @@ fun EditDialog(
             targetTime.value = cal.time
 
             if (editingClockIn.value) {
-                clockIn = cal.time
+                viewModel.updateClockIn(cal.time)
             } else {
-                clockOut = cal.time
+                viewModel.updateClockOut(cal.time)
             }
 
             openTimePicker.value = false
@@ -346,7 +339,7 @@ fun EditDialog(
 
                 OutlinedTextField(
                     value = status,
-                    onValueChange = { status = it },
+                    onValueChange = { viewModel.updateStatus(it) },
                     label = { Text("Status") }
                 )
 

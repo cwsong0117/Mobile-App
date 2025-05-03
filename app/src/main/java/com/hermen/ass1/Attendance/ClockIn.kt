@@ -15,9 +15,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -31,7 +29,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
@@ -40,7 +37,6 @@ import kotlinx.coroutines.delay
 import java.util.*
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.google.android.gms.location.LocationServices
-import com.google.firebase.Timestamp
 import android.location.Geocoder
 import android.location.Location
 import android.os.Looper
@@ -49,7 +45,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.CircularProgressIndicator
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
@@ -61,12 +56,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationResult
-import com.google.firebase.auth.FirebaseAuth
 import com.hermen.ass1.User.SessionManager
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
 import java.util.Locale
 import com.google.android.gms.location.Priority
@@ -74,7 +64,9 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.hermen.ass1.ui.theme.LeaveRequest
 import android.util.Log
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.ui.text.TextStyle
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.text.style.TextAlign
 import androidx.navigation.NavController
 import com.hermen.ass1.BackButton
@@ -83,9 +75,10 @@ import com.hermen.ass1.BackButton
 fun ClockIn(
     navController: NavController,
     isDarkTheme: Boolean,
-//    onBackButtonClicked: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val landscape = isLandscape()
+
     val backgroundColor = if (isDarkTheme) Color.Black else Color(0xFFE5FFFF)
 
     //Get current time function
@@ -125,102 +118,197 @@ fun ClockIn(
     val amPm = if (calendar.get(Calendar.AM_PM) == Calendar.AM) "AM" else "PM"
     //Get current time function
 
-    Column(
-        modifier = Modifier
-            .background(backgroundColor)
-            .fillMaxSize()
-    ){
-        BackButton(navController = navController, title = "CLOCK IN", isDarkTheme = isDarkTheme)
+    if (landscape) {
         Column(
-            modifier = Modifier.fillMaxSize(),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
-        ) {
-            Row {
-                Box(
-                    modifier = Modifier
-                        .padding(5.dp)
-                        .size(100.dp)
-                        .clip(RoundedCornerShape(32.dp))
-                        .background(colorResource(id = R.color.teal_200))
+            modifier = Modifier
+                .background(backgroundColor)
+                .fillMaxSize()
+        ){
+            BackButton(navController = navController, title = "CLOCK IN", isDarkTheme = isDarkTheme)
+            Row(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState()), // <-- Make it scrollable,
+                horizontalArrangement = Arrangement.SpaceEvenly,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
                 ){
+                    Row {
+                        Box(
+                            modifier = Modifier
+                                .padding(5.dp)
+                                .size(100.dp)
+                                .clip(RoundedCornerShape(32.dp))
+                                .background(colorResource(id = R.color.teal_200))
+                        ){
+                            Text(
+                                text = "%02d".format(hour),
+                                color = Color.Black,
+                                fontSize = 30.sp,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier.align(Alignment.Center) // Add padding here (change value as needed)
+                            )
+                        }
+
+                        Text(
+                            text = ":",
+                            color = Color.Black,
+                            fontSize = 30.sp,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.padding(top = 32.dp) // Add padding here (change value as needed)
+                        )
+
+                        Box(
+                            modifier = Modifier
+                                .padding(5.dp)
+                                .size(100.dp)
+                                .clip(RoundedCornerShape(32.dp))
+                                .background(colorResource(id = R.color.teal_200))
+                        ){
+                            Text(
+                                text = "%02d".format(minute),
+                                color = Color.Black,
+                                fontSize = 30.sp,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier.align(Alignment.Center)
+                            )
+                        }
+
+                        Text(
+                            text = amPm,
+                            fontSize = 30.sp,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.padding(top = 32.dp) // Add padding here (change value as needed)
+                        )
+                    }
+
                     Text(
-                        text = "%02d".format(hour),
-                        color = Color.Black,
+                        text = currentDate,
                         fontSize = 30.sp,
                         fontWeight = FontWeight.Bold,
-                        modifier = Modifier.align(Alignment.Center) // Add padding here (change value as needed)
+                        modifier = Modifier.padding(top = 32.dp) // Add padding here (change value as needed)
                     )
                 }
 
-                Text(
-                    text = ":",
-                    color = Color.Black,
-                    fontSize = 30.sp,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(top = 32.dp) // Add padding here (change value as needed)
-                )
-
-                Box(
-                    modifier = Modifier
-                        .padding(5.dp)
-                        .size(100.dp)
-                        .clip(RoundedCornerShape(32.dp))
-                        .background(colorResource(id = R.color.teal_200))
-                ){
-                    Text(
-                        text = "%02d".format(minute),
-                        color = Color.Black,
-                        fontSize = 30.sp,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.align(Alignment.Center)
-                    )
+                if ( currentDay != Calendar.SATURDAY) {
+                    AddAttendanceScreen()
+                } else {
+                    // Optional: Show a message if it's weekend
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "Hooray! It's the weekend.",
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
                 }
-
-                Text(
-                    text = amPm,
-                    fontSize = 30.sp,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(top = 32.dp) // Add padding here (change value as needed)
-                )
             }
+        }
+    } else {
+        Column(
+            modifier = Modifier
+                .background(backgroundColor)
+                .fillMaxSize()
+        ){
+            BackButton(navController = navController, title = "CLOCK IN", isDarkTheme = isDarkTheme)
+            Column(
+                modifier = Modifier.fillMaxSize(),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                Row {
+                    Box(
+                        modifier = Modifier
+                            .padding(5.dp)
+                            .size(100.dp)
+                            .clip(RoundedCornerShape(32.dp))
+                            .background(colorResource(id = R.color.teal_200))
+                    ){
+                        Text(
+                            text = "%02d".format(hour),
+                            color = Color.Black,
+                            fontSize = 30.sp,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.align(Alignment.Center) // Add padding here (change value as needed)
+                        )
+                    }
 
-            Text(
-                text = currentDate,
-                fontSize = 30.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(top = 32.dp) // Add padding here (change value as needed)
-            )
-
-            Spacer(modifier = Modifier.height(30.dp))
-
-            if ( currentDay != Calendar.SUNDAY) {
-                AddAttendanceScreen()
-            } else {
-                // Optional: Show a message if it's weekend
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
                     Text(
-                        text = "Hooray! It's the weekend.",
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Medium
+                        text = ":",
+                        color = Color.Black,
+                        fontSize = 30.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(top = 32.dp) // Add padding here (change value as needed)
                     )
+
+                    Box(
+                        modifier = Modifier
+                            .padding(5.dp)
+                            .size(100.dp)
+                            .clip(RoundedCornerShape(32.dp))
+                            .background(colorResource(id = R.color.teal_200))
+                    ){
+                        Text(
+                            text = "%02d".format(minute),
+                            color = Color.Black,
+                            fontSize = 30.sp,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.align(Alignment.Center)
+                        )
+                    }
+
+                    Text(
+                        text = amPm,
+                        fontSize = 30.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(top = 32.dp) // Add padding here (change value as needed)
+                    )
+                }
+
+                Text(
+                    text = currentDate,
+                    fontSize = 30.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(top = 32.dp) // Add padding here (change value as needed)
+                )
+
+                Spacer(modifier = Modifier.height(30.dp))
+
+                if ( currentDay != Calendar.SATURDAY) {
+                    AddAttendanceScreen()
+                } else {
+                    // Optional: Show a message if it's weekend
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "Hooray! It's the weekend.",
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
                 }
             }
         }
     }
+
 }
 
 @Composable
 fun AddAttendanceScreen(viewModel: AttendanceViewModel = viewModel()) {
 
-    var isCheckingAttendance by remember { mutableStateOf(true) }
+    var isCheckingAttendance by rememberSaveable { mutableStateOf(true) }
     val lifecycleOwner = LocalLifecycleOwner.current
 
-    var showSuccessDialog by remember { mutableStateOf(false) }
-    var showNotAtWorkplaceDialog by remember { mutableStateOf(false) }
+    var showSuccessDialog by rememberSaveable { mutableStateOf(false) }
+    var showNotAtWorkplaceDialog by rememberSaveable { mutableStateOf(false) }
     var clockedInToday by remember { mutableStateOf<Attendance?>(null) }
 
     val context = LocalContext.current
@@ -236,8 +324,8 @@ fun AddAttendanceScreen(viewModel: AttendanceViewModel = viewModel()) {
     val allowedRadius = 200f // meters
 
     var userLocation by remember { mutableStateOf<Location?>(null) }
-    var userAddress by remember { mutableStateOf("Fetching address...") }
-    var permissionGranted by remember { mutableStateOf(false) }
+    var userAddress by rememberSaveable { mutableStateOf("Fetching address...") }
+    var permissionGranted by rememberSaveable { mutableStateOf(false) }
 
     val locationPermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
@@ -275,7 +363,7 @@ fun AddAttendanceScreen(viewModel: AttendanceViewModel = viewModel()) {
 
     // 3. Get current location if permission is granted
     LaunchedEffect(permissionGranted) {
-        if (permissionGranted) {
+        if (permissionGranted && userLocation == null) {
             val locationRequest = LocationRequest.Builder(
                 Priority.PRIORITY_HIGH_ACCURACY,
                 1000L
@@ -286,27 +374,30 @@ fun AddAttendanceScreen(viewModel: AttendanceViewModel = viewModel()) {
 
             val locationCallback = object : LocationCallback() {
                 override fun onLocationResult(result: LocationResult) {
-                    userLocation = result.lastLocation
-                    if (result.lastLocation != null) {
-                        userLocation = result.lastLocation
+                    val location = result.lastLocation
+                    if (location != null) {
+                        userLocation = location
 
                         val geocoder = Geocoder(context, Locale.getDefault())
                         val addresses = geocoder.getFromLocation(
-                            userLocation!!.latitude,
-                            userLocation!!.longitude,
+                            location.latitude,
+                            location.longitude,
                             1
                         )
 
-                        if (!addresses.isNullOrEmpty()) {
-                            userAddress = addresses[0].getAddressLine(0)
+                        userAddress = if (!addresses.isNullOrEmpty()) {
+                            addresses[0].getAddressLine(0)
                         } else {
-                            userAddress = "Address not found"
+                            "Address not found"
                         }
-                    }
 
+                        // ✅ Clean up location callback after getting location
+                        fusedLocationClient.removeLocationUpdates(this)
+                    }
                 }
             }
 
+            // 🔁 Start receiving location updates
             fusedLocationClient.requestLocationUpdates(
                 locationRequest,
                 locationCallback,
@@ -315,10 +406,11 @@ fun AddAttendanceScreen(viewModel: AttendanceViewModel = viewModel()) {
         }
     }
 
+
     //check leaves list
     val firestore = FirebaseFirestore.getInstance()
-    val leaveList = remember { mutableStateListOf<LeaveRequest>() }
-    var onLeaveToday by remember { mutableStateOf(false) } // <-- add this to store leave status
+    val leaveList = remember{ mutableStateListOf<LeaveRequest>() }
+    var onLeaveToday by rememberSaveable { mutableStateOf(false) } // <-- add this to store leave status
 
     LaunchedEffect(Unit) {
         firestore.collection("Leave")
