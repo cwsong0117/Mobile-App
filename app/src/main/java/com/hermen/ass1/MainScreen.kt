@@ -48,11 +48,13 @@ import com.hermen.ass1.MeetingRoom.RoomViewModel
 import com.hermen.ass1.User.UserProfileScreen
 import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.compose.composable
-import androidx.navigation.compose.currentBackStackEntryAsState
 import com.hermen.ass1.IndicateFooter
 import coil.compose.AsyncImage
 import com.hermen.ass1.Attendance.AdminScreen
-import androidx.compose.runtime.LaunchedEffect
+import com.hermen.ass1.PaySlip.PaySlip
+import com.hermen.ass1.PaySlip.PaySlipDetailsScreen
+import com.hermen.ass1.PaySlip.PaySlipHomeScreen
+import com.hermen.ass1.PaySlip.PaySlipHomeScreenForAdmin
 
 enum class AppScreen(@StringRes val title: Int) {
     Home(title = R.string.app_name),
@@ -66,6 +68,7 @@ enum class AppScreen(@StringRes val title: Int) {
     ApproveLeave(title = R.string.approve_leave),
     CreateOrEditAnnouncement(title = R.string.create_or_edit_announcement),
     ShowLeave(title = R.string.approve_leave),
+    PaySlip(title = R.string.pay_slip),
 }
 
 data class AppItem(
@@ -204,6 +207,25 @@ fun AppNavHost(
                 announcementId = announcementId,
                 isDarkTheme = isDarkTheme
             )
+        }
+        composable("paySlip") {
+            PaySlip(navController = navController, isDarkTheme = isDarkTheme)
+        }
+        composable("paySlipDetails/{month}/{year}") { backStackEntry ->
+            val month = backStackEntry.arguments?.getString("month") ?: ""
+            val year = backStackEntry.arguments?.getString("year") ?: ""
+            PaySlipDetailsScreen(
+                navController = navController,
+                month = month,
+                year = year,
+                isDarkTheme = isDarkTheme
+            )
+        }
+        composable("viewPayslip") {
+            PaySlipHomeScreen(navController = navController, isDarkTheme = isDarkTheme)
+        }
+        composable("managePayslip") {
+            PaySlipHomeScreenForAdmin(navController = navController, isDarkTheme = isDarkTheme)
         }
     }
 }
@@ -363,6 +385,7 @@ fun AnnouncementSection(
     isDarkTheme: Boolean,
     viewModel: AnnouncementViewModel = viewModel()
 ) {
+    // Collect the announcements
     val announcements by viewModel.announcements.collectAsState()
 
     // Add LaunchedEffect to refresh data when this composable enters composition

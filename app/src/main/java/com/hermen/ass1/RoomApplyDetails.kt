@@ -331,7 +331,7 @@ fun NameInput(name:String, onNameChange:(String) -> Unit) {
         TextField(
             value = name,
             onValueChange = onNameChange,
-            placeholder = { Text("ex: John") },
+            placeholder = { Text("ex: John", color = Color.Gray) },
             colors = TextFieldDefaults.textFieldColors(
                 backgroundColor = Color.White, // Set the background color
                 textColor = Color.Black // Set text color
@@ -535,7 +535,7 @@ fun PurposeInput(purpose: String, onPurposeChange: (String) -> Unit, customPurpo
                 value = customPurpose,
                 onValueChange = {},
                 readOnly = true,
-                placeholder = { Text("Select purpose") },
+                placeholder = { Text("Select purpose", color = Color.Gray) },
                 colors = TextFieldDefaults.textFieldColors(
                     backgroundColor = Color.White, // Set the background color
                     textColor = Color.Black // Set text color
@@ -591,7 +591,7 @@ fun PurposeInput(purpose: String, onPurposeChange: (String) -> Unit, customPurpo
                 TextField(
                     value = purpose,
                     onValueChange = onPurposeChange,
-                    placeholder = { Text("Enter your reservation purpose") },
+                    placeholder = { Text("Enter your reservation purpose",color = Color.Gray) },
                     colors = TextFieldDefaults.textFieldColors(
                         backgroundColor = Color.White, // Set the background color
                         textColor = Color.Black // Set text color

@@ -34,7 +34,6 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.*
 import androidx.compose.runtime.setValue
@@ -62,11 +61,29 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.hermen.ass1.MeetingRoom.RoomViewModel
 import androidx.compose.ui.graphics.Color
+import androidx.lifecycle.ViewModel
 import com.hermen.ass1.User.SessionManager
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
+
+class MeetingRoomViewModel : ViewModel() {
+    private val _selectedTabIndex = MutableStateFlow(0)
+    val selectedTabIndex = _selectedTabIndex.asStateFlow()
+
+    fun updateSelectedTab(index: Int) {
+        _selectedTabIndex.value = index
+    }
+}
 
 @Composable
 fun MeetingRoomApply(navController: NavController, isDarkTheme: Boolean) {
-    var selectedTabIndex by remember { mutableIntStateOf(0) }
+    // Get the ViewModel instance
+    val viewModel: MeetingRoomViewModel = viewModel()
+
+    // Collect the state without using "by" delegate
+    val selectedTabIndexState = viewModel.selectedTabIndex.collectAsState()
+    val selectedTabIndex = selectedTabIndexState.value
+
     val topBarTitle = if (selectedTabIndex == 0) "Meeting Room" else "Application Status"
     val backgroundColor = if (isDarkTheme) Color.Black else Color(0xFFE5FFFF)
 
@@ -76,7 +93,7 @@ fun MeetingRoomApply(navController: NavController, isDarkTheme: Boolean) {
             .fillMaxSize()
     ) {
         BackButton(navController = navController, title = topBarTitle, isDarkTheme = isDarkTheme)
-        MeetingRoomTabs(selectedTabIndex, onTabSelected = { selectedTabIndex = it })
+        MeetingRoomTabs(selectedTabIndex, onTabSelected = { viewModel.updateSelectedTab(it) })
 
         when (selectedTabIndex) {
             0 -> ApplyTabContent(navController)
@@ -237,7 +254,7 @@ fun StatusScreen(navController: NavController, viewModel: RoomViewModel = viewMo
         requestList.filter { it.userId == userId }
     }
 
-// Step 2: Then, apply search filter if needed
+    // Step 2: Then, apply search filter if needed
     val filteredList = if (searchText.isNotBlank()) {
         visibleList.filter { request ->
             if (userId.startsWith("A")) {
@@ -392,7 +409,6 @@ fun StatusDetails(navController: NavController, applyId: String, viewModel: Room
     val isAdmin = userId.startsWith("A") == true
     var isQrCodeVisible by remember { mutableStateOf(true) }
     val background = if (isDarkTheme) Color.Transparent else Color(0xFFE5FFFF)
-    val context = LocalContext.current
 
     Box(
         modifier = Modifier

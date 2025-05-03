@@ -8,6 +8,7 @@
     <string name="meetingRoom2">Phone Booth Room</string>
     <string name="meetingRoom3">Conference Room</string>
     <string name="meetingRoom4">Innovation Room</string>
+    <string name="meeting_room">Meeting Room</string>
     <string name="announcement_overview">AnnouncementOverview</string>
     <string name="announcement_detail">AnnouncementDetail</string>
     <string name="user_profile">User Profile</string>
@@ -16,4 +17,5 @@
     <string name="approve_leave">Approve Leave</string>
     <string name="show_leave">Show Leave</string>
     <string name="create_or_edit_announcement">Create Or Edit Announcement</string>
+    <string name="pay_slip">Pay Slip</string>
 </resources>

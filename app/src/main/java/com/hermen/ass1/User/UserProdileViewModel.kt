@@ -38,6 +38,50 @@ class UserProfileViewModel : ViewModel() {
 
         private lateinit var originalUser: User
 
+    var departmentList by mutableStateOf(listOf<String>())
+        private set
+
+    fun fetchAllDepartments() {
+        FirebaseFirestore.getInstance().collection("User")
+            .get()
+            .addOnSuccessListener { result ->
+                val departments = result.documents
+                    .mapNotNull { it.getString("department") }
+                    .distinct() // Remove duplicates
+                    .sorted()
+                departmentList = departments
+            }
+            .addOnFailureListener { e ->
+                Log.e("UserProfileViewModel", "Failed to fetch departments: ${e.message}")
+            }
+    }
+
+    init {
+        fetchAllDepartments()
+    }
+
+    var employeesInSelectedDepartment by mutableStateOf(mapOf<String, String>())
+        private set
+
+    fun fetchEmployeesByDepartment(department: String) {
+        FirebaseFirestore.getInstance().collection("User")
+            .whereEqualTo("department", department)
+            .get()
+            .addOnSuccessListener { result ->
+                val employeeMap = result.documents.mapNotNull { doc ->
+                    val name = doc.getString("name")
+                    val userId = doc.getString("userId") ?: doc.id
+                    if (name != null) name to userId else null
+                }.toMap().toSortedMap()
+
+                employeesInSelectedDepartment = employeeMap
+            }
+            .addOnFailureListener { e ->
+                Log.e("UserProfileViewModel", "Failed to fetch employees: ${e.message}")
+            }
+    }
+
+
     fun initializeUserData(user: User) {
         // Initialize only if the data is not already set
         if (this::originalUser.isInitialized.not()) {
