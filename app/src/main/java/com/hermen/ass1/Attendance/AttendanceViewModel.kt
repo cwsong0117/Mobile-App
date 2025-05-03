@@ -14,6 +14,20 @@ import java.util.Locale
 import java.util.TimeZone
 import androidx.compose.runtime.State
 import kotlinx.coroutines.tasks.await
+import android.content.res.Configuration
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateMapOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.LocalConfiguration
+import java.util.Date
+
+@Composable
+fun isLandscape(): Boolean {
+    val configuration = LocalConfiguration.current
+    return configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
+}
 
 data class Attendance(
     val attendanceID: String = "",
@@ -23,9 +37,74 @@ data class Attendance(
     val status: String = ""
 )
 
+data class EditableAttendanceState(
+    val clockIn: Date,
+    val clockOut: Date,
+    val status: String
+)
+
 class AttendanceViewModel : ViewModel() {
     private val db = Firebase.firestore
     val attendance = mutableStateListOf<Attendance>()
+
+    //for orientation changes
+    var showEarlyLeaveDialog by mutableStateOf(false)
+    var showSuccessDialog by mutableStateOf(false)
+    var showEditDialog by mutableStateOf(false)
+    var showRemoveDialog by mutableStateOf(false)
+    var selectedAttendance: Attendance? by mutableStateOf(null)
+    var editableState: EditableAttendanceState? by mutableStateOf(null)
+
+    //expand for history list
+    var expandedHistoryId by mutableStateOf<String?>(null)
+        private set
+
+    fun toggleHistoryExpansion(attendanceId: String) {
+        expandedHistoryId = if (expandedHistoryId == attendanceId) null else attendanceId
+    }
+
+    fun isHistoryExpanded(attendanceId: String): Boolean {
+        return expandedHistoryId == attendanceId
+    }
+
+    //expand for admin
+    val expandedCards = mutableStateMapOf<String, Boolean>()
+
+    fun toggleExpanded(employeeID: String) {
+        val current = expandedCards[employeeID] ?: false
+        expandedCards[employeeID] = !current
+    }
+
+    fun isExpanded(employeeID: String): Boolean {
+        return expandedCards[employeeID] ?: false
+    }
+
+    //especially for editing for surviving orientationc change
+
+    fun setEditableState(attendance: Attendance) {
+        editableState = EditableAttendanceState(
+            clockIn = attendance.clockInTime?.toDate() ?: Date(),
+            clockOut = attendance.clockOutTime?.toDate() ?: Date(),
+            status = attendance.status ?: ""
+        )
+    }
+
+    fun updateClockIn(date: Date) {
+        editableState = editableState?.copy(clockIn = date)
+    }
+
+    fun updateClockOut(date: Date) {
+        editableState = editableState?.copy(clockOut = date)
+    }
+
+    fun updateStatus(newStatus: String) {
+        editableState = editableState?.copy(status = newStatus)
+    }
+
+    fun clearEditableState() {
+        editableState = null
+    }
+    //especially for editing for surviving orientationc change
 
     fun getAttendance(onComplete: () -> Unit) {
         db.collection("Attendance")

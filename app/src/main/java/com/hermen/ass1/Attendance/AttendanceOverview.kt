@@ -60,10 +60,12 @@ fun AttendanceOverview(
     gotoClockInScreen: () -> Unit,
     gotoClockOutScreen: () -> Unit,
     gotoAdminScreen: () -> Unit,
-//    onBackButtonClicked: () -> Unit,
     isDarkTheme: Boolean,
     modifier: Modifier = Modifier,
 ) {
+
+    val landscape = isLandscape()
+
     //background color
     val backgroundColor = if (isDarkTheme) Color.Black else Color(0xFFE5FFFF)
 
@@ -101,180 +103,366 @@ fun AttendanceOverview(
 
     val currentUserId = SessionManager.currentUser?.id
 
-    Column(
-        modifier = Modifier
-            .background(backgroundColor)
-            .fillMaxSize()
-    ){
-        BackButton(navController = navController, title = "ATTENDANCE", isDarkTheme = isDarkTheme)
+    if (landscape) {
+        Column(
+            modifier = Modifier
+                .background(backgroundColor)
+                .fillMaxSize()
+        ){
+            BackButton(navController = navController, title = "ATTENDANCE", isDarkTheme = isDarkTheme)
 
-        if (currentUserId?.startsWith("A") == true) {
-            Spacer(modifier = Modifier.height(8.dp))
+            if (currentUserId?.startsWith("A") == true) {
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 8.dp, end = 16.dp),
+                    horizontalArrangement = Arrangement.End
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(32.dp)
+                            .clickable { gotoAdminScreen() }
+                    ) {
+                        Image(
+                            painter = painterResource(id = R.drawable.more_vertical),
+                            contentDescription = "more for admin",
+                            contentScale = ContentScale.Fit,
+                            modifier = Modifier.fillMaxSize(),
+                            colorFilter = ColorFilter.tint(
+                                if (isDarkTheme) Color.White else Color.Black
+                            )
+                        )
+                    }
+                }
+            }
 
             Row(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 8.dp, end = 16.dp),
-                horizontalArrangement = Arrangement.End
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState()), // <-- Make it scrollable,
+                horizontalArrangement = Arrangement.SpaceEvenly,
+                verticalAlignment = Alignment.CenterVertically,
             ) {
-                Box(
-                    modifier = Modifier
-                        .size(32.dp)
-                        .clickable { gotoAdminScreen() }
-                ) {
-                    Image(
-                        painter = painterResource(id = R.drawable.more_vertical),
-                        contentDescription = "more for admin",
-                        contentScale = ContentScale.Fit,
-                        modifier = Modifier.fillMaxSize(),
-                        colorFilter = ColorFilter.tint(
-                            if (isDarkTheme) Color.White else Color.Black
+
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ){
+                    Row {
+                        Box(
+                            modifier = Modifier
+                                .padding(5.dp)
+                                .size(100.dp)
+                                .clip(RoundedCornerShape(32.dp))
+                                .background(colorResource(id = R.color.teal_200))
+                        ) {
+                            Text(
+                                text = "%02d".format(hour),
+                                color = Color.Black,
+                                fontSize = 30.sp,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier.align(Alignment.Center) // Add padding here (change value as needed)
+                            )
+                        }
+
+                        Text(
+                            text = ":",
+                            fontSize = 30.sp,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.padding(top = 32.dp) // Add padding here (change value as needed)
                         )
+
+                        Box(
+                            modifier = Modifier
+                                .padding(5.dp)
+                                .size(100.dp)
+                                .clip(RoundedCornerShape(32.dp))
+                                .background(colorResource(id = R.color.teal_200))
+                        ) {
+                            Text(
+                                text = "%02d".format(minute),
+                                color = Color.Black,
+                                fontSize = 30.sp,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier.align(Alignment.Center)
+                            )
+                        }
+
+                        Text(
+                            text = amPm,
+                            fontSize = 30.sp,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.padding(top = 40.dp) // Add padding here (change value as needed)
+                        )
+                    }
+
+                    Text(
+                        text = currentDate,
+                        fontSize = 30.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(top = 32.dp) // Add padding here (change value as needed)
                     )
+                }
+
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    //choose clock in clock out
+                    Row {
+                        // Clock-In
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            modifier = Modifier
+                                .clickable { gotoClockInScreen() }
+                                .padding(8.dp)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .padding(top = 16.dp)
+                                    .size(150.dp)
+                            ) {
+                                Image(
+                                    painter = painterResource(id = R.drawable.baseline_access_time_24),
+                                    contentDescription = "clock-in",
+                                    contentScale = ContentScale.Fit,
+                                    modifier = Modifier.fillMaxSize(),
+                                    colorFilter = ColorFilter.tint(
+                                        if (isDarkTheme) Color.White else Color.Black
+                                    )
+                                )
+                            }
+
+                            Text(
+                                text = "Clock-IN",
+                                color = MaterialTheme.colorScheme.onBackground,
+                                fontSize = 30.sp,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier.align(Alignment.CenterHorizontally)
+                            )
+                        }
+
+                        // Clock-Out
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            modifier = Modifier
+                                .clickable { gotoClockOutScreen() }
+                                .padding(8.dp)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .padding(top = 16.dp)
+                                    .size(150.dp)
+                            ) {
+                                Image(
+                                    painter = painterResource(id = R.drawable.clock_out_logo),
+                                    contentDescription = "clock-out",
+                                    contentScale = ContentScale.Fit,
+                                    modifier = Modifier.fillMaxSize(),
+                                    colorFilter = ColorFilter.tint(
+                                        if (isDarkTheme) Color.White else Color.Black
+                                    )
+                                )
+                            }
+
+                            Text(
+                                text = "Clock-OUT",
+                                color = MaterialTheme.colorScheme.onBackground,
+                                fontSize = 30.sp,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier.align(Alignment.CenterHorizontally)
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(50.dp))
+
+                    Button(
+                        onClick = gotoHistoryScreen
+                    ) {
+                        Text(text = "History")
+                    }
                 }
             }
         }
-
+    } else {
         Column(
             modifier = Modifier
+                .background(backgroundColor)
                 .fillMaxSize()
-                .verticalScroll(rememberScrollState()), // <-- Make it scrollable,
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center,
-        ) {
-            Row {
-                Box(
+        ){
+            BackButton(navController = navController, title = "ATTENDANCE", isDarkTheme = isDarkTheme)
+
+            if (currentUserId?.startsWith("A") == true) {
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Row(
                     modifier = Modifier
-                        .padding(5.dp)
-                        .size(100.dp)
-                        .clip(RoundedCornerShape(32.dp))
-                        .background(colorResource(id = R.color.teal_200))
+                        .fillMaxWidth()
+                        .padding(top = 8.dp, end = 16.dp),
+                    horizontalArrangement = Arrangement.End
                 ) {
+                    Box(
+                        modifier = Modifier
+                            .size(32.dp)
+                            .clickable { gotoAdminScreen() }
+                    ) {
+                        Image(
+                            painter = painterResource(id = R.drawable.more_vertical),
+                            contentDescription = "more for admin",
+                            contentScale = ContentScale.Fit,
+                            modifier = Modifier.fillMaxSize(),
+                            colorFilter = ColorFilter.tint(
+                                if (isDarkTheme) Color.White else Color.Black
+                            )
+                        )
+                    }
+                }
+            }
+
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState()), // <-- Make it scrollable,
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center,
+            ) {
+                Row {
+                    Box(
+                        modifier = Modifier
+                            .padding(5.dp)
+                            .size(100.dp)
+                            .clip(RoundedCornerShape(32.dp))
+                            .background(colorResource(id = R.color.teal_200))
+                    ) {
+                        Text(
+                            text = "%02d".format(hour),
+                            color = Color.Black,
+                            fontSize = 30.sp,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.align(Alignment.Center) // Add padding here (change value as needed)
+                        )
+                    }
+
                     Text(
-                        text = "%02d".format(hour),
-                        color = Color.Black,
+                        text = ":",
                         fontSize = 30.sp,
                         fontWeight = FontWeight.Bold,
-                        modifier = Modifier.align(Alignment.Center) // Add padding here (change value as needed)
+                        modifier = Modifier.padding(top = 32.dp) // Add padding here (change value as needed)
+                    )
+
+                    Box(
+                        modifier = Modifier
+                            .padding(5.dp)
+                            .size(100.dp)
+                            .clip(RoundedCornerShape(32.dp))
+                            .background(colorResource(id = R.color.teal_200))
+                    ) {
+                        Text(
+                            text = "%02d".format(minute),
+                            color = Color.Black,
+                            fontSize = 30.sp,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.align(Alignment.Center)
+                        )
+                    }
+
+                    Text(
+                        text = amPm,
+                        fontSize = 30.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(top = 40.dp) // Add padding here (change value as needed)
                     )
                 }
 
                 Text(
-                    text = ":",
+                    text = currentDate,
                     fontSize = 30.sp,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.padding(top = 32.dp) // Add padding here (change value as needed)
                 )
 
-                Box(
-                    modifier = Modifier
-                        .padding(5.dp)
-                        .size(100.dp)
-                        .clip(RoundedCornerShape(32.dp))
-                        .background(colorResource(id = R.color.teal_200))
-                ) {
-                    Text(
-                        text = "%02d".format(minute),
-                        color = Color.Black,
-                        fontSize = 30.sp,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.align(Alignment.Center)
-                    )
-                }
+                Spacer(modifier = Modifier.height(40.dp))
 
-                Text(
-                    text = amPm,
-                    fontSize = 30.sp,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(top = 40.dp) // Add padding here (change value as needed)
-                )
-            }
+                //choose clock in clock out
 
-            Text(
-                text = currentDate,
-                fontSize = 30.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(top = 32.dp) // Add padding here (change value as needed)
-            )
-
-            Spacer(modifier = Modifier.height(40.dp))
-
-            //choose clock in clock out
-
-            Row {
-                // Clock-In
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier
-                        .clickable { gotoClockInScreen() }
-                        .padding(8.dp)
-                ) {
-                    Box(
+                Row {
+                    // Clock-In
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
                         modifier = Modifier
-                            .padding(top = 16.dp)
-                            .size(150.dp)
+                            .clickable { gotoClockInScreen() }
+                            .padding(8.dp)
                     ) {
-                        Image(
-                            painter = painterResource(id = R.drawable.baseline_access_time_24),
-                            contentDescription = "clock-in",
-                            contentScale = ContentScale.Fit,
-                            modifier = Modifier.fillMaxSize(),
-                            colorFilter = ColorFilter.tint(
-                                if (isDarkTheme) Color.White else Color.Black
+                        Box(
+                            modifier = Modifier
+                                .padding(top = 16.dp)
+                                .size(150.dp)
+                        ) {
+                            Image(
+                                painter = painterResource(id = R.drawable.baseline_access_time_24),
+                                contentDescription = "clock-in",
+                                contentScale = ContentScale.Fit,
+                                modifier = Modifier.fillMaxSize(),
+                                colorFilter = ColorFilter.tint(
+                                    if (isDarkTheme) Color.White else Color.Black
+                                )
                             )
+                        }
+
+                        Text(
+                            text = "Clock-IN",
+                            color = MaterialTheme.colorScheme.onBackground,
+                            fontSize = 30.sp,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.align(Alignment.CenterHorizontally)
                         )
                     }
 
-                    Text(
-                        text = "Clock-IN",
-                        color = MaterialTheme.colorScheme.onBackground,
-                        fontSize = 30.sp,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.align(Alignment.CenterHorizontally)
-                    )
-                }
-
-                // Clock-Out
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier
-                        .clickable { gotoClockOutScreen() }
-                        .padding(8.dp)
-                ) {
-                    Box(
+                    // Clock-Out
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
                         modifier = Modifier
-                            .padding(top = 16.dp)
-                            .size(150.dp)
+                            .clickable { gotoClockOutScreen() }
+                            .padding(8.dp)
                     ) {
-                        Image(
-                            painter = painterResource(id = R.drawable.clock_out_logo),
-                            contentDescription = "clock-out",
-                            contentScale = ContentScale.Fit,
-                            modifier = Modifier.fillMaxSize(),
-                            colorFilter = ColorFilter.tint(
-                                if (isDarkTheme) Color.White else Color.Black
+                        Box(
+                            modifier = Modifier
+                                .padding(top = 16.dp)
+                                .size(150.dp)
+                        ) {
+                            Image(
+                                painter = painterResource(id = R.drawable.clock_out_logo),
+                                contentDescription = "clock-out",
+                                contentScale = ContentScale.Fit,
+                                modifier = Modifier.fillMaxSize(),
+                                colorFilter = ColorFilter.tint(
+                                    if (isDarkTheme) Color.White else Color.Black
+                                )
                             )
+                        }
+
+                        Text(
+                            text = "Clock-OUT",
+                            color = MaterialTheme.colorScheme.onBackground,
+                            fontSize = 30.sp,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.align(Alignment.CenterHorizontally)
                         )
                     }
-
-                    Text(
-                        text = "Clock-OUT",
-                        color = MaterialTheme.colorScheme.onBackground,
-                        fontSize = 30.sp,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.align(Alignment.CenterHorizontally)
-                    )
                 }
+
+                Spacer(modifier = Modifier.height(50.dp))
+
+                Button(
+                    onClick = gotoHistoryScreen
+                ) {
+                    Text(text = "History")
+                }
+
             }
-
-            Spacer(modifier = Modifier.height(50.dp))
-
-            Button(
-                onClick = gotoHistoryScreen
-            ) {
-                Text(text = "History")
-            }
-
         }
     }
 
