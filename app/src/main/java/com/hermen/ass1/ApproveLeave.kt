@@ -60,9 +60,10 @@ fun ApproveLeave(navController: NavController, isDarkTheme: Boolean) {
     val scrollState = rememberScrollState()
     val user = SessionManager.currentUser
     val approveStatusMap = remember { mutableStateMapOf<LeaveRequest, String?>() }
+    var refreshTrigger by remember { mutableStateOf(false) }
 
     // 获取数据
-    LaunchedEffect(Unit) {
+    LaunchedEffect(refreshTrigger) {
         firestore.collection("Leave")
             .whereEqualTo("status", "pending") // ✅ 只拿 status = "pending" 的
             .get()
@@ -172,6 +173,8 @@ fun ApproveLeave(navController: NavController, isDarkTheme: Boolean) {
 
             Button(
                 onClick = {
+                    var totalToUpdate = approveStatusMap.count { it.value != null }
+                    var updatedCount = 0
                     approveStatusMap.forEach { (leave, decision) ->
                         if (decision != null) {
                             db.collection("Leave")
@@ -183,6 +186,12 @@ fun ApproveLeave(navController: NavController, isDarkTheme: Boolean) {
                                             .update("status", decision)
                                             .addOnSuccessListener {
                                                 Log.d("Confirm", "Status updated to $decision for ${leave.reason}")
+                                                updatedCount++
+                                                if (updatedCount == totalToUpdate) {
+                                                    approveStatusMap.clear()
+                                                    Toast.makeText(context, "All selections confirmed.", Toast.LENGTH_SHORT).show()
+                                                    refreshTrigger = !refreshTrigger // ⬅️ 触发重新加载
+                                                }
                                             }
                                             .addOnFailureListener {
                                                 Log.e("Confirm", "Failed to update $decision for ${leave.reason}")

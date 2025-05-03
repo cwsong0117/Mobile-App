@@ -527,37 +527,7 @@ fun LeaveApplication(navController: NavController, isDarkTheme: Boolean) {
 
 
 
-                if (user != null) {
-                    Text("Name: ${user.name}")
-                    Text("Email: ${user.email}")
-                    Text("Role: ${user.id}")
-                } else {
-                    Text("No user is logged in.")
-                }
 
-                val nameFlow = remember { DataStoreManager.getUserName(context) }
-                val emailFlow = remember { DataStoreManager.getUserEmail(context) }
-
-                val name by nameFlow.collectAsState(initial = "Loading name...")
-                val email by emailFlow.collectAsState(initial = "Loading email...")
-
-                // 从 DataStore 读取完整 User 对象
-                var user by remember { mutableStateOf<User?>(null) }
-                LaunchedEffect(Unit) {
-                    user = DataStoreManager.getCurrentUser(context)
-                    Log.d("UserData", "Loaded user: $user")
-                }
-
-                // UI 展示
-                Column {
-                    Text("📝 Stored Name: ${name ?: "Not Found"}")
-                    Text("📧 Stored Email: ${email ?: "Not Found"}")
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Text("👤 Full User Object:")
-                    Text("Name: ${user?.name ?: "No name"}")
-                    Text("Email: ${user?.email ?: "No email"}")
-                    Text("Password: ${user?.password ?: "No password"}") // 可选，看你要不要展示密码
-                }
 
             }
         }
