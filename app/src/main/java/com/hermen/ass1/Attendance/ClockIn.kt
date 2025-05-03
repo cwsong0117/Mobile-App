@@ -355,11 +355,14 @@ fun AddAttendanceScreen(viewModel: AttendanceViewModel = viewModel()) {
             SessionManager.currentUser?.let { user ->
                 isCheckingAttendance = true
                 val attendance = viewModel.getLatestAttendanceForToday(user.id)
-                clockedInToday = attendance
-                isCheckingAttendance = false
+                clockedInToday = attendance  // this will be null if no record
+                isCheckingAttendance = false // ✅ ensure it's always turned off
+            } ?: run {
+                isCheckingAttendance = false // ✅ handle if user is null
             }
         }
     }
+
 
     // 3. Get current location if permission is granted
     LaunchedEffect(permissionGranted) {

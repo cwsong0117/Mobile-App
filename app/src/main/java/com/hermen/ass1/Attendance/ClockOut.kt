@@ -295,23 +295,38 @@ fun ClockOutScreen(
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        Text(
-            text = if (latestClockIn != null)
-                "Last Clock-In: ${timeFormat.format(latestClockIn.toDate())}"
-            else "Fetching clock-in info...",
-            fontSize = 16.sp,
-            fontWeight = FontWeight.Medium
-        )
+//        Text(
+//            text = if (latestClockIn != null)
+//                "Last Clock-In: ${timeFormat.format(latestClockIn.toDate())}"
+//            else "Fetching clock-in info...",
+//            fontSize = 16.sp,
+//            fontWeight = FontWeight.Medium
+//        )
+//
+//        Spacer(modifier = Modifier.height(16.dp))
+//
+//        Text(
+//            text = if (shiftEnd != null)
+//                "Shift Ends At: ${timeFormat.format(shiftEnd.time)}"
+//            else "Calculating shift end...",
+//            fontSize = 16.sp,
+//            fontWeight = FontWeight.Medium
+//        )
+        if (latestClockIn != null && shiftEnd != null) {
+            Text(
+                text = "Last Clock-In: ${timeFormat.format(latestClockIn.toDate())}",
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Medium
+            )
 
-        Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
-        Text(
-            text = if (shiftEnd != null)
-                "Shift Ends At: ${timeFormat.format(shiftEnd.time)}"
-            else "Calculating shift end...",
-            fontSize = 16.sp,
-            fontWeight = FontWeight.Medium
-        )
+            Text(
+                text = "Shift Ends At: ${timeFormat.format(shiftEnd.time)}",
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Medium
+            )
+        }
 
         Spacer(modifier = Modifier.height(8.dp))
 
