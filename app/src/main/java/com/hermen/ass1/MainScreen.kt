@@ -48,9 +48,11 @@ import com.hermen.ass1.MeetingRoom.RoomViewModel
 import com.hermen.ass1.User.UserProfileScreen
 import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
 import com.hermen.ass1.IndicateFooter
 import coil.compose.AsyncImage
 import com.hermen.ass1.Attendance.AdminScreen
+import androidx.compose.runtime.LaunchedEffect
 
 enum class AppScreen(@StringRes val title: Int) {
     Home(title = R.string.app_name),
@@ -369,7 +371,6 @@ fun AnnouncementSection(
     isDarkTheme: Boolean,
     viewModel: AnnouncementViewModel = viewModel()
 ) {
-    // Collect the announcements
     val announcements by viewModel.announcements.collectAsState()
 
     Column(modifier = Modifier.fillMaxWidth()) {

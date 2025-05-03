@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.AlertDialog
 import androidx.compose.material.Button
 import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.Divider
@@ -25,6 +26,7 @@ import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
 import androidx.compose.material.Surface
 import androidx.compose.material.Text
+import androidx.compose.material.TextButton
 import androidx.compose.material.TextField
 import androidx.compose.material.TextFieldDefaults
 import androidx.compose.material3.MaterialTheme
@@ -41,6 +43,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.modifier.modifierLocalConsumer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -52,6 +55,7 @@ import coil.compose.rememberAsyncImagePainter
 import com.hermen.ass1.AppScreen
 import com.hermen.ass1.R
 import java.net.URLDecoder
+import java.nio.file.WatchEvent
 
 @Composable
 fun CreateOrEditAnnouncement(
@@ -64,6 +68,11 @@ fun CreateOrEditAnnouncement(
 ) {
     val viewModel: AnnouncementViewModel = viewModel()
     Log.d("TEST DEBUG", "passed URL: ${imageUrl}")
+
+    // Track the original values
+    val originalTitle = remember { mutableStateOf(title) }
+    val originalContent = remember { mutableStateOf(content) }
+    val originalImageUri = remember { mutableStateOf(imageUrl) }
 
     // Load announcement data if editing
     LaunchedEffect(announcementId) {
@@ -99,7 +108,8 @@ fun CreateOrEditAnnouncement(
         }
     }
 
-    val backgroundColor = if (isDarkTheme) Color.Transparent else Color(0xFFE5FFFF)
+    val backgroundColor = if (isDarkTheme) Color.Black else Color(0xFFE5FFFF)
+    val barColor = if (isDarkTheme) Color.Black else Color.White
     val textColor = if (isDarkTheme) Color.White else Color.Black
     val iconColor = if (isDarkTheme) Color.White else Color.Black
     val buttonBackground = if (isDarkTheme) Color(0xFF80CBC4) else Color(0xFF009688)
@@ -108,14 +118,7 @@ fun CreateOrEditAnnouncement(
     val uploadedState = remember { mutableStateOf(false) }
 
     val imageUri = rememberSaveable {
-        mutableStateOf<Uri?>(
-            // Only use the parameter URL if nothing has been uploaded yet
-            if (!uploadedState.value && imageUrl != null) {
-                Uri.parse(imageUrl)
-            } else {
-                null
-            }
-        )
+        mutableStateOf<Uri?>(if (!uploadedState.value && imageUrl != null) Uri.parse(imageUrl) else null)
     }
 
     val launcher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
@@ -146,6 +149,22 @@ fun CreateOrEditAnnouncement(
         else -> Color.DarkGray
     }
 
+    val showDialog = remember { mutableStateOf(false) }
+    val isTitleChanged = savedTitle.value != originalTitle.value
+    val isContentChanged = savedContent.value != originalContent.value
+    val isImageChanged = imageUri.value != Uri.parse(originalImageUri.value)
+
+    val onBackPressed = {
+        if (isTitleChanged || isContentChanged || isImageChanged) {
+            showDialog.value = true
+        } else {
+            navController.popBackStack()
+        }
+    }
+
+    val onBackPressedUnit: () -> Unit = {
+        onBackPressed()
+    }
 
     Column(
         modifier = Modifier
@@ -156,7 +175,7 @@ fun CreateOrEditAnnouncement(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(backgroundColor)
+                .background(barColor)
         ) {
             Row(
                 modifier = Modifier
@@ -169,7 +188,7 @@ fun CreateOrEditAnnouncement(
                         .padding(start = 8.dp, top = 8.dp)
                         .height(36.dp)
                 ) {
-                    IconButton(onClick = { navController.popBackStack() }) {
+                    IconButton(onClick = onBackPressedUnit) { // Use the back press logic
                         Icon(
                             painter = painterResource(id = R.drawable.baseline_arrow_back_ios_new_24),
                             contentDescription = "Back",
@@ -335,5 +354,49 @@ fun CreateOrEditAnnouncement(
                 Text("Upload Image", color = buttonTextColor, fontWeight = FontWeight.Bold)
             }
         }
+    }
+    if (showDialog.value) {
+        AlertDialog(
+            onDismissRequest = { showDialog.value = false },
+            title = {
+                Text(
+                    text = "Discard Changes?",
+                    color = if (isDarkTheme) Color.White else Color.Black
+                )
+            },
+            text = {
+                Text(
+                    text = "You have unsaved changes. Do you want to discard them?",
+                    color = if (isDarkTheme) Color.White else Color.Black
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        navController.popBackStack() // Discard changes and go back
+                        showDialog.value = false
+                    },
+                    modifier = Modifier.padding(16.dp)
+                ) {
+                    Text(
+                        text = "Discard",
+                        color = if (isDarkTheme) Color(0xFFFF0000) else Color.Red
+                    )
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { showDialog.value = false },
+                    modifier = Modifier.padding(16.dp)
+                ) {
+                    Text(
+                        text = "Cancel",
+                        color = if (isDarkTheme) Color(0xFFB2C5FF) else Color(0xFF495D92)
+                    )
+                }
+            },
+            shape = RoundedCornerShape(16.dp),
+            backgroundColor = if (isDarkTheme) Color(0xFF232630) else Color.White
+        )
     }
 }

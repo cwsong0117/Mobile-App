@@ -38,12 +38,15 @@ import androidx.compose.material.Surface
 import androidx.compose.material.Button
 import androidx.compose.material.Text
 import androidx.compose.material.ButtonDefaults
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.hermen.ass1.BackButton
+import com.hermen.ass1.User.UserRepository
 import java.net.URLEncoder
 
 @Composable
@@ -61,9 +64,18 @@ fun AnnouncementDetailScreen(
     val decodedTitle = URLDecoder.decode(announcement.title, "UTF-8")
     val decodedContent = URLDecoder.decode(announcement.content, "UTF-8")
     val textColor = if (isDarkTheme) MaterialTheme.colorScheme.onBackground else MaterialTheme.colorScheme.onSurface
-    val backgroundColor = if (isDarkTheme) Color(0xFF121212) else Color(0xFFE6F4F1)
+    val backgroundColor = if (isDarkTheme) Color.Black else Color(0xFFE6F4F1)
     val saveButtonColor = if (isDarkTheme) Color(0xFF80CBC4) else Color(0xFF009688)
     val buttonTextColor = if (isDarkTheme) Color.Black else Color.White
+
+    // State for the user's name
+    val userName = remember { mutableStateOf<String>("") }
+
+    // Fetch user by ID (this is a suspend function)
+    LaunchedEffect(announcement.employeeID) {
+        val user = UserRepository.getUserById(announcement.employeeID)
+        userName.value = user?.name ?: "Unknown"
+    }
 
     Log.d("Announcement Image Url", "Url: ${announcement.imageUrl}")
 
@@ -123,7 +135,6 @@ fun AnnouncementDetailScreen(
                 Spacer(modifier = Modifier.height(16.dp))
             }
 
-            // Title and Content
             Text(
                 text = decodedTitle,
                 style = MaterialTheme.typography.headlineMedium,
@@ -138,26 +149,17 @@ fun AnnouncementDetailScreen(
                 color = textColor
             )
 
-            Spacer(modifier = Modifier.weight(1f))
-
-            // Footer Information
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.End
-            ) {
-                Column(horizontalAlignment = Alignment.End) {
-                    Text(
-                        text = "Posted by: ${announcement.employeeID}",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = textColor
-                    )
-                    Text(
-                        text = "At: ${announcement.created_at}",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = textColor
-                    )
-                }
-            }
+            Spacer(modifier = Modifier.height(32.dp)) // Optional space before the footer content
+            Text(
+                text = "Best regards,",
+                style = MaterialTheme.typography.bodySmall,
+                color = textColor
+            )
+            Text(
+                text = userName.value, // User's name fetched from Firebase
+                style = MaterialTheme.typography.bodySmall,
+                color = textColor
+            )
         }
     }
 }

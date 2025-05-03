@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.Divider
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -52,6 +53,7 @@ import java.net.URLEncoder
 import kotlinx.serialization.encodeToString
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import com.hermen.ass1.R
 import kotlinx.coroutines.CoroutineScope
 
 @Composable
@@ -62,6 +64,9 @@ fun AnnouncementOverview(
     val announcements = remember { mutableStateOf(emptyList<Announcement>()) }
     val isLoading = remember { mutableStateOf(true) }
     val backgroundColor = if (isDarkTheme) Color.Black else Color(0xFFE5FFFF)
+    val barColor = if (isDarkTheme) Color.Transparent else Color.White
+    val textColor = if (isDarkTheme) Color.White else Color.Black
+    val iconColor = if (isDarkTheme) Color.White else Color.Black
 
     val currentUser = SessionManager.currentUser
     val isAdmin = currentUser?.id?.startsWith("A") == true
@@ -86,7 +91,6 @@ fun AnnouncementOverview(
         isLoading.value = false
     }
 
-    // Only delete when the user confirms
     val onDeleteConfirmed: () -> Unit = {
         CoroutineScope(Dispatchers.IO).launch {
             try {
@@ -97,7 +101,7 @@ fun AnnouncementOverview(
                 val refreshed = AnnouncementRepository.getAnnouncements()
                 announcements.value = refreshed
                 isDeleteMode.value = false
-                selectedAnnouncementIds.value = emptyList() // Reset selection after deletion
+                selectedAnnouncementIds.value = emptyList()
             } catch (e: Exception) {
                 Log.e("OverviewDebug", "Failed to delete: ${e.message}")
             } finally {
@@ -105,6 +109,7 @@ fun AnnouncementOverview(
             }
         }
     }
+    val showDeleteDialog = remember { mutableStateOf(false) }
 
     Column(
         modifier = Modifier
@@ -114,11 +119,31 @@ fun AnnouncementOverview(
         Box(
             modifier = Modifier.fillMaxWidth()
         ) {
-            BackButton(
-                navController = navController,
-                title = "Announcement",
-                isDarkTheme = isDarkTheme
-            )
+            Column(modifier = Modifier.fillMaxWidth()) {
+                Surface(modifier = Modifier.fillMaxWidth(), color = barColor) {
+                    Row(
+                        modifier = Modifier.height(52.dp).fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        IconButton(onClick = { navController.popBackStack(AppScreen.Home.name, inclusive = false) }) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.baseline_arrow_back_ios_new_24),
+                                contentDescription = "Back",
+                                modifier = Modifier.size(24.dp),
+                                tint = iconColor
+                            )
+                        }
+                        Text(
+                            text = "Announcement",
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.padding(start = 8.dp),
+                            color = textColor
+                        )
+                    }
+                }
+                Divider(color = Color.LightGray, thickness = 2.dp)
+            }
 
             Row(
                 modifier = Modifier
@@ -152,7 +177,7 @@ fun AnnouncementOverview(
 
                     if (isDeleteMode.value) {
                         Button(
-                            onClick = onDeleteConfirmed,
+                            onClick = { showDeleteDialog.value = true },
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = if (isDarkTheme) Color(0xFF80CBC4) else Color(0xFF009688)
                             ),
@@ -205,6 +230,30 @@ fun AnnouncementOverview(
                 }
             }
         }
+    }
+    if (showDeleteDialog.value) {
+        AlertDialog(
+            onDismissRequest = { showDeleteDialog.value = false },
+            title = { Text("Confirm Deletion") },
+            text = {
+                Text("Are you sure you want to delete the selected announcements? This action cannot be undone.")
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    showDeleteDialog.value = false
+                    onDeleteConfirmed()
+                }) {
+                    Text("Delete", color = Color.Red)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = {
+                    showDeleteDialog.value = false
+                }) {
+                    Text("Cancel")
+                }
+            }
+        )
     }
 }
 
