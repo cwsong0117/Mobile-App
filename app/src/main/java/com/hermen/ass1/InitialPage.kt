@@ -40,17 +40,98 @@ import com.hermen.ass1.ui.theme.Screen
 import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.material3.windowsizeclass.calculateWindowSizeClass
 import androidx.compose.ui.platform.LocalConfiguration
+import com.hermen.ass1.User.SessionManager
+import com.hermen.ass1.User.User
+import androidx.compose.runtime.*
+import androidx.compose.ui.platform.LocalContext
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.map
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.hermen.ass1.ui.theme.DataStoreManager
+import androidx.compose.material3.CircularProgressIndicator
+import com.hermen.ass1.ui.theme.UserRepository
+import android.util.Log
+import com.google.firebase.auth.FirebaseAuth
+import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.flow.firstOrNull // 用于访问 Flow 的 firstOrNull
 
-@Composable
+
+
+ @Composable
 fun Navigation(
     navController: NavHostController,
     isDarkTheme: Boolean,
     onToggleTheme: () -> Unit,
 ) {
-    CompositionLocalProvider(LocalRootNavController provides navController) {
+     val context = LocalContext.current
+     val scope = rememberCoroutineScope()
+
+     // 获取登录状态
+     val loggedInState = DataStoreManager.getLoggedIn(context).collectAsState(initial = null)
+
+     // ⏳ 如果登录状态还在加载，显示加载动画
+     if (loggedInState.value == null) {
+         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+             CircularProgressIndicator()
+         }
+         return
+     }
+
+     // ✅ 自动登录逻辑，如果登录状态为 true 且 SessionManager.currentUser 为 null
+     if (loggedInState.value == true && SessionManager.currentUser == null) {
+         LaunchedEffect(Unit) {
+             val email = DataStoreManager.getUserEmail(context).firstOrNull()
+             val name = DataStoreManager.getUserName(context).firstOrNull()
+             val savedUser = DataStoreManager.getCurrentUser(context)
+
+             if (savedUser != null) {
+                 SessionManager.currentUser = savedUser
+                 DataStoreManager.saveCurrentUser(context, savedUser) // <- Save it again
+             }
+
+             if (!email.isNullOrEmpty() && !name.isNullOrEmpty()) {
+                 val users = UserRepository.getUsers()
+                 val matchedUser = users.find {
+                     it.email.trim().lowercase() == email.trim().lowercase()
+                 }
+
+                 if (matchedUser != null) {
+                     try {
+                         // 自动登录操作
+                         FirebaseAuth.getInstance().signInWithEmailAndPassword(
+                             matchedUser.email,
+                             matchedUser.password // 使用密码（或改为 token 认证）
+                         ).await()
+
+                         // 登录成功
+                         SessionManager.currentUser = matchedUser
+                         DataStoreManager.setLoggedIn(context, true)
+                         DataStoreManager.saveUserInfo(context, matchedUser.name, matchedUser.email)
+
+                         // 跳转到主页面
+                         navController.navigate(Screen.Main.route) {
+                             popUpTo(Screen.Login.route) { inclusive = true }
+                         }
+                     } catch (e: Exception) {
+                         Log.e("AutoLogin", "❌ 自动登录失败: ${e.message}")
+                     }
+                 }
+             }
+         }
+     }
+
+     // 最终决定导航的目标页面（如果已登录则跳转到主页面）
+     val startDestination = if (loggedInState.value == true) {
+         Screen.Main.route
+     } else {
+         Screen.InitialPage.route // 未登录则跳转到登录页面
+     }
+
+     CompositionLocalProvider(LocalRootNavController provides navController) {
         NavHost(
             navController = navController,
-            startDestination = Screen.InitialPage.route
+            startDestination = startDestination
         ) {
             composable(Screen.InitialPage.route) {
                 InitialPage(navController, isDarkTheme)

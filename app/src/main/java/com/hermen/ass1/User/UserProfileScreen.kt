@@ -52,6 +52,11 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.hermen.ass1.BackButton
 import kotlinx.coroutines.launch
+import com.hermen.ass1.ui.theme.DataStoreManager
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+
 
 @Composable
 fun UserProfileScreen(
@@ -315,6 +320,13 @@ fun UserProfileScreen(
                     Button(
                         onClick = {
                             SessionManager.currentUser = null
+
+                            // Set is_logged_in to false in DataStore
+                            CoroutineScope(Dispatchers.IO).launch {
+                                DataStoreManager.setLoggedIn(context, false) // Set logged out status
+                                DataStoreManager.saveCurrentUser(context, User("",0, "","","","","","","",null)) // Clear current user data if needed
+                            }
+                            
                             rootNavController.navigate(Screen.InitialPage.route) {
                                 popUpTo(0) { inclusive = true }
                             }

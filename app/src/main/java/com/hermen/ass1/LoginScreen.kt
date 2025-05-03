@@ -217,6 +217,8 @@ fun LoginScreen(navController: NavController, isDarkTheme: Boolean) {
                                     if (matchedUser != null) {
                                         SessionManager.currentUser = matchedUser
                                         DataStoreManager.setLoggedIn(context, true)
+                                        DataStoreManager.saveUserInfo(context, matchedUser.name, matchedUser.email)
+                                        DataStoreManager.saveCurrentUser(context, matchedUser)
                                         loginResult.value = "✅ Login Successful"
                                         navController.navigate(Screen.Main.route) {
                                             popUpTo(Screen.Login.route) { inclusive = true }
@@ -244,6 +246,8 @@ fun LoginScreen(navController: NavController, isDarkTheme: Boolean) {
                                 if (task.isSuccessful) {
                                     scope.launch {
                                         DataStoreManager.setLoggedIn(context, true)
+                                        DataStoreManager.saveUserInfo(context, matchedUser.name, matchedUser.email)
+                                        DataStoreManager.saveCurrentUser(context, matchedUser)
                                         SessionManager.currentUser = matchedUser
                                         loginResult.value = "✅ Login Successful"
                                         navController.navigate(Screen.Main.route) {

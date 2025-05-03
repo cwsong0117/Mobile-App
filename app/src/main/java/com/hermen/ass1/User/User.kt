@@ -3,6 +3,7 @@ package com.hermen.ass1.User
 import com.google.firebase.firestore.DocumentSnapshot
 import kotlinx.serialization.Serializable
 
+
 @Serializable
 data class User(
     val id: String = "",
