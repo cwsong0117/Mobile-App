@@ -51,10 +51,17 @@ import androidx.navigation.compose.composable
 import com.hermen.ass1.IndicateFooter
 import coil.compose.AsyncImage
 import com.hermen.ass1.Attendance.AdminScreen
+import com.hermen.ass1.Attendance.AttendanceViewModel
+import com.hermen.ass1.Attendance.isLandscape
 import com.hermen.ass1.PaySlip.PaySlip
 import com.hermen.ass1.PaySlip.PaySlipDetailsScreen
 import com.hermen.ass1.PaySlip.PaySlipHomeScreen
 import com.hermen.ass1.PaySlip.PaySlipHomeScreenForAdmin
+import com.hermen.ass1.User.SessionManager
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+import java.util.TimeZone
 
 enum class AppScreen(@StringRes val title: Int) {
     Home(title = R.string.app_name),
@@ -365,7 +372,27 @@ fun ApplicationSection(
 }
 
 @Composable
-fun GotoAttendanceOverview(navController: NavController) {
+fun GotoAttendanceOverview(
+    navController: NavController,
+    viewModel: AttendanceViewModel = viewModel()
+) {
+    val clockIn = viewModel.lastClockIn.value
+    val clockOut = viewModel.latestClockOut.value
+
+    val malaysiaTimeZone = TimeZone.getTimeZone("Asia/Kuala_Lumpur")
+    val dateFormatter = remember {
+        SimpleDateFormat("dd MMM yyyy", Locale.getDefault()).apply {
+            timeZone = malaysiaTimeZone
+        }
+    }
+    val todayDate = dateFormatter.format(Date())
+
+    LaunchedEffect(Unit) {
+        SessionManager.currentUser?.let {
+            viewModel.loadTodayAttendance(it.id)
+        }
+    }
+
     TextButton(
         onClick = { navController.navigate(AppScreen.Attendance.name) }
     ) {
@@ -376,6 +403,79 @@ fun GotoAttendanceOverview(navController: NavController) {
             fontSize = 30.sp,
             fontWeight = FontWeight.Bold
         )
+    }
+    Box(
+        modifier = Modifier
+            .clip(RoundedCornerShape(32.dp))
+            .background(colorResource(id = R.color.teal_200))
+            .clickable{ navController.navigate(AppScreen.Attendance.name) }
+    ){
+        Column(
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ){
+            Text(
+                text = todayDate,
+                color = Color.White,
+                fontSize = 30.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier
+                    .align(Alignment.CenterHorizontally)
+                    .padding(horizontal = 16.dp, vertical = 8.dp)
+            )
+            Row(
+                modifier = Modifier.padding(bottom = 20.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center
+            ){
+                Column{
+                    Text(
+                        text = "IN",
+                        color = Color.White,
+                        fontSize = 30.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.align(Alignment.CenterHorizontally)
+                    )
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(32.dp))
+                            .background(Color.White)
+                    ) {
+                        Text(
+                            text = clockIn,
+                            color = Color.Black,
+                            fontSize = 30.sp,
+                            fontWeight = FontWeight.Bold,
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.width(30.dp))
+
+                Column{
+                    Text(
+                        text = "OUT",
+                        color = Color.White,
+                        fontSize = 30.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.align(Alignment.CenterHorizontally)
+                    )
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(32.dp))
+                            .background(Color.White)
+                    ) {
+                        Text(
+                            text = clockOut,
+                            color = Color.Black,
+                            fontSize = 30.sp,
+                            fontWeight = FontWeight.Bold,
+                        )
+                    }
+                }
+            }
+        }
+
     }
 }
 
