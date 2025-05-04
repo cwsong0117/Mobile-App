@@ -9,19 +9,17 @@ data class PaySlipResource(
     val allowance: Double,
     val bonus: Double,
     val overtimePay: Double,
-    val otherIncome: Double,
 
     // Deduction
     val incomeTax: Double,
     val unpaidLeave: Double,
-    val otherDeduction: Double
 ) {
 
     val grossSalary: Double
-        get() = basicSalary + overtimePay + allowance + bonus + otherIncome
+        get() = basicSalary + overtimePay + allowance + bonus
 
     val deduction: Double
-        get() = incomeTax + unpaidLeave + otherDeduction
+        get() = incomeTax + unpaidLeave
 
     val netSalary: Double
         get() = grossSalary - deduction

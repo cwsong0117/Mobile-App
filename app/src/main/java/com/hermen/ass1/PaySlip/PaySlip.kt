@@ -579,10 +579,8 @@ fun PaySlipEditorScreen(
         allowance = viewModel.allowance.toDoubleOrNull() ?: 0.0,
         bonus = viewModel.bonus.toDoubleOrNull() ?: 0.0,
         overtimePay = viewModel.overtimePay.toDoubleOrNull() ?: 0.0,
-        otherIncome = viewModel.otherIncome.toDoubleOrNull() ?: 0.0,
         incomeTax = viewModel.incomeTax.toDoubleOrNull() ?: 0.0,
         unpaidLeave = viewModel.unpaidLeave.toDoubleOrNull() ?: 0.0,
-        otherDeduction = viewModel.otherDeduction.toDoubleOrNull() ?: 0.0
     )
 
     Column(
@@ -680,7 +678,6 @@ fun PaySlipEditorScreen(
             if(viewModel.year.isNotEmpty() && viewModel.month.isNotEmpty()){
                 viewModel.fetchRecordByMonth(userId = employeeId)
             }
-            viewModel.loadBasicSalary(userId = employeeId)
         }
 
         OutlinedTextField(
@@ -719,15 +716,6 @@ fun PaySlipEditorScreen(
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
         )
 
-        OutlinedTextField(
-            value = viewModel.otherIncome,
-            onValueChange = {viewModel.otherIncome = it},
-            label = { Text("Other Incomes (RM)") },
-            modifier = Modifier.fillMaxWidth()
-            .padding(bottom = 12.dp),
-        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
-        )
-
         //display the gross income using details row
         Spacer(modifier = Modifier.height(8.dp))
         DetailRow("Gross Salary", calculation.grossSalary)
@@ -751,15 +739,6 @@ fun PaySlipEditorScreen(
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
         )
 
-        OutlinedTextField(
-            value = viewModel.otherDeduction,
-            onValueChange = { viewModel.otherDeduction = it },
-            label = { Text("Other Deductions (RM)") },
-            modifier = Modifier.fillMaxWidth()
-                .padding(bottom = 12.dp),
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
-        )
-
         //display the gross income using details row
         Spacer(modifier = Modifier.height(8.dp))
         DetailRow("Total Deduction", calculation.deduction)
@@ -777,6 +756,7 @@ fun PaySlipEditorScreen(
                 viewModel.submitPaySlip(
                     year = viewModel.year,
                     month = viewModel.month,
+                    basicSalary = viewModel.basicSalary.toDoubleOrNull() ?: 0.0,
                     allowance = viewModel.allowance.toDoubleOrNull() ?: 0.0,
                     bonus = viewModel.bonus.toDoubleOrNull() ?: 0.0,
                     overtimePay = viewModel.overtimePay.toDoubleOrNull() ?: 0.0,

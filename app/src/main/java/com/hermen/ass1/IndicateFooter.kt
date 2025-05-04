@@ -24,7 +24,7 @@ data class NavItem(
 val NavItems = listOf(
     NavItem("Home", R.drawable.baseline_home_24, AppScreen.Home.name),
     NavItem("Attendance", R.drawable.baseline_access_time_24,  AppScreen.Attendance.name),
-    NavItem("PaySlip", R.drawable.meeting_nav_bar, AppScreen.PaySlip.name),
+    NavItem("PaySlip", R.drawable.baseline_payment_24, AppScreen.PaySlip.name),
     NavItem("Profile", R.drawable.baseline_account_circle_24, AppScreen.UserProfile.name),
 )
 @Composable

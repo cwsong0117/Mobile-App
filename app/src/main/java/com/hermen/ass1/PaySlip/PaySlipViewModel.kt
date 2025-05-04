@@ -14,39 +14,36 @@ class PaySlipViewModel: ViewModel() {
     private val _requestList = MutableStateFlow<List<PaySlipResource>>(emptyList())
     val requestList: StateFlow<List<PaySlipResource>> = _requestList
     private val db = Firebase.firestore
-    private var basicSalaryMap: Map<String, BasicSalaryResource> = emptyMap()
     var year by mutableStateOf("")
     var month by mutableStateOf("")
     var allowance by mutableStateOf("")
     var bonus by mutableStateOf("")
     var overtimePay by mutableStateOf("")
-    var otherIncome by mutableStateOf("")
     var incomeTax by mutableStateOf("")
     var unpaidLeave by mutableStateOf("")
-    var otherDeduction by mutableStateOf("")
 
     init {
-        fetchBasicSalary()
+        fetchRequestList()
     }
 
-     fun fetchBasicSalary() {
-        db.collection("BasicSalary")
-            .get()
-            .addOnSuccessListener { snapshot ->
-                val salaryMap = snapshot.documents.associate { doc ->
-                    val userId = doc.getString("userId") ?: ""
-                    val basicSalary = doc.getDouble("basicSalary") ?: 0.0
-                    val salaryId = doc.getString("salaryId") ?: ""
-                    userId to BasicSalaryResource(userId, basicSalary, salaryId)
-                }
-                basicSalaryMap = salaryMap
-                fetchRequestList()
-                Log.d("Firebase", "Loaded ${salaryMap.size} basic salaries")
-            }
-            .addOnFailureListener { error ->
-                Log.e("Firebase", "Error fetching basic salaries", error)
-            }
-    }
+//     fun fetchBasicSalary() {
+//        db.collection("PaySlip")
+//            .get()
+//            .addOnSuccessListener { snapshot ->
+//                val salaryMap = snapshot.documents.associate { doc ->
+//                    val userId = doc.getString("userId") ?: ""
+//                    val basicSalary = doc.getDouble("basicSalary") ?: 0.0
+//                    val salaryId = doc.getString("salaryId") ?: ""
+//                    userId to BasicSalaryResource(userId, basicSalary, salaryId)
+//                }
+//                basicSalaryMap = salaryMap
+//                fetchRequestList()
+//                Log.d("Firebase", "Loaded ${salaryMap.size} basic salaries")
+//            }
+//            .addOnFailureListener { error ->
+//                Log.e("Firebase", "Error fetching basic salaries", error)
+//            }
+//    }
 
     fun fetchRequestList() {
         db.collection("PaySlip")
@@ -55,23 +52,19 @@ class PaySlipViewModel: ViewModel() {
                     Log.e("Firebase", "Error fetching data", error)
                     return@addSnapshotListener
                 }
-
                 val requests = snapshot?.documents?.mapNotNull { doc ->
                     try {
                         val userId = doc.getString("userId") ?: return@mapNotNull null
-                        val basicSalary = basicSalaryMap[userId] ?: return@mapNotNull null
                         PaySlipResource(
                             userId = userId,
                             month = doc.getString("month") ?: "",
                             year = doc.getString("year") ?: "",
-                            basicSalary = basicSalary.basicSalary,
+                            basicSalary = doc.getDouble("basicSalary") ?: 0.00,
                             allowance = doc.getDouble("allowance") ?: 0.0,
                             bonus = doc.getDouble("bonus") ?: 0.0,
                             overtimePay = doc.getDouble("overtimePay") ?: 0.0,
-                            otherIncome = doc.getDouble("otherIncome") ?: 0.0,
                             incomeTax = doc.getDouble("incomeTax") ?: 0.0,
                             unpaidLeave = doc.getDouble("unpaidLeave") ?: 0.0,
-                            otherDeduction = doc.getDouble("otherDeduction") ?: 0.0
                         )
                     } catch (e: Exception) {
                         Log.e("Firebase", "Document parsing error", e)
@@ -89,6 +82,7 @@ class PaySlipViewModel: ViewModel() {
     fun submitPaySlip(
         month: String,
         year: String,
+        basicSalary: Double,
         allowance: Double,
         bonus: Double,
         overtimePay: Double,
@@ -107,6 +101,7 @@ class PaySlipViewModel: ViewModel() {
                 handlePaySlipRecord(
                     month = month,
                     year = year,
+                    basicSalary = basicSalary,
                     allowance = allowance,
                     bonus = bonus,
                     overtimePay = overtimePay,
@@ -224,6 +219,7 @@ class PaySlipViewModel: ViewModel() {
     private fun handlePaySlipRecord(
         month: String,
         year: String,
+        basicSalary: Double,
         allowance: Double,
         bonus: Double,
         overtimePay: Double,
@@ -246,6 +242,7 @@ class PaySlipViewModel: ViewModel() {
                     val document = querySnapshot.documents[0]
                     updateExistingPayslip(
                         documentId = document.id,
+                        basicSalary = basicSalary,
                         allowance = allowance,
                         bonus = bonus,
                         overtimePay = overtimePay,
@@ -259,6 +256,7 @@ class PaySlipViewModel: ViewModel() {
                     createNewPayslip(
                         month = month,
                         year = year,
+                        basicSalary = basicSalary,
                         allowance = allowance,
                         bonus = bonus,
                         overtimePay = overtimePay,
@@ -278,6 +276,7 @@ class PaySlipViewModel: ViewModel() {
 
     private fun updateExistingPayslip(
         documentId: String,
+        basicSalary: Double,
         allowance: Double,
         bonus: Double,
         overtimePay: Double,
@@ -287,6 +286,7 @@ class PaySlipViewModel: ViewModel() {
         onError: (Exception) -> Unit
     ) {
         val updates = hashMapOf<String, Any>(
+            "basicSalary" to basicSalary,
             "allowance" to allowance,
             "bonus" to bonus,
             "overtimePay" to overtimePay,
@@ -310,6 +310,7 @@ class PaySlipViewModel: ViewModel() {
     private fun createNewPayslip(
         month: String,
         year: String,
+        basicSalary: Double,
         allowance: Double,
         bonus: Double,
         overtimePay: Double,
@@ -325,6 +326,7 @@ class PaySlipViewModel: ViewModel() {
                     "payslipId" to newId,
                     "month" to month,
                     "year" to year,
+                    "basicSalary" to basicSalary,
                     "allowance" to allowance,
                     "bonus" to bonus,
                     "overtimePay" to overtimePay,
@@ -394,32 +396,6 @@ class PaySlipViewModel: ViewModel() {
     private var lastLoadedYear: String? = null
 
 
-    fun loadBasicSalary(userId: String) {
-        if (
-            lastLoadedUserId == userId &&
-            lastLoadedMonth == month &&
-            lastLoadedYear == year
-        ) return
-
-        db.collection("BasicSalary")
-            .whereEqualTo("userId", userId)
-            .get()
-            .addOnSuccessListener { documents ->
-                val salary = documents.firstOrNull()?.getDouble("basicSalary")
-                basicSalary = salary?.toString() ?: "0.0"
-                lastLoadedUserId = userId
-                lastLoadedMonth = month
-                lastLoadedYear = year
-            }
-            .addOnFailureListener {
-                basicSalary = "0.0"
-                resetFieldsToDefault()
-                lastLoadedUserId = userId
-                lastLoadedMonth = month
-                lastLoadedYear = year
-            }
-    }
-
     fun fetchRecordByMonth(userId: String) {
         if (
             lastLoadedUserId == userId &&
@@ -455,16 +431,17 @@ class PaySlipViewModel: ViewModel() {
 
     private fun updateFieldsFromDocument(userId: String, document: DocumentSnapshot) {
         try {
+            basicSalary = (document.getDouble("basicSalary") ?: 0.0).toString()
             allowance = (document.getDouble("allowance") ?: 0.0).toString()
             bonus = (document.getDouble("bonus") ?: 0.0).toString()
             overtimePay = (document.getDouble("overtimePay") ?: 0.0).toString()
-            otherIncome = (document.getDouble("otherIncome") ?: 0.0).toString()
             incomeTax = (document.getDouble("incomeTax") ?: 0.0).toString()
             unpaidLeave = (document.getDouble("unpaidLeave") ?: 0.0).toString()
-            otherDeduction = (document.getDouble("otherDeduction") ?: 0.0).toString()
 
             // Log to confirm the fields are updated correctly
-            Log.d("ViewModel", "Updated fields for $userId: allowance=$allowance, bonus=$bonus, overtimePay=$overtimePay, otherIncome=$otherIncome, incomeTax=$incomeTax, unpaidLeave=$unpaidLeave, otherDeduction=$otherDeduction")
+            Log.d("ViewModel", "Updated fields for $userId: allowance=$allowance, " +
+                    "bonus=$bonus, overtimePay=$overtimePay, incomeTax=$incomeTax, " +
+                    "unpaidLeave=$unpaidLeave, basicSalary=$basicSalary")
         } catch (e: Exception) {
         }
     }
@@ -474,10 +451,8 @@ class PaySlipViewModel: ViewModel() {
         allowance = "0.0"
         bonus = "0.0"
         overtimePay = "0.0"
-        otherIncome = "0.0"
         incomeTax = "0.0"
         unpaidLeave = "0.0"
-        otherDeduction = "0.0"
         Log.d("ViewModel", "Reset all fields to default values")
     }
 
