@@ -510,57 +510,6 @@ fun EndTimeInput(endTime: String, onEndTimeChange: (String) -> Unit, isDarkTheme
     TimeInput(endTime, onEndTimeChange, R.drawable.baseline_timer_24, isDarkTheme)
 }
 
-//@Composable
-//fun EndTimeInput(endTime: String, onEndTimeChange: (String) -> Unit) {
-//    val context = LocalContext.current
-//    val calendar = Calendar.getInstance()
-//    val currentTime = SimpleDateFormat("HH : mm", Locale.getDefault()).format(calendar.time)
-//
-//    val timePickerDialog = TimePickerDialog(
-//        context,
-//        { _, hourOfDay, minute ->
-//            val formattedTime = String.format("%02d : %02d", hourOfDay, minute)
-//            onEndTimeChange(formattedTime)
-//        },
-//        calendar.get(Calendar.HOUR_OF_DAY),
-//        calendar.get(Calendar.MINUTE),
-//        true
-//    )
-//
-//    BasicTextField(
-//        value = endTime,
-//        onValueChange = { },
-//        readOnly = true,
-//        modifier = Modifier
-//            .width(380.dp)
-//            .padding(10.dp)
-//            .background(Color.White, RoundedCornerShape(36.dp))
-//            .padding(10.dp)
-//            .height(40.dp),
-//        decorationBox = { innerTextField ->
-//            Row(
-//                verticalAlignment = Alignment.CenterVertically,
-//                horizontalArrangement = Arrangement.SpaceBetween,
-//                modifier = Modifier
-//                    .fillMaxWidth()
-//                    .padding(start = 10.dp)
-//            ) {
-//                if (endTime.isEmpty()) {
-//                    Text(currentTime, color = Color.Gray)
-//                } else {
-//                    innerTextField()
-//                }
-//                IconButton(onClick = { timePickerDialog.show() }) {
-//                    Icon(
-//                        painter = painterResource(id = R.drawable.baseline_timer_24),
-//                        contentDescription = "Select End Time"
-//                    )
-//                }
-//            }
-//        }
-//    )
-//}
-
 @Composable
 fun PurposeInput(purpose: String, onPurposeChange: (String) -> Unit, customPurpose: String, onCustomPurposeChange: (String) -> Unit, isDarkTheme: Boolean) {
     val purposeList = listOf("Meeting", "Conference", "Training", "Discussion", "Interview", "Project Planning", "Other")
