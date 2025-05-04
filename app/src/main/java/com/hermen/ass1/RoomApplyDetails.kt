@@ -51,6 +51,8 @@ import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
 import com.hermen.ass1.User.SessionManager
+import java.time.LocalDate
+import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 
@@ -241,24 +243,36 @@ fun ApplyDetails(name:String, onNameChange: (String) -> Unit,
                         }
 
                         // Check if the start time is before the end time
-                        val formatter = DateTimeFormatter.ofPattern("HH : mm")
-                        val start= LocalTime.parse(startTime.uppercase(), formatter)
-                        val end = LocalTime.parse(endTime.uppercase(), formatter)
-                        val now = LocalTime.now()
-
                         try {
-                            if(start.isAfter(end) || start == end) {
-                                Toast.makeText(context, "Start time must be before end time", Toast.LENGTH_SHORT).show()
-                                return@Button
-                            }
-                            else if(start.isBefore(now)){
-                                 Toast.makeText(context, "Start time must be after current time", Toast.LENGTH_SHORT).show()
-                                return@Button
+                            val timeFormatter = DateTimeFormatter.ofPattern("HH : mm")
+                            val dateFormatter = DateTimeFormatter.ofPattern("dd-MM-yyyy") // Adjust to your input format
+
+                            val selectedDate = LocalDate.parse(date, dateFormatter) // e.g., "10/05/2025"
+                            val startTimeParsed = LocalTime.parse(startTime.uppercase(), timeFormatter)
+                            val endTimeParsed = LocalTime.parse(endTime.uppercase(), timeFormatter)
+
+                            val startDateTime = LocalDateTime.of(selectedDate, startTimeParsed)
+                            val endDateTime = LocalDateTime.of(selectedDate, endTimeParsed)
+                            val now = LocalDateTime.now()
+
+                            when {
+                                startDateTime >= endDateTime -> {
+                                    Toast.makeText(context, "Start time must be before end time", Toast.LENGTH_SHORT).show()
+                                    return@Button
+                                }
+                                startDateTime <= now -> {
+                                    Toast.makeText(context, "Start time must be in the future", Toast.LENGTH_SHORT).show()
+                                    return@Button
+                                }
+                                else -> {
+                                    isDialogOpen = true
+                                }
                             }
                         } catch (e: Exception) {
-                            Toast.makeText(context, "Invalid time format", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, "Invalid date or time format", Toast.LENGTH_SHORT).show()
                             return@Button
                         }
+
                         isDialogOpen = true
 
                     },
@@ -334,6 +348,7 @@ fun NameInput(name: String, onNameChange: (String) -> Unit, isDarkTheme: Boolean
         OutlinedTextField(
             value = name,
             onValueChange = onNameChange,
+            singleLine = true,
             placeholder = {
                 Text("ex: John", color = placeholderColor)
             },
