@@ -172,7 +172,7 @@ fun SignupScreen(navController: NavController, isDarkTheme: Boolean) {
                 TextField(
                     value = email.value,
                     onValueChange = { email.value = it },
-                    placeholder = { Text("ex: Ah Lee") },
+                    placeholder = { Text("ex: lee@gmail.com") },
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(50.dp)),
