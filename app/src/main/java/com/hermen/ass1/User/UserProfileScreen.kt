@@ -48,6 +48,7 @@ import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.lifecycle.ViewModelStoreOwner
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.hermen.ass1.BackButton
@@ -65,6 +66,7 @@ fun UserProfileScreen(
     isDarkTheme: Boolean,
     userProfileViewModel: UserProfileViewModel = viewModel()
 ) {
+    val themeViewModel: ThemeViewModel = viewModel(LocalContext.current as ViewModelStoreOwner)
     val backgroundColor = if (isDarkTheme) Color(0xFF121212) else Color(0xFFE6F4F1)
     val fieldBackground = if (isDarkTheme) Color(0xFF2C2C2C) else Color(0xFFE0E0E0)
     val labelColor = if (isDarkTheme) Color.LightGray else Color.Blue
@@ -320,7 +322,7 @@ fun UserProfileScreen(
                     Button(
                         onClick = {
                             SessionManager.currentUser = null
-
+                            themeViewModel.setDarkTheme(false)
                             // Set is_logged_in to false in DataStore
                             CoroutineScope(Dispatchers.IO).launch {
                                 DataStoreManager.setLoggedIn(context, false) // Set logged out status
