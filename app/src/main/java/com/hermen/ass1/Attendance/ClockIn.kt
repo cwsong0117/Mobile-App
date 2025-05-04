@@ -36,10 +36,7 @@ import com.hermen.ass1.R
 import kotlinx.coroutines.delay
 import java.util.*
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.google.android.gms.location.LocationServices
-import android.location.Geocoder
 import android.location.Location
-import android.os.Looper
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
@@ -53,17 +50,12 @@ import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.repeatOnLifecycle
-import com.google.android.gms.location.LocationCallback
-import com.google.android.gms.location.LocationRequest
-import com.google.android.gms.location.LocationResult
 import com.hermen.ass1.User.SessionManager
 import java.text.SimpleDateFormat
 import java.util.Locale
-import com.google.android.gms.location.Priority
 import com.google.firebase.firestore.FirebaseFirestore
 import com.hermen.ass1.ui.theme.LeaveRequest
 import android.util.Log
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.collectAsState
@@ -81,6 +73,8 @@ fun ClockIn(
     val landscape = isLandscape()
 
     val backgroundColor = if (isDarkTheme) Color.Black else Color(0xFFE5FFFF)
+    //text color
+    val textColor = if (isDarkTheme) Color.White else Color.Black
 
     //Get current time function
     val malaysiaTimeZone = TimeZone.getTimeZone("Asia/Kuala_Lumpur")
@@ -156,7 +150,7 @@ fun ClockIn(
 
                         Text(
                             text = ":",
-                            color = Color.Black,
+                            color = textColor,
                             fontSize = 30.sp,
                             fontWeight = FontWeight.Bold,
                             modifier = Modifier.padding(top = 32.dp) // Add padding here (change value as needed)
@@ -180,6 +174,7 @@ fun ClockIn(
 
                         Text(
                             text = amPm,
+                            color = textColor,
                             fontSize = 30.sp,
                             fontWeight = FontWeight.Bold,
                             modifier = Modifier.padding(top = 32.dp) // Add padding here (change value as needed)
@@ -188,14 +183,15 @@ fun ClockIn(
 
                     Text(
                         text = currentDate,
+                        color = textColor,
                         fontSize = 30.sp,
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier.padding(top = 32.dp) // Add padding here (change value as needed)
                     )
                 }
 
-                if ( currentDay != Calendar.SATURDAY) {
-                    AddAttendanceScreen()
+                if ( currentDay != Calendar.SATURDAY && currentDay != Calendar.SUNDAY ) {
+                    AddAttendanceScreen(isDarkTheme = isDarkTheme)
                 } else {
                     // Optional: Show a message if it's weekend
                     Box(
@@ -204,6 +200,7 @@ fun ClockIn(
                     ) {
                         Text(
                             text = "Hooray! It's the weekend.",
+                            color = textColor,
                             fontSize = 18.sp,
                             fontWeight = FontWeight.Medium
                         )
@@ -242,7 +239,7 @@ fun ClockIn(
 
                     Text(
                         text = ":",
-                        color = Color.Black,
+                        color = textColor,
                         fontSize = 30.sp,
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier.padding(top = 32.dp) // Add padding here (change value as needed)
@@ -266,6 +263,7 @@ fun ClockIn(
 
                     Text(
                         text = amPm,
+                        color = textColor,
                         fontSize = 30.sp,
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier.padding(top = 32.dp) // Add padding here (change value as needed)
@@ -274,6 +272,7 @@ fun ClockIn(
 
                 Text(
                     text = currentDate,
+                    color = textColor,
                     fontSize = 30.sp,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.padding(top = 32.dp) // Add padding here (change value as needed)
@@ -281,8 +280,8 @@ fun ClockIn(
 
                 Spacer(modifier = Modifier.height(30.dp))
 
-                if ( currentDay != Calendar.SATURDAY) {
-                    AddAttendanceScreen()
+                if ( currentDay != Calendar.SATURDAY && currentDay != Calendar.SUNDAY ) {
+                    AddAttendanceScreen(isDarkTheme = isDarkTheme)
                 } else {
                     // Optional: Show a message if it's weekend
                     Box(
@@ -291,6 +290,7 @@ fun ClockIn(
                     ) {
                         Text(
                             text = "Hooray! It's the weekend.",
+                            color = textColor,
                             fontSize = 18.sp,
                             fontWeight = FontWeight.Medium
                         )
@@ -303,7 +303,12 @@ fun ClockIn(
 }
 
 @Composable
-fun AddAttendanceScreen(viewModel: AttendanceViewModel = viewModel()) {
+fun AddAttendanceScreen(
+    viewModel: AttendanceViewModel = viewModel(),
+    isDarkTheme: Boolean
+) {
+    //text color
+    val textColor = if (isDarkTheme) Color.White else Color.Black
 
     var isCheckingAttendance by rememberSaveable { mutableStateOf(true) }
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -427,19 +432,22 @@ fun AddAttendanceScreen(viewModel: AttendanceViewModel = viewModel()) {
         horizontalAlignment = Alignment.CenterHorizontally) {
 
         Text(
-            text = "Your current location"
+            text = "Your current location",
+            color = textColor
         )
 
         Text(
             text = userLocation?.let {
                 "Lat: ${it.latitude}, Lng: ${it.longitude}"
-            } ?: "Fetching location..."
+            } ?: "Fetching location..." ,
+            color = textColor
         )
 
         Spacer(modifier = Modifier.height(8.dp))
 
         Text(
             text = userAddress,
+            color = textColor,
             modifier = Modifier
                 .padding(horizontal = 16.dp),
             textAlign = TextAlign.Center
@@ -464,8 +472,8 @@ fun AddAttendanceScreen(viewModel: AttendanceViewModel = viewModel()) {
                     add(Calendar.HOUR_OF_DAY, 8)
                 }
 
-                Text("You have already clocked in.")
-                Text("Shift: ${timeFormat.format(clockInTime)} - ${timeFormat.format(shiftEndTime.time)}")
+                Text("You have already clocked in.", color = textColor)
+                Text("Shift: ${timeFormat.format(clockInTime)} - ${timeFormat.format(shiftEndTime.time)}", color = textColor)
             }
             else -> {
                 Button(onClick = {
@@ -503,29 +511,36 @@ fun AddAttendanceScreen(viewModel: AttendanceViewModel = viewModel()) {
                         Toast.makeText(context, "Location not ready yet", Toast.LENGTH_SHORT).show()
                     }
                 }) {
-                    Text("Clock-IN")
+                    Text("Clock-IN", color = textColor)
                 }
             }
         }
 
 
         if (showSuccessDialog) {
-            SuccessDialog(onDismiss = { showSuccessDialog = false })
+            SuccessDialog(onDismiss = { showSuccessDialog = false }, isDarkTheme = isDarkTheme)
         } else if (showNotAtWorkplaceDialog) {
-            NotAtWorkPlaceDialog(onDismiss = { showNotAtWorkplaceDialog = false })
+            NotAtWorkPlaceDialog(onDismiss = { showNotAtWorkplaceDialog = false }, isDarkTheme = isDarkTheme)
         }
     }
 }
 
 
 @Composable
-fun SuccessDialog(onDismiss: () -> Unit) {
+fun SuccessDialog(
+    onDismiss: () -> Unit,
+    isDarkTheme: Boolean
+) {
+    val backgroundColor = if (isDarkTheme) Color.DarkGray else Color.White
+    //text color
+    val textColor = if (isDarkTheme) Color.White else Color.Black
+
     Dialog(onDismissRequest = onDismiss) {
         Box(
             modifier = Modifier
                 .width(320.dp) // 👈 Adjust the width as needed
                 .wrapContentHeight()
-                .background(Color.White, shape = RoundedCornerShape(16.dp))
+                .background(backgroundColor, shape = RoundedCornerShape(16.dp))
                 .padding(24.dp)
         ) {
             Column(
@@ -534,6 +549,7 @@ fun SuccessDialog(onDismiss: () -> Unit) {
             ) {
                 Text(
                     text = "Clock-In Successful",
+                    color = textColor,
                     fontWeight = FontWeight.Bold,
                     fontSize = 20.sp
                 )
@@ -549,7 +565,7 @@ fun SuccessDialog(onDismiss: () -> Unit) {
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                Text("You have successfully clocked in at your workplace.")
+                Text("You have successfully clocked in at your workplace." , color = textColor,)
 
                 Spacer(modifier = Modifier.height(24.dp))
 
@@ -563,13 +579,17 @@ fun SuccessDialog(onDismiss: () -> Unit) {
 
 
 @Composable
-fun NotAtWorkPlaceDialog(onDismiss: () -> Unit) {
+fun NotAtWorkPlaceDialog(onDismiss: () -> Unit, isDarkTheme: Boolean) {
+    val backgroundColor = if (isDarkTheme) Color.DarkGray else Color.White
+    //text color
+    val textColor = if (isDarkTheme) Color.White else Color.Black
+
     Dialog(onDismissRequest = onDismiss) {
         Box(
             modifier = Modifier
                 .width(320.dp)
                 .wrapContentHeight()
-                .background(Color.White, shape = RoundedCornerShape(16.dp))
+                .background(backgroundColor, shape = RoundedCornerShape(16.dp))
                 .padding(24.dp),
             contentAlignment = Alignment.Center // 👈 THIS LINE CENTERS THE COLUMN
         ) {
@@ -579,6 +599,7 @@ fun NotAtWorkPlaceDialog(onDismiss: () -> Unit) {
             ) {
                 Text(
                     text = "Not at workplace!",
+                    color = textColor,
                     fontWeight = FontWeight.Bold,
                     fontSize = 20.sp
                 )
@@ -594,8 +615,8 @@ fun NotAtWorkPlaceDialog(onDismiss: () -> Unit) {
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                Text("You are not at your workplace.")
-                Text("Unable to clock in now.")
+                Text("You are not at your workplace.", color = textColor,)
+                Text("Unable to clock in now.", color = textColor,)
 
                 Spacer(modifier = Modifier.height(24.dp))
 

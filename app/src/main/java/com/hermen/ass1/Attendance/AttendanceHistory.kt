@@ -66,6 +66,8 @@ fun HistoryList(
     modifier: Modifier = Modifier
 ) {
     val backgroundColor = if (isDarkTheme) Color.Black else Color.White
+    //text color
+    val textColor = if (isDarkTheme) Color.White else Color.Black
 
     val isTablet = isTablet()
     val selectedAttendance = viewModel.selectedHistoryAttendance
@@ -148,29 +150,36 @@ fun HistoryList(
                         ) {
                             Text(
                                 text ="Attendance ID: ${item.attendanceID}",
+                                color = textColor,
                                 fontSize = 18.sp,
                                 fontWeight = FontWeight.Bold
                             )
                             Spacer(modifier = Modifier.height(16.dp))
                             Text(
                                 text ="Clock In: ${clockInDate?.let { formatter.format(it) } ?: "Unknown"}",
+                                color = textColor,
                                 fontSize = 18.sp,
                                 fontWeight = FontWeight.Bold
                             )
                             Spacer(modifier = Modifier.height(16.dp))
                             Text(
                                 text = "Clock Out: ${clockOutDate?.let { formatter.format(it) } ?: "Still working"}",
+                                color = textColor,
                                 fontSize = 18.sp,
                                 fontWeight = FontWeight.Bold
                                 )
                             Spacer(modifier = Modifier.height(16.dp))
                             Text(
                                 text ="Status: ${item.status}",
+                                color = textColor,
                                 fontSize = 18.sp,
                                 fontWeight = FontWeight.Bold
                             )
                         }
-                    } ?: Text("Select a record to see details.")
+                    } ?: Text(
+                        text="Select a record to see details.",
+                        color = textColor,
+                        )
                 }
             }
 

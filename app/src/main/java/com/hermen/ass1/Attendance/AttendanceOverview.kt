@@ -68,6 +68,8 @@ fun AttendanceOverview(
 
     //background color
     val backgroundColor = if (isDarkTheme) Color.Black else Color(0xFFE5FFFF)
+    //text color
+    val textColor = if (isDarkTheme) Color.White else Color.Black
 
     val malaysiaTimeZone = TimeZone.getTimeZone("Asia/Kuala_Lumpur")
 
@@ -169,6 +171,7 @@ fun AttendanceOverview(
 
                         Text(
                             text = ":",
+                            color = textColor,
                             fontSize = 30.sp,
                             fontWeight = FontWeight.Bold,
                             modifier = Modifier.padding(top = 32.dp) // Add padding here (change value as needed)
@@ -192,6 +195,7 @@ fun AttendanceOverview(
 
                         Text(
                             text = amPm,
+                            color = textColor,
                             fontSize = 30.sp,
                             fontWeight = FontWeight.Bold,
                             modifier = Modifier.padding(top = 40.dp) // Add padding here (change value as needed)
@@ -200,6 +204,7 @@ fun AttendanceOverview(
 
                     Text(
                         text = currentDate,
+                        color = textColor,
                         fontSize = 30.sp,
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier.padding(top = 32.dp) // Add padding here (change value as needed)

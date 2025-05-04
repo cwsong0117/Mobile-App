@@ -61,6 +61,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import com.google.firebase.Timestamp
 import java.text.SimpleDateFormat
 import java.util.*
@@ -74,6 +75,9 @@ fun AdminScreen(
     modifier: Modifier = Modifier
 ) {
     val backgroundColor = if (isDarkTheme) Color.Black else Color(0xFFE5FFFF)
+    //text color
+    val textColor = if (isDarkTheme) Color.White else Color.Black
+
     val isTablet = isTablet()
 
     val attendanceList = viewModel.attendance
@@ -158,6 +162,7 @@ fun AdminScreen(
                                 ) {
                                     Text(
                                         text = userName,
+                                        color = textColor,
                                         fontWeight = FontWeight.Bold,
                                         fontSize = 18.sp,
                                         modifier = Modifier.padding(16.dp)
@@ -181,6 +186,7 @@ fun AdminScreen(
                             Column {
                                 Text(
                                     text = "Attendance for $userName",
+                                    color = textColor,
                                     fontWeight = FontWeight.Bold,
                                     fontSize = 22.sp,
                                     modifier = Modifier.padding(bottom = 8.dp)
@@ -203,9 +209,12 @@ fun AdminScreen(
                                                 horizontalArrangement = Arrangement.SpaceBetween
                                             ) {
                                                 Column(modifier = Modifier.weight(1f)) {
-                                                    Text("Date: ${clockInDate?.let { dateFormat.format(it) } ?: "N/A"}", fontWeight = FontWeight.Bold, fontSize = 18.sp)
-                                                    Text("Clock In: ${clockInDate?.let { timeFormat.format(it) } ?: "N/A"}", fontWeight = FontWeight.Bold, fontSize = 18.sp)
-                                                    Text("Clock Out: ${clockOutDate?.let { timeFormat.format(it) } ?: "N/A"}", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                                                    Text("Date: ${clockInDate?.let { dateFormat.format(it) } ?: "N/A"}",
+                                                        color = textColor,fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                                                    Text("Clock In: ${clockInDate?.let { timeFormat.format(it) } ?: "N/A"}",
+                                                        color = textColor,fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                                                    Text("Clock Out: ${clockOutDate?.let { timeFormat.format(it) } ?: "N/A"}",
+                                                        color = textColor,fontWeight = FontWeight.Bold, fontSize = 18.sp)
                                                     Text(
                                                         text = "Status: ${attendance.status ?: "-"}",
                                                         fontWeight = FontWeight.Bold,
@@ -245,7 +254,9 @@ fun AdminScreen(
                                     }
                                 }
                             }
-                        } ?: Text("Select an employee from the list.", fontSize = 18.sp)
+                        } ?: Text("Select an employee from the list.",
+                            color = textColor,
+                            fontSize = 18.sp)
                     }
                 }
 
@@ -359,7 +370,8 @@ fun AdminScreen(
                 viewModel.clearEditableState()
                 viewModel.selectedAttendance = null
                 viewModel.showEditDialog = false
-            }
+            },
+            isDarkTheme = isDarkTheme
         )
     }
 
@@ -369,7 +381,8 @@ fun AdminScreen(
             onDismiss = {
                 viewModel.selectedAttendance = null
                 viewModel.showRemoveDialog = false
-            }
+            },
+            isDarkTheme = isDarkTheme
         )
     }
 }
@@ -378,14 +391,22 @@ fun AdminScreen(
 fun EditDialog(
     attendance: Attendance,
     onDismiss: () -> Unit,
-    viewModel: AttendanceViewModel = viewModel()
+    viewModel: AttendanceViewModel = viewModel(),
+    isDarkTheme: Boolean
 ) {
+    val backgroundColor = if (isDarkTheme) Color.DarkGray else Color.White
+    //text color
+    val textColor = if (isDarkTheme) Color.White else Color.Black
+
     val context = LocalContext.current
 
     val editable = viewModel.editableState ?: return  // Prevent crash if null
     val clockIn = editable.clockIn
     val clockOut = editable.clockOut
     val status = editable.status
+
+    val statusOptions = listOf("Clocked In", "OUT", "Left Early")
+    var expanded by rememberSaveable { mutableStateOf(false) } // survives orientation change
 
     val dateFormat = SimpleDateFormat("dd-MM-yyyy", Locale.getDefault())
     val timeFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
@@ -430,39 +451,63 @@ fun EditDialog(
             modifier = Modifier
                 .width(320.dp)
                 .wrapContentHeight()
-                .background(Color.White, shape = RoundedCornerShape(16.dp))
+                .background(backgroundColor, shape = RoundedCornerShape(16.dp))
                 .padding(24.dp)
         ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text("Edit Attendance", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                Text("Edit Attendance", color = textColor, fontWeight = FontWeight.Bold, fontSize = 18.sp)
 
                 Spacer(Modifier.height(16.dp))
 
-                Text("Clock In: ${dateFormat.format(clockIn)} ${timeFormat.format(clockIn)}")
+                Text("Clock In: ${dateFormat.format(clockIn)} ${timeFormat.format(clockIn)}"
+                , color = textColor)
                 Button(onClick = {
                     editingClockIn.value = true
                     targetTime.value = clockIn
                     openTimePicker.value = true
 
-                }) { Text("Edit") }
+                }) { Text("Edit" , color = textColor) }
 
 
                 Spacer(Modifier.height(8.dp))
 
-                Text("Clock Out: ${dateFormat.format(clockOut)} ${timeFormat.format(clockOut)}")
+                Text("Clock Out: ${dateFormat.format(clockOut)} ${timeFormat.format(clockOut)}"
+                    , color = textColor)
                 Button(onClick = {
                     editingClockIn.value = false
                     targetTime.value = clockOut
                     openTimePicker.value = true
-                }) { Text("Edit") }
+                }) { Text("Edit" , color = textColor) }
 
                 Spacer(Modifier.height(8.dp))
 
-                OutlinedTextField(
-                    value = status,
-                    onValueChange = { viewModel.updateStatus(it) },
-                    label = { Text("Status") }
-                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center
+                ){
+                    Text("Status: ${status}", color = textColor)
+
+                    Spacer(modifier = Modifier.width(8.dp))
+
+                    Button(onClick = { expanded = true }) {
+                        Text("edit", color = textColor)
+                    }
+                }
+
+                DropdownMenu(
+                    expanded = expanded,
+                    onDismissRequest = { expanded = false }
+                ) {
+                    statusOptions.forEach { option ->
+                        DropdownMenuItem(
+                            text = { Text(option) },
+                            onClick = {
+                                viewModel.updateStatus(option)
+                                expanded = false
+                            }
+                        )
+                    }
+                }
 
                 Spacer(Modifier.height(16.dp))
 
@@ -471,7 +516,7 @@ fun EditDialog(
                     horizontalArrangement = Arrangement.End
                 ){
                     Button(onClick = onDismiss) {
-                        Text("Cancel")
+                        Text("Cancel" , color = textColor)
                     }
 
                     Spacer(Modifier.width(8.dp))
@@ -519,7 +564,7 @@ fun EditDialog(
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50))
 
                     ) {
-                        Text("Save Changes")
+                        Text("Save Changes" , color = textColor)
                     }
 
                 }
@@ -534,8 +579,13 @@ fun EditDialog(
 fun RemoveDialog(
     attendance: Attendance,
     onDismiss: () -> Unit,
-    viewModel: AttendanceViewModel = viewModel()
+    viewModel: AttendanceViewModel = viewModel(),
+    isDarkTheme: Boolean
 ) {
+    val backgroundColor = if (isDarkTheme) Color.DarkGray else Color.White
+    //text color
+    val textColor = if (isDarkTheme) Color.White else Color.Black
+
     val timeFormat = SimpleDateFormat("hh:mm a", Locale.getDefault()).apply {
         timeZone = TimeZone.getTimeZone("Asia/Kuala_Lumpur")
     }
@@ -552,7 +602,7 @@ fun RemoveDialog(
             modifier = Modifier
                 .width(320.dp)
                 .wrapContentHeight()
-                .background(Color.White, shape = RoundedCornerShape(16.dp))
+                .background(backgroundColor, shape = RoundedCornerShape(16.dp))
                 .padding(24.dp)
         ) {
             Column(
@@ -561,6 +611,7 @@ fun RemoveDialog(
             ) {
                 Text(
                     text = "Are you sure you want to delete ${attendance.employeeID}'s record?",
+                    color = textColor,
                     fontWeight = FontWeight.Bold,
                     textAlign = TextAlign.Center
                 )
@@ -590,13 +641,13 @@ fun RemoveDialog(
                         }
                     }
                 }) {
-                    Text("Remove")
+                    Text("Remove" , color = textColor)
                 }
 
                 Spacer(Modifier.height(8.dp))
 
                 Button(onClick = onDismiss) {
-                    Text("Cancel")
+                    Text("Cancel" , color = textColor)
                 }
             }
         }

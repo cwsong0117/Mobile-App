@@ -57,6 +57,8 @@ fun ClockOut(
 
     //background color
     val backgroundColor = if (isDarkTheme) Color.Black else Color(0xFFE5FFFF)
+    //text color
+    val textColor = if (isDarkTheme) Color.White else Color.Black
 
     val malaysiaTimeZone = TimeZone.getTimeZone("Asia/Kuala_Lumpur")
 
@@ -89,8 +91,6 @@ fun ClockOut(
     val minute = calendar.get(Calendar.MINUTE)
     val amPm = if (calendar.get(Calendar.AM_PM) == Calendar.AM) "AM" else "PM"
     //Get current time function
-
-    val employeeID = SessionManager.currentUser?.id
 
     if(landscape){
         Column(
@@ -130,6 +130,7 @@ fun ClockOut(
 
                         Text(
                             text = ":",
+                            color = textColor,
                             fontSize = 30.sp,
                             fontWeight = FontWeight.Bold,
                             modifier = Modifier.padding(top = 32.dp) // Add padding here (change value as needed)
@@ -153,6 +154,7 @@ fun ClockOut(
 
                         Text(
                             text = amPm,
+                            color = textColor,
                             fontSize = 30.sp,
                             fontWeight = FontWeight.Bold,
                             modifier = Modifier.padding(top = 40.dp) // Add padding here (change value as needed)
@@ -161,13 +163,14 @@ fun ClockOut(
 
                     Text(
                         text = currentDate,
+                        color = textColor,
                         fontSize = 30.sp,
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier.padding(top = 32.dp) // Add padding here (change value as needed)
                     )
 
                 }
-                ClockOutScreen()
+                ClockOutScreen(isDarkTheme = isDarkTheme)
             }
         }
 
@@ -202,6 +205,7 @@ fun ClockOut(
 
                     Text(
                         text = ":",
+                        color = textColor,
                         fontSize = 30.sp,
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier.padding(top = 32.dp) // Add padding here (change value as needed)
@@ -225,6 +229,7 @@ fun ClockOut(
 
                     Text(
                         text = amPm,
+                        color = textColor,
                         fontSize = 30.sp,
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier.padding(top = 40.dp) // Add padding here (change value as needed)
@@ -233,6 +238,7 @@ fun ClockOut(
 
                 Text(
                     text = currentDate,
+                    color = textColor,
                     fontSize = 30.sp,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.padding(top = 32.dp) // Add padding here (change value as needed)
@@ -240,7 +246,7 @@ fun ClockOut(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                ClockOutScreen()
+                ClockOutScreen(isDarkTheme = isDarkTheme)
 
             }
         }
@@ -250,9 +256,13 @@ fun ClockOut(
 
 @Composable
 fun ClockOutScreen(
-    viewModel: AttendanceViewModel = viewModel()
+    viewModel: AttendanceViewModel = viewModel(),
+    isDarkTheme: Boolean
 ) {
     val employeeID = SessionManager.currentUser?.id
+
+    //text color
+    val textColor = if (isDarkTheme) Color.White else Color.Black
 
     var isEarlyLeaveConfirmed by rememberSaveable(employeeID) { mutableStateOf(false) }
     var message by rememberSaveable(employeeID) { mutableStateOf("") }
@@ -268,9 +278,6 @@ fun ClockOutScreen(
 
     val latestClockIn = viewModel.latestClockIn.value
     val malaysiaTimeZone = TimeZone.getTimeZone("Asia/Kuala_Lumpur")
-    val todayFormatter = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).apply {
-        timeZone = malaysiaTimeZone
-    }
 
     val timeFormat = remember {
         SimpleDateFormat("HH:mm:ss dd-MM-yyyy", Locale.getDefault()).apply {
@@ -295,26 +302,10 @@ fun ClockOutScreen(
 
         Spacer(modifier = Modifier.height(8.dp))
 
-//        Text(
-//            text = if (latestClockIn != null)
-//                "Last Clock-In: ${timeFormat.format(latestClockIn.toDate())}"
-//            else "Fetching clock-in info...",
-//            fontSize = 16.sp,
-//            fontWeight = FontWeight.Medium
-//        )
-//
-//        Spacer(modifier = Modifier.height(16.dp))
-//
-//        Text(
-//            text = if (shiftEnd != null)
-//                "Shift Ends At: ${timeFormat.format(shiftEnd.time)}"
-//            else "Calculating shift end...",
-//            fontSize = 16.sp,
-//            fontWeight = FontWeight.Medium
-//        )
         if (latestClockIn != null && shiftEnd != null) {
             Text(
                 text = "Last Clock-In: ${timeFormat.format(latestClockIn.toDate())}",
+                color = textColor,
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Medium
             )
@@ -323,6 +314,7 @@ fun ClockOutScreen(
 
             Text(
                 text = "Shift Ends At: ${timeFormat.format(shiftEnd.time)}",
+                color = textColor,
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Medium
             )
@@ -368,7 +360,7 @@ fun ClockOutScreen(
                 message = "Clock-in record not found."
             }
         }) {
-            Text("Clock Out")
+            Text("Clock Out", color = textColor,)
         }
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -398,18 +390,25 @@ fun ClockOutScreen(
                     )
                 }
             },
-            onDismiss = { viewModel.showEarlyLeaveDialog = false }
+            onDismiss = { viewModel.showEarlyLeaveDialog = false },
+            isDarkTheme = isDarkTheme
         )
     }
 
     if (showSuccessDialog) {
-        ClockOutSuccessDialog(onDismiss = { viewModel.showSuccessDialog = false })
+        ClockOutSuccessDialog(onDismiss = { viewModel.showSuccessDialog = false }, isDarkTheme = isDarkTheme)
     }
 }
 
 
 @Composable
-fun ClockOutSuccessDialog(onDismiss: () -> Unit) {
+fun ClockOutSuccessDialog(
+    onDismiss: () -> Unit,
+    isDarkTheme: Boolean)
+{
+    val backgroundColor = if (isDarkTheme) Color.DarkGray else Color.White
+    //text color
+    val textColor = if (isDarkTheme) Color.White else Color.Black
 
     val landscape = isLandscape()
 
@@ -418,7 +417,7 @@ fun ClockOutSuccessDialog(onDismiss: () -> Unit) {
             modifier = Modifier
                 .width(320.dp) // 👈 Adjust the width as needed
                 .wrapContentHeight()
-                .background(Color.White, shape = RoundedCornerShape(16.dp))
+                .background(backgroundColor, shape = RoundedCornerShape(16.dp))
                 .padding(24.dp)
         ) {
             Column(
@@ -427,6 +426,7 @@ fun ClockOutSuccessDialog(onDismiss: () -> Unit) {
             ) {
                 Text(
                     text = "Clock-Out Successful",
+                    color = textColor,
                     fontWeight = FontWeight.Bold,
                     fontSize = 20.sp
                 )
@@ -442,8 +442,8 @@ fun ClockOutSuccessDialog(onDismiss: () -> Unit) {
 
                 Spacer(modifier = Modifier.height(if (landscape) 8.dp else 16.dp))
 
-                Text("You have successfully clock-out.")
-                Text("Goodbye")
+                Text("You have successfully clock-out.", color = textColor,)
+                Text("Goodbye", color = textColor,)
 
                 Spacer(modifier = Modifier.height(24.dp))
 
@@ -458,17 +458,22 @@ fun ClockOutSuccessDialog(onDismiss: () -> Unit) {
 @Composable
 fun LeaveEarlyDialog(
     onConfirm: () -> Unit,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    isDarkTheme: Boolean
 ) {
 
     val landscape = isLandscape()
+
+    val backgroundColor = if (isDarkTheme) Color.DarkGray else Color.White
+    //text color
+    val textColor = if (isDarkTheme) Color.White else Color.Black
 
     Dialog(onDismissRequest = onDismiss) {
         Box(
             modifier = Modifier
                 .width(320.dp)
                 .wrapContentHeight()
-                .background(Color.White, shape = RoundedCornerShape(16.dp))
+                .background(backgroundColor, shape = RoundedCornerShape(16.dp))
                 .padding(24.dp)
         ) {
             Column(
@@ -477,6 +482,7 @@ fun LeaveEarlyDialog(
             ) {
                 Text(
                     text = "Leave Early?",
+                    color = textColor,
                     fontWeight = FontWeight.Bold,
                     fontSize = 20.sp
                 )
@@ -494,10 +500,12 @@ fun LeaveEarlyDialog(
 
                 Text(
                     text = "Your shift hasn't ended yet.",
+                    color = textColor,
                     textAlign = TextAlign.Center
                     )
                 Text(
                     text ="Are you sure you want to clock out early?",
+                    color = textColor,
                     textAlign = TextAlign.Center
                 )
 
