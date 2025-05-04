@@ -207,7 +207,10 @@ fun InitialPage(navController: NavController, isDarkTheme: Boolean) {
                         modifier = Modifier
                             .fillMaxWidth(0.5f)
                             .height(50.dp),
-                        colors = ButtonDefaults.buttonColors(signUpButtonColor)
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFF89CFF0), // 背景颜色
+                            contentColor = Color.White   // 文字颜色（可选）
+                        ),
                     ) {
                         Text(text = "Signup", fontSize = 18.sp)
                     }
@@ -219,10 +222,13 @@ fun InitialPage(navController: NavController, isDarkTheme: Boolean) {
                         modifier = Modifier
                             .fillMaxWidth(0.5f)
                             .height(50.dp),
-                        colors = ButtonDefaults.buttonColors(Color.White),
-                        border = BorderStroke(2.dp, logInButtonColor)
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color.White, // 背景颜色
+                            contentColor = Color(0xFFe5ffff)   // 文字颜色（可选）
+                        ),
+                        border = BorderStroke(2.dp, Color(0xFF89cff0))
                     ) {
-                        Text(text = "Login", fontSize = 18.sp, color = logInButtonColor)
+                        Text(text = "Login", fontSize = 18.sp, color = Color(0xFF89cff0))
                     }
                 }
             }
@@ -301,9 +307,12 @@ fun InitialPage(navController: NavController, isDarkTheme: Boolean) {
                             modifier = Modifier
                                 .fillMaxWidth(0.7f)
                                 .height(50.dp),
-                            colors = ButtonDefaults.buttonColors(signUpButtonColor)
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color(0xFF89CFF0), // 背景颜色
+                                contentColor = Color.White   // 文字颜色（可选）
+                            ),
                         ) {
-                            Text(text = "Sign In", fontSize = 18.sp)
+                            Text(text = "Signup", fontSize = 18.sp)
                         }
 
                         Spacer(modifier = Modifier.height(20.dp))
@@ -313,10 +322,13 @@ fun InitialPage(navController: NavController, isDarkTheme: Boolean) {
                             modifier = Modifier
                                 .fillMaxWidth(0.7f)
                                 .height(50.dp),
-                            colors = ButtonDefaults.buttonColors(Color.White),
-                            border = BorderStroke(2.dp, logInButtonColor)
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color.White, // 背景颜色
+                                contentColor = Color(0xFFe5ffff)   // 文字颜色（可选）
+                            ),
+                            border = BorderStroke(2.dp, Color(0xFF89cff0))
                         ) {
-                            Text(text = "Login", fontSize = 18.sp, color = logInButtonColor)
+                            Text(text = "Login", fontSize = 18.sp, color = Color(0xFF89cff0))
                         }
                     }
                 }
