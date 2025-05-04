@@ -22,7 +22,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Divider
 import androidx.compose.material.LocalContentColor
-import androidx.compose.material.TextButton
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -53,14 +52,13 @@ import com.google.firebase.Firebase
 import com.google.firebase.firestore.firestore
 import com.hermen.ass1.BackButton
 import com.hermen.ass1.R
-import com.hermen.ass1.User.SessionManager
 import com.hermen.ass1.User.User
 import com.hermen.ass1.User.toUser
 import java.util.Locale
 import java.util.TimeZone
-import android.app.DatePickerDialog
 import android.app.TimePickerDialog
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import com.google.firebase.Timestamp
@@ -76,6 +74,7 @@ fun AdminScreen(
     modifier: Modifier = Modifier
 ) {
     val backgroundColor = if (isDarkTheme) Color.Black else Color(0xFFE5FFFF)
+    val isTablet = isTablet()
 
     val attendanceList = viewModel.attendance
     var isLoading by remember { mutableStateOf(true) }
@@ -114,6 +113,9 @@ fun AdminScreen(
     val showRemoveDialog = viewModel.showRemoveDialog
     val selectedAttendance = viewModel.selectedAttendance
 
+    //for tablet
+    val selectedEmployeeId = viewModel.selectedEmployeeId
+
     Column(
         modifier = Modifier
             .background(backgroundColor)
@@ -129,95 +131,215 @@ fun AdminScreen(
                 CircularProgressIndicator()
             }
         } else {
-            LazyColumn(modifier = modifier.padding(8.dp)) {
-                groupedAttendance.forEach { (employeeID, records) ->
-                    item {
-                        val expanded = viewModel.isExpanded(employeeID)
-                        val userName = usersMap[employeeID]?.name ?: "Unknown User"
+            if(isTablet){
+                Row(modifier = modifier.fillMaxSize()) {
+                    // LEFT PANE - List of employees
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxHeight()
+                            .weight(1f)
+                            .padding(8.dp)
+                    ) {
+                        groupedAttendance.keys.forEach { employeeID ->
+                            item {
+                                val userName = usersMap[employeeID]?.name ?: "Unknown User"
+                                val isSelected = employeeID == selectedEmployeeId
 
-                        Card(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(8.dp)
-                                .clickable { viewModel.toggleExpanded(employeeID) },
-                            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-                        ) {
-                            Column(modifier = Modifier.padding(16.dp)) {
+                                Card(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(4.dp)
+                                        .clickable { viewModel.selectEmployee(employeeID) },
+                                    elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+                                    colors = CardDefaults.cardColors(
+                                        containerColor = if (isSelected) MaterialTheme.colorScheme.primaryContainer
+                                        else MaterialTheme.colorScheme.surface
+                                    )
+                                ) {
+                                    Text(
+                                        text = userName,
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 18.sp,
+                                        modifier = Modifier.padding(16.dp)
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    // RIGHT PANE - Attendance for selected employee
+                    Box(
+                        modifier = Modifier
+                            .fillMaxHeight()
+                            .weight(2f)
+                            .padding(8.dp)
+                    ) {
+                        selectedEmployeeId?.let { employeeID ->
+                            val records = groupedAttendance[employeeID] ?: emptyList()
+                            val userName = usersMap[employeeID]?.name ?: "Unknown User"
+
+                            Column {
                                 Text(
-                                    text = userName,
+                                    text = "Attendance for $userName",
                                     fontWeight = FontWeight.Bold,
-                                    fontSize = 20.sp
+                                    fontSize = 22.sp,
+                                    modifier = Modifier.padding(bottom = 8.dp)
                                 )
 
-                                AnimatedVisibility(visible = expanded) {
-                                    Column {
-                                        records.sortedByDescending { it.clockInTime?.toDate() }.forEach { attendance ->
-                                            val clockInDate = attendance.clockInTime?.toDate()
-                                            val clockOutDate = attendance.clockOutTime?.toDate()
+                                LazyColumn {
+                                    items(records.sortedByDescending { it.clockInTime?.toDate() }) { attendance ->
+                                        val clockInDate = attendance.clockInTime?.toDate()
+                                        val clockOutDate = attendance.clockOutTime?.toDate()
 
+                                        Card(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(vertical = 6.dp),
+                                            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                                        ) {
                                             Row(
                                                 modifier = Modifier
-                                                    .fillMaxWidth()
-                                                    .padding(vertical = 8.dp),
-                                                horizontalArrangement = Arrangement.SpaceBetween,
-                                                verticalAlignment = Alignment.CenterVertically
+                                                    .padding(16.dp),
+                                                horizontalArrangement = Arrangement.SpaceBetween
                                             ) {
-                                                // Attendance info
                                                 Column(modifier = Modifier.weight(1f)) {
-                                                    Text("Date: ${clockInDate?.let { dateFormat.format(it) } ?: "N/A"}", fontWeight = FontWeight.Bold)
-                                                    Text("Clock In: ${clockInDate?.let { timeFormat.format(it) } ?: "N/A"}")
-                                                    Text("Clock Out: ${clockOutDate?.let { timeFormat.format(it) } ?: "N/A"}")
+                                                    Text("Date: ${clockInDate?.let { dateFormat.format(it) } ?: "N/A"}", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                                                    Text("Clock In: ${clockInDate?.let { timeFormat.format(it) } ?: "N/A"}", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                                                    Text("Clock Out: ${clockOutDate?.let { timeFormat.format(it) } ?: "N/A"}", fontWeight = FontWeight.Bold, fontSize = 18.sp)
                                                     Text(
                                                         text = "Status: ${attendance.status ?: "-"}",
+                                                        fontWeight = FontWeight.Bold,
+                                                        fontSize = 18.sp,
                                                         color = if (attendance.status == "Left Early") Color.Red else LocalContentColor.current
                                                     )
                                                 }
 
-                                                // Edit & Delete buttons
-                                                Column(
-                                                    horizontalAlignment = Alignment.End,
-                                                    verticalArrangement = Arrangement.Center,
-                                                ) {
-                                                    Box(
-                                                        modifier = Modifier
-                                                            .size(32.dp)
-                                                            .clickable {
-                                                                viewModel.selectedAttendance = attendance
-                                                                viewModel.setEditableState(attendance)
-                                                                viewModel.showEditDialog = true
-                                                            }
-                                                    ) {
-                                                        Image(
-                                                            painter = painterResource(id = R.drawable.edit),
-                                                            contentDescription = "edit",
-                                                            contentScale = ContentScale.Fit,
-                                                            modifier = Modifier.fillMaxSize(),
-                                                            colorFilter = ColorFilter.tint(if (isDarkTheme) Color.White else Color.Black)
+                                                Column(horizontalAlignment = Alignment.End) {
+                                                    // Edit
+                                                    IconButton(onClick = {
+                                                        viewModel.selectedAttendance = attendance
+                                                        viewModel.setEditableState(attendance)
+                                                        viewModel.showEditDialog = true
+                                                    }) {
+                                                        Icon(
+                                                            painter = painterResource(R.drawable.edit),
+                                                            contentDescription = "Edit",
+                                                            tint = if (isDarkTheme) Color.White else Color.Black
                                                         )
                                                     }
 
-                                                    Spacer(modifier = Modifier.height(16.dp))
-
-                                                    Box(
-                                                        modifier = Modifier
-                                                            .size(32.dp)
-                                                            .clickable {
-                                                                viewModel.selectedAttendance = attendance
-                                                                viewModel.showRemoveDialog = true
-                                                            }
-                                                    ) {
-                                                        Image(
-                                                            painter = painterResource(id = R.drawable.delete),
-                                                            contentDescription = "remove",
-                                                            contentScale = ContentScale.Fit,
-                                                            modifier = Modifier.fillMaxSize(),
-                                                            colorFilter = ColorFilter.tint(Color.Red)
+                                                    // Delete
+                                                    IconButton(onClick = {
+                                                        viewModel.selectedAttendance = attendance
+                                                        viewModel.showRemoveDialog = true
+                                                    }) {
+                                                        Icon(
+                                                            painter = painterResource(R.drawable.delete),
+                                                            contentDescription = "Delete",
+                                                            tint = Color.Red
                                                         )
                                                     }
                                                 }
                                             }
+                                        }
+                                    }
+                                }
+                            }
+                        } ?: Text("Select an employee from the list.", fontSize = 18.sp)
+                    }
+                }
 
-                                            Divider(thickness = 1.5.dp)
+            }else{
+                LazyColumn(modifier = modifier.padding(8.dp)) {
+                    groupedAttendance.forEach { (employeeID, records) ->
+                        item {
+                            val expanded = viewModel.isExpanded(employeeID)
+                            val userName = usersMap[employeeID]?.name ?: "Unknown User"
+
+                            Card(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(8.dp)
+                                    .clickable { viewModel.toggleExpanded(employeeID) },
+                                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                            ) {
+                                Column(modifier = Modifier.padding(16.dp)) {
+                                    Text(
+                                        text = userName,
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 20.sp
+                                    )
+
+                                    AnimatedVisibility(visible = expanded) {
+                                        Column {
+                                            records.sortedByDescending { it.clockInTime?.toDate() }.forEach { attendance ->
+                                                val clockInDate = attendance.clockInTime?.toDate()
+                                                val clockOutDate = attendance.clockOutTime?.toDate()
+
+                                                Row(
+                                                    modifier = Modifier
+                                                        .fillMaxWidth()
+                                                        .padding(vertical = 8.dp),
+                                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                                    verticalAlignment = Alignment.CenterVertically
+                                                ) {
+                                                    // Attendance info
+                                                    Column(modifier = Modifier.weight(1f)) {
+                                                        Text("Date: ${clockInDate?.let { dateFormat.format(it) } ?: "N/A"}", fontWeight = FontWeight.Bold)
+                                                        Text("Clock In: ${clockInDate?.let { timeFormat.format(it) } ?: "N/A"}")
+                                                        Text("Clock Out: ${clockOutDate?.let { timeFormat.format(it) } ?: "N/A"}")
+                                                        Text(
+                                                            text = "Status: ${attendance.status ?: "-"}",
+                                                            color = if (attendance.status == "Left Early") Color.Red else LocalContentColor.current
+                                                        )
+                                                    }
+
+                                                    // Edit & Delete buttons
+                                                    Column(
+                                                        horizontalAlignment = Alignment.End,
+                                                        verticalArrangement = Arrangement.Center,
+                                                    ) {
+                                                        Box(
+                                                            modifier = Modifier
+                                                                .size(32.dp)
+                                                                .clickable {
+                                                                    viewModel.selectedAttendance = attendance
+                                                                    viewModel.setEditableState(attendance)
+                                                                    viewModel.showEditDialog = true
+                                                                }
+                                                        ) {
+                                                            Image(
+                                                                painter = painterResource(id = R.drawable.edit),
+                                                                contentDescription = "edit",
+                                                                contentScale = ContentScale.Fit,
+                                                                modifier = Modifier.fillMaxSize(),
+                                                                colorFilter = ColorFilter.tint(if (isDarkTheme) Color.White else Color.Black)
+                                                            )
+                                                        }
+
+                                                        Spacer(modifier = Modifier.height(16.dp))
+
+                                                        Box(
+                                                            modifier = Modifier
+                                                                .size(32.dp)
+                                                                .clickable {
+                                                                    viewModel.selectedAttendance = attendance
+                                                                    viewModel.showRemoveDialog = true
+                                                                }
+                                                        ) {
+                                                            Image(
+                                                                painter = painterResource(id = R.drawable.delete),
+                                                                contentDescription = "remove",
+                                                                contentScale = ContentScale.Fit,
+                                                                modifier = Modifier.fillMaxSize(),
+                                                                colorFilter = ColorFilter.tint(Color.Red)
+                                                            )
+                                                        }
+                                                    }
+                                                }
+
+                                                Divider(thickness = 1.5.dp)
+                                            }
                                         }
                                     }
                                 }
@@ -226,7 +348,6 @@ fun AdminScreen(
                     }
                 }
             }
-
         }
     }
 

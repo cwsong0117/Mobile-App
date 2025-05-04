@@ -66,6 +66,7 @@ import android.util.Log
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.text.style.TextAlign
 import androidx.navigation.NavController
@@ -311,9 +312,6 @@ fun AddAttendanceScreen(viewModel: AttendanceViewModel = viewModel()) {
     var showNotAtWorkplaceDialog by rememberSaveable { mutableStateOf(false) }
     var clockedInToday by remember { mutableStateOf<Attendance?>(null) }
 
-    val context = LocalContext.current
-    val fusedLocationClient = remember { LocationServices.getFusedLocationProviderClient(context) }
-
 // tarumt location
 //    val workplaceLat = 3.2154587237369303
 //    val workplaceLng = 101.72655709533397
@@ -323,15 +321,18 @@ fun AddAttendanceScreen(viewModel: AttendanceViewModel = viewModel()) {
     val workplaceLng = 101.7870
     val allowedRadius = 200f // meters
 
-    var userLocation by remember { mutableStateOf<Location?>(null) }
-    var userAddress by rememberSaveable { mutableStateOf("Fetching address...") }
+    val context = LocalContext.current
+    val userLocation by viewModel.userLocation.collectAsState()
+    val userAddress by viewModel.userAddress.collectAsState()
     var permissionGranted by rememberSaveable { mutableStateOf(false) }
 
     val locationPermissionLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.RequestPermission()
-    ) { isGranted ->
-        permissionGranted = isGranted
-        if (!isGranted) {
+        ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        permissionGranted = granted
+        if (granted) {
+            viewModel.fetchUserLocation()
+        } else {
             Toast.makeText(context, "Location permission denied", Toast.LENGTH_SHORT).show()
         }
     }
@@ -346,6 +347,7 @@ fun AddAttendanceScreen(viewModel: AttendanceViewModel = viewModel()) {
             locationPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
         } else {
             permissionGranted = true
+            viewModel.fetchUserLocation()
         }
     }
 
@@ -360,52 +362,6 @@ fun AddAttendanceScreen(viewModel: AttendanceViewModel = viewModel()) {
             } ?: run {
                 isCheckingAttendance = false // ✅ handle if user is null
             }
-        }
-    }
-
-
-    // 3. Get current location if permission is granted
-    LaunchedEffect(permissionGranted) {
-        if (permissionGranted && userLocation == null) {
-            val locationRequest = LocationRequest.Builder(
-                Priority.PRIORITY_HIGH_ACCURACY,
-                1000L
-            )
-                .setWaitForAccurateLocation(true)
-                .setMaxUpdates(1)
-                .build()
-
-            val locationCallback = object : LocationCallback() {
-                override fun onLocationResult(result: LocationResult) {
-                    val location = result.lastLocation
-                    if (location != null) {
-                        userLocation = location
-
-                        val geocoder = Geocoder(context, Locale.getDefault())
-                        val addresses = geocoder.getFromLocation(
-                            location.latitude,
-                            location.longitude,
-                            1
-                        )
-
-                        userAddress = if (!addresses.isNullOrEmpty()) {
-                            addresses[0].getAddressLine(0)
-                        } else {
-                            "Address not found"
-                        }
-
-                        // ✅ Clean up location callback after getting location
-                        fusedLocationClient.removeLocationUpdates(this)
-                    }
-                }
-            }
-
-            // 🔁 Start receiving location updates
-            fusedLocationClient.requestLocationUpdates(
-                locationRequest,
-                locationCallback,
-                Looper.getMainLooper()
-            )
         }
     }
 
@@ -456,7 +412,6 @@ fun AddAttendanceScreen(viewModel: AttendanceViewModel = viewModel()) {
     }
 //    check leaves list
 
-
     val timeFormat = remember {
         SimpleDateFormat("HH:mm", Locale.getDefault()).apply {
             timeZone = TimeZone.getTimeZone("Asia/Kuala_Lumpur")
@@ -482,7 +437,6 @@ fun AddAttendanceScreen(viewModel: AttendanceViewModel = viewModel()) {
         Text(
             text = userAddress,
             modifier = Modifier
-                .fillMaxWidth()
                 .padding(horizontal = 16.dp),
             textAlign = TextAlign.Center
         )

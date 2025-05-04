@@ -1,5 +1,6 @@
 package com.hermen.ass1.Attendance
 
+import android.app.Application
 import android.util.Log
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -15,18 +16,41 @@ import java.util.TimeZone
 import androidx.compose.runtime.State
 import kotlinx.coroutines.tasks.await
 import android.content.res.Configuration
+import android.location.Geocoder
+import android.location.Location
+import android.os.Looper
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.core.content.ContextCompat
+import androidx.lifecycle.AndroidViewModel
+import com.google.android.gms.location.LocationCallback
+import com.google.android.gms.location.LocationRequest
+import com.google.android.gms.location.LocationResult
+import com.google.android.gms.location.LocationServices
+import com.google.android.gms.location.Priority
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import java.io.IOException
 import java.util.Date
+import android.Manifest
+import android.content.pm.PackageManager
+
 
 @Composable
 fun isLandscape(): Boolean {
     val configuration = LocalConfiguration.current
     return configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
+}
+
+@Composable
+fun isTablet(): Boolean {
+    val configuration = LocalConfiguration.current
+    return configuration.screenWidthDp >= 600
 }
 
 data class Attendance(
@@ -43,7 +67,7 @@ data class EditableAttendanceState(
     val status: String
 )
 
-class AttendanceViewModel : ViewModel() {
+class AttendanceViewModel(application: Application) : AndroidViewModel(application) {
     private val db = Firebase.firestore
     val attendance = mutableStateListOf<Attendance>()
 
@@ -104,7 +128,82 @@ class AttendanceViewModel : ViewModel() {
     fun clearEditableState() {
         editableState = null
     }
-    //especially for editing for surviving orientationc change
+    //especially for editing for surviving orientation change
+
+    //for tablettttt
+    var selectedHistoryAttendance by mutableStateOf<Attendance?>(null)
+
+    fun selectAttendance(attendance: Attendance) {
+        selectedHistoryAttendance = attendance
+    }
+
+    var selectedEmployeeId by mutableStateOf<String?>(null)
+
+    fun selectEmployee(employeeID: String) {
+        selectedEmployeeId = employeeID
+    }
+    //tablettttttttttttt
+
+
+    //for fetching location
+    private val context = application.applicationContext
+    private val fusedLocationClient = LocationServices.getFusedLocationProviderClient(context)
+
+    private val _userLocation = MutableStateFlow<Location?>(null)
+    val userLocation: StateFlow<Location?> = _userLocation.asStateFlow()
+
+    private val _userAddress = MutableStateFlow("Fetching address...")
+    val userAddress: StateFlow<String> = _userAddress.asStateFlow()
+
+    fun fetchUserLocation() {
+        if (ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED
+        ) return
+
+        val request = LocationRequest.Builder(
+            Priority.PRIORITY_HIGH_ACCURACY,
+            1000L
+        ).setWaitForAccurateLocation(true)
+            .setMaxUpdates(1)
+            .build()
+
+        val callback = object : LocationCallback() {
+            override fun onLocationResult(result: LocationResult) {
+                val location = result.lastLocation ?: return
+                _userLocation.value = location
+
+                try {
+                    val geocoder = Geocoder(context, Locale.getDefault())
+                    val addresses = geocoder.getFromLocation(
+                        location.latitude,
+                        location.longitude,
+                        1
+                    )
+                    _userAddress.value = addresses?.firstOrNull()?.getAddressLine(0)
+                        ?: "Address not found"
+                } catch (e: IOException) {
+                    _userAddress.value = "Failed to fetch address"
+                }
+
+                fusedLocationClient.removeLocationUpdates(this)
+            }
+        }
+
+        try {
+            fusedLocationClient.requestLocationUpdates(
+                request,
+                callback,
+                Looper.getMainLooper()
+            )
+        } catch (e: SecurityException) {
+            // Permission might have been revoked suddenly
+            e.printStackTrace()
+        }
+    }
+
+    //for fetching location
 
     fun getAttendance(onComplete: () -> Unit) {
         db.collection("Attendance")
