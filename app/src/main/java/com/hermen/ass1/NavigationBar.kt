@@ -30,6 +30,7 @@ import androidx.compose.material3.*
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight.Companion.Bold
+import androidx.navigation.NavGraph.Companion.findStartDestination
 
 @Composable
 fun BackButton(navController: NavController, title: String, isDarkTheme: Boolean) {
@@ -43,7 +44,12 @@ fun BackButton(navController: NavController, title: String, isDarkTheme: Boolean
                 modifier = Modifier.height(52.dp).fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                IconButton(onClick = { navController.popBackStack() }) {
+                IconButton(onClick = {
+                    // Check if we can pop back
+                    if (navController.previousBackStackEntry != null) {
+                        navController.popBackStack()
+                    }
+                }) {
                     Icon(
                         painter = painterResource(id = R.drawable.baseline_arrow_back_ios_new_24),
                         contentDescription = "Back",
@@ -85,11 +91,18 @@ fun BottomNavigationBar(navItems: List<NavItem>, navController: NavHostControlle
                 IconButton(
                     onClick = {
                         // Don't navigate if we're already on this route
-                        if (!navController.currentDestination?.route.equals(item.route)) {
+                        if (currentRoute != item.route) {
                             navController.navigate(item.route) {
-                                // Clear entire back stack and only keep the destination we're navigating to
-                                popUpTo(0) { inclusive = true }
+                                // Pop up to the start destination of the graph to
+                                // avoid building up a large stack of destinations
+                                popUpTo(navController.graph.findStartDestination().id) {
+                                    saveState = true
+                                }
+                                // Avoid multiple copies of the same destination when
+                                // reselecting the same item
                                 launchSingleTop = true
+                                // Restore state when reselecting a previously selected item
+                                restoreState = true
                             }
                         }
                     }
@@ -133,11 +146,17 @@ fun FooterRail(
                     selected = isSelected,
                     onClick = {
                         // Don't navigate if we're already on this route
-                        if (!navController.currentDestination?.route.equals(item.route)) {
+                        if (currentRoute != item.route) {
                             navController.navigate(item.route) {
-                                // Clear entire back stack and only keep the destination we're navigating to
-                                popUpTo(0) { inclusive = true }
+                                // Pop up to the start destination of the graph to
+                                // avoid building up a large stack of destinations
+                                popUpTo(navController.graph.findStartDestination().id) {
+                                    saveState = true
+                                }
+                                // Avoid multiple copies of the same destination
                                 launchSingleTop = true
+                                // Restore state when reselecting a previously selected item
+                                restoreState = true
                             }
                         }
                     },
@@ -208,11 +227,17 @@ fun DrawerContent(
                 selected = selected,
                 onClick = {
                     // Don't navigate if we're already on this route
-                    if (!navController.currentDestination?.route.equals(item.route)) {
+                    if (currentRoute != item.route) {
                         navController.navigate(item.route) {
-                            // Clear entire back stack and only keep the destination we're navigating to
-                            popUpTo(0) { inclusive = true }
+                            // Pop up to the start destination of the graph to
+                            // avoid building up a large stack of destinations
+                            popUpTo(navController.graph.findStartDestination().id) {
+                                saveState = true
+                            }
+                            // Avoid multiple copies of the same destination
                             launchSingleTop = true
+                            // Restore state when reselecting a previously selected item
+                            restoreState = true
                         }
                     }
                 },
