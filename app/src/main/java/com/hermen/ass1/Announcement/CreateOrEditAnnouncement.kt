@@ -74,9 +74,12 @@ fun CreateOrEditAnnouncement(
     val originalContent = remember { mutableStateOf("") }
     val originalImageUrl = remember { mutableStateOf<String?>(null) }
 
-    // State for form fields
-    val savedTitle = rememberSaveable { mutableStateOf("") }
-    val savedContent = rememberSaveable { mutableStateOf("") }
+    // SOLUTION: Instead of using rememberSaveable directly, use the ViewModel state
+    // and only use local state for temporary UI changes
+
+    // The form fields are now synced with ViewModel state
+    val title = viewModel.title.value
+    val content = viewModel.content.value
 
     // Load announcement data if editing
     LaunchedEffect(announcementId) {
@@ -85,8 +88,6 @@ fun CreateOrEditAnnouncement(
             val announcement = AnnouncementRepository.getAnnouncementById(announcementId)
             announcement?.let {
                 // Update all relevant states
-                savedTitle.value = it.title
-                savedContent.value = it.content
                 viewModel.title.value = it.title
                 viewModel.content.value = it.content
                 viewModel.imageUrl.value = it.imageUrl
@@ -120,8 +121,16 @@ fun CreateOrEditAnnouncement(
 
     val uploadedState = remember { mutableStateOf(false) }
 
-    val imageUri = rememberSaveable {
+    // Ensure imageUri is tied to the ViewModel state
+    val imageUri = remember {
         mutableStateOf<Uri?>(if (!uploadedState.value && viewModel.imageUrl.value != null) Uri.parse(viewModel.imageUrl.value) else null)
+    }
+
+    // Update imageUri when viewModel.imageUrl changes
+    LaunchedEffect(viewModel.imageUrl.value) {
+        if (!uploadedState.value && viewModel.imageUrl.value != null) {
+            imageUri.value = Uri.parse(viewModel.imageUrl.value)
+        }
     }
 
     val launcher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
@@ -136,7 +145,7 @@ fun CreateOrEditAnnouncement(
     val titleError = remember { mutableStateOf(false) }
     val contentError = remember { mutableStateOf(false) }
 
-    val saveEnabled = savedTitle.value.isNotBlank() && savedContent.value.isNotBlank()
+    val saveEnabled = viewModel.title.value.isNotBlank() && viewModel.content.value.isNotBlank()
 
     val saveButtonBackgroundColor = when {
         saveEnabled && isDarkTheme -> Color(0xFF80CBC4)
@@ -153,8 +162,8 @@ fun CreateOrEditAnnouncement(
     }
 
     val showDialog = remember { mutableStateOf(false) }
-    val isTitleChanged = savedTitle.value != originalTitle.value
-    val isContentChanged = savedContent.value != originalContent.value
+    val isTitleChanged = viewModel.title.value != originalTitle.value
+    val isContentChanged = viewModel.content.value != originalContent.value
     val isImageChanged = (imageUri.value != null && uploadedState.value) ||
             (viewModel.imageUrl.value != originalImageUrl.value)
 
@@ -229,14 +238,10 @@ fun CreateOrEditAnnouncement(
                     ) {
                         IconButton(
                             onClick = {
-                                titleError.value = savedTitle.value.isBlank()
-                                contentError.value = savedContent.value.isBlank()
+                                titleError.value = viewModel.title.value.isBlank()
+                                contentError.value = viewModel.content.value.isBlank()
 
                                 if (!titleError.value && !contentError.value) {
-                                    // Update the ViewModel values before saving
-                                    viewModel.title.value = savedTitle.value
-                                    viewModel.content.value = savedContent.value
-
                                     if (!announcementId.isNullOrEmpty()) {
                                         viewModel.updateAnnouncement(announcementId, imageUri.value)
                                         viewModel.uploadSuccessful.value = false
@@ -266,9 +271,9 @@ fun CreateOrEditAnnouncement(
                 Spacer(modifier = Modifier.height(4.dp))
                 Column {
                     TextField(
-                        value = savedTitle.value,
+                        value = viewModel.title.value,
                         onValueChange = {
-                            savedTitle.value = it
+                            viewModel.title.value = it
                             titleError.value = it.isBlank()
                         },
                         isError = titleError.value,
@@ -306,9 +311,9 @@ fun CreateOrEditAnnouncement(
                 Spacer(modifier = Modifier.height(4.dp))
                 Column {
                     TextField(
-                        value = savedContent.value,
+                        value = viewModel.content.value,
                         onValueChange = {
-                            savedContent.value = it
+                            viewModel.content.value = it
                             contentError.value = it.isBlank()
                         },
                         isError = contentError.value,

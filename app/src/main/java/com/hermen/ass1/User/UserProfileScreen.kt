@@ -48,6 +48,7 @@ import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.lifecycle.ViewModelStoreOwner
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
@@ -97,30 +98,6 @@ fun UserProfileScreen(
             fontSize = 12.sp,
             modifier = Modifier.padding(8.dp)
         )
-    }
-
-
-    if (selectedImageUri != null) {
-        // Load local selected image
-        val bitmap = remember(selectedImageUri) {
-            MediaStore.Images.Media.getBitmap(context.contentResolver, selectedImageUri)
-        }
-        Image(
-            bitmap = bitmap.asImageBitmap(),
-            contentDescription = "Profile Image",
-            modifier = Modifier.fillMaxSize(),
-            contentScale = ContentScale.Crop
-        )
-    } else if (!userImageUrl.isNullOrEmpty()) {
-        // Load from URL (needs Coil or Glide Compose)
-        AsyncImage(
-            model = userImageUrl,
-            contentDescription = "Profile Image",
-            modifier = Modifier.fillMaxSize(),
-            contentScale = ContentScale.Crop
-        )
-    } else {
-        Text("Tap to Upload", color = Color.White)
     }
 
     val coroutineScope = rememberCoroutineScope()
@@ -230,7 +207,17 @@ fun UserProfileScreen(
                             }
 
                             else -> {
-                                Text("Tap to Upload", color = Color.White)
+                                // Center the "Tap to Upload" text properly
+                                Box(
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        "Tap to Upload",
+                                        color = Color.White,
+                                        textAlign = TextAlign.Center
+                                    )
+                                }
                             }
                         }
                     }
@@ -250,14 +237,13 @@ fun UserProfileScreen(
                         errorMessage = userProfileViewModel.nameErrorMessage
                     )
 
-                    EditableProfileField(
+                    // Changed Age field to non-editable like Birthday
+                    NonEditableProfileField(
                         label = "Age",
                         value = userProfileViewModel.age,
-                        onValueChange = { userProfileViewModel.onAgeChanged(it) },
                         labelColor = labelColor,
                         fieldBackground = fieldBackground,
-                        textColor = textColor,
-                        errorMessage = userProfileViewModel.ageErrorMessage
+                        textColor = textColor
                     )
 
                     NonEditableProfileField(
@@ -328,7 +314,7 @@ fun UserProfileScreen(
                                 DataStoreManager.setLoggedIn(context, false) // Set logged out status
                                 DataStoreManager.saveCurrentUser(context, User("",0, "","","","","","","",null)) // Clear current user data if needed
                             }
-                            
+
                             rootNavController.navigate(Screen.InitialPage.route) {
                                 popUpTo(0) { inclusive = true }
                             }

@@ -85,6 +85,34 @@ fun SignupScreen(navController: NavController, isDarkTheme: Boolean) {
     )
     datePickerDialog.datePicker.maxDate = System.currentTimeMillis()
 
+    // Function to calculate age from birthday
+    fun calculateAge(birthDate: String): Int {
+        try {
+            val parts = birthDate.split("/")
+            if (parts.size != 3) return 0
+
+            val day = parts[0].toInt()
+            val month = parts[1].toInt()
+            val year = parts[2].toInt()
+
+            val dob = Calendar.getInstance()
+            dob.set(year, month - 1, day)
+
+            val today = Calendar.getInstance()
+
+            var age = today.get(Calendar.YEAR) - dob.get(Calendar.YEAR)
+
+            // Adjust age if birthday hasn't occurred yet this year
+            if (today.get(Calendar.DAY_OF_YEAR) < dob.get(Calendar.DAY_OF_YEAR)) {
+                age--
+            }
+
+            return age
+        } catch (e: Exception) {
+            return 0
+        }
+    }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -113,8 +141,8 @@ fun SignupScreen(navController: NavController, isDarkTheme: Boolean) {
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Row(
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
                         IconButton(
                             onClick = { navController.popBackStack() },
                         ) {
@@ -172,7 +200,7 @@ fun SignupScreen(navController: NavController, isDarkTheme: Boolean) {
                 TextField(
                     value = email.value,
                     onValueChange = { email.value = it },
-                    placeholder = { Text("ex: lee@gmail.com") },
+                    placeholder = { Text("ex: example@email.com") },
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(50.dp)),
@@ -209,6 +237,18 @@ fun SignupScreen(navController: NavController, isDarkTheme: Boolean) {
                     enabled = false, // So users can't manually edit, only pick from calendar
                     readOnly = true,
                 )
+
+                // Show calculated age if birthday is provided
+                if (birthday.value.isNotEmpty()) {
+                    val age = calculateAge(birthday.value)
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "Age: $age years",
+                        fontSize = 16.sp,
+                        color = Color.Gray,
+                        modifier = Modifier.padding(start = 16.dp)
+                    )
+                }
 
                 Spacer(modifier = Modifier.height(30.dp))
                 Text(
@@ -375,6 +415,9 @@ fun SignupScreen(navController: NavController, isDarkTheme: Boolean) {
                             return@Button
                         }
 
+                        // Calculate age from birthday
+                        val age = calculateAge(birthday.value)
+
                         // 查询所有同前缀 doc IDs
                         ref.get()
                             .addOnSuccessListener { snap ->
@@ -393,16 +436,6 @@ fun SignupScreen(navController: NavController, isDarkTheme: Boolean) {
                                     return@addOnSuccessListener
                                 }
                                 val newId = prefix + String.format("%03d", nextNum)
-
-                                // 构建用户数据
-                                val userMap = hashMapOf(
-                                    "name" to username.value,
-                                    "email" to email.value,
-                                    "birthday" to birthday.value,
-                                    "password" to password.value,
-                                    "position" to position.value,
-                                    "department" to department.value
-                                )
 
                                 // 校验后写入
                                 if (username.value.isNotBlank() &&
@@ -425,6 +458,7 @@ fun SignupScreen(navController: NavController, isDarkTheme: Boolean) {
                                                     "password" to password.value,
                                                     "position" to position.value,
                                                     "department" to department.value,
+                                                    "age" to age  // Add calculated age to database
                                                 )
 
                                                 ref.document(newId)
