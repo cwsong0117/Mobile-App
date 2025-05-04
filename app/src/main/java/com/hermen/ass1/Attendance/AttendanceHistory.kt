@@ -99,7 +99,11 @@ fun HistoryList(
                         .weight(1f)
                         .padding(8.dp)
                 ) {
-                    items(attendanceList) { item ->
+                    items(
+                        attendanceList
+                            .filter { it.employeeID == currentUserId }
+                            .sortedByDescending { it.clockInTime?.toDate() }
+                    ) { item ->
                         val clockInDate = item.clockInTime?.toDate()
                         val dayFormat = SimpleDateFormat("EEEE", Locale.getDefault()).apply {
                             timeZone = TimeZone.getTimeZone("Asia/Kuala_Lumpur")
