@@ -682,7 +682,7 @@ fun PaySlipEditorScreen(
 
         OutlinedTextField(
             value = viewModel.basicSalary,
-            onValueChange = { viewModel.basicSalary = it },
+            onValueChange = { viewModel.basicSalary = filterToDecimal(it) },
             label = { Text("Basic Salary (RM)") },
             modifier = Modifier.fillMaxWidth()
                 .padding(bottom = 12.dp),
@@ -752,16 +752,22 @@ fun PaySlipEditorScreen(
 
         Button(
             onClick = {
+                val basicSalary = viewModel.basicSalary.toDoubleOrNull()?.roundToTwoDecimalPlaces() ?: 0.0
+                val allowance = viewModel.allowance.toDoubleOrNull()?.roundToTwoDecimalPlaces() ?: 0.0
+                val bonus = viewModel.bonus.toDoubleOrNull()?.roundToTwoDecimalPlaces() ?: 0.0
+                val overtimePay = viewModel.overtimePay.toDoubleOrNull()?.roundToTwoDecimalPlaces() ?: 0.0
+                val incomeTax = viewModel.incomeTax.toDoubleOrNull()?.roundToTwoDecimalPlaces() ?: 0.0
+                val unpaidLeave = viewModel.unpaidLeave.toDoubleOrNull()?.roundToTwoDecimalPlaces() ?: 0.0
                 //submit to firebase
                 viewModel.submitPaySlip(
                     year = viewModel.year,
                     month = viewModel.month,
-                    basicSalary = viewModel.basicSalary.toDoubleOrNull() ?: 0.0,
-                    allowance = viewModel.allowance.toDoubleOrNull() ?: 0.0,
-                    bonus = viewModel.bonus.toDoubleOrNull() ?: 0.0,
-                    overtimePay = viewModel.overtimePay.toDoubleOrNull() ?: 0.0,
-                    incomeTax = viewModel.incomeTax.toDoubleOrNull() ?: 0.0,
-                    unpaidLeave = viewModel.unpaidLeave.toDoubleOrNull() ?: 0.0,
+                    basicSalary = basicSalary,
+                    allowance = allowance,
+                    bonus = bonus,
+                    overtimePay = overtimePay,
+                    incomeTax = incomeTax,
+                    unpaidLeave = unpaidLeave,
                     employeeId = employeeId,
                     onSuccess = {
                         Toast.makeText(context, "Pay Slip submitted successfully!", Toast.LENGTH_SHORT).show()
@@ -774,13 +780,35 @@ fun PaySlipEditorScreen(
                         Log.e("Submit", "Error submitting application", e)
                     },
                 )
-                onSubmit(calculation)
+                onSubmit(
+                    PaySlipResource(
+                    userId = employeeId,
+                    year = viewModel.year,
+                    month = viewModel.month,
+                    basicSalary = basicSalary,
+                    allowance = allowance,
+                    bonus = bonus,
+                    overtimePay = overtimePay,
+                    incomeTax = incomeTax,
+                    unpaidLeave = unpaidLeave
+                    )
+                )
             },
             modifier = Modifier.fillMaxWidth()
         ) {
             Text("Submit Pay Slip")
         }
     }
+}
+
+fun filterToDecimal(input: String): String {
+    return input.filterIndexed { index, c ->
+        c.isDigit() || (c == '.' && input.indexOf('.') == index)
+    }
+}
+
+fun Double.roundToTwoDecimalPlaces(): Double {
+    return String.format("%.2f", this).toDouble()
 }
 
 @Preview(showBackground = true)

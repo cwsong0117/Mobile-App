@@ -189,4 +189,5 @@ class MeetingRoomFormViewModel : ViewModel() {
     var endTime by mutableStateOf("")
     var purpose by mutableStateOf("")
     var customPurpose by mutableStateOf("")
+    var searchText by mutableStateOf("")
 }

@@ -62,6 +62,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.hermen.ass1.MeetingRoom.RoomViewModel
 import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.ViewModel
+import com.hermen.ass1.MeetingRoom.MeetingRoomFormViewModel
 import com.hermen.ass1.User.SessionManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -241,7 +242,8 @@ fun Status(navController: NavController, isDarkTheme: Boolean) {
 @Composable
 fun StatusScreen(navController: NavController, viewModel: RoomViewModel = viewModel(), isDarkTheme: Boolean) {
     val requestList by viewModel.requestList.collectAsState()
-    var searchText by remember { mutableStateOf("") }
+    val statusViewModel: MeetingRoomFormViewModel = viewModel()
+    var searchText = statusViewModel.searchText
     // You can add a loading state if needed
     var isLoading by remember { mutableStateOf(true) }
     val user = SessionManager.currentUser!!
@@ -278,8 +280,7 @@ fun StatusScreen(navController: NavController, viewModel: RoomViewModel = viewMo
     }
     //Search Bar
     SearchBar(
-        searchText,
-        onSearchChanged = {searchText = it},
+        viewModel = statusViewModel,
         isAdmin = isAdmin
     )
 
@@ -306,7 +307,8 @@ fun StatusScreen(navController: NavController, viewModel: RoomViewModel = viewMo
 }
 
 @Composable
-fun SearchBar(searchText: String, onSearchChanged: (String) -> Unit, isAdmin: Boolean) {
+fun SearchBar(viewModel: MeetingRoomFormViewModel, isAdmin: Boolean) {
+    val searchText = viewModel.searchText
     val placeholderText = if (isAdmin) {
         "Search based on Name, Room Type, and Status"
     } else {
@@ -315,7 +317,7 @@ fun SearchBar(searchText: String, onSearchChanged: (String) -> Unit, isAdmin: Bo
 
     TextField(
         value = searchText,
-        onValueChange = onSearchChanged,
+        onValueChange = { viewModel.searchText = it },
         placeholder = { Text(placeholderText, color = Color.Gray) },
         modifier = Modifier
             .fillMaxWidth()
@@ -333,7 +335,6 @@ fun SearchBar(searchText: String, onSearchChanged: (String) -> Unit, isAdmin: Bo
         }
     )
 }
-
 
 @Composable
 fun ApplicationStatusCard(navController: NavController, request: ApplicationStatus) {
