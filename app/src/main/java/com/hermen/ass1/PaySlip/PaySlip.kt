@@ -65,6 +65,7 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.core.content.FileProvider
+import com.hermen.ass1.AppScreen
 import com.hermen.ass1.R
 import com.hermen.ass1.User.SessionManager
 import com.hermen.ass1.User.UserProfileViewModel
@@ -452,6 +453,8 @@ fun PaySlipHomeScreenForAdmin(navController: NavController, isDarkTheme: Boolean
     var expandedEmp by remember { mutableStateOf(false) }
 
     val backgroundColor = if (isDarkTheme) Color.Black else Color(0xFFE5FFFF)
+    val button1 = if (isDarkTheme) Color.Transparent else Color(0xFF89CFF0)
+    val button2 = if (isDarkTheme) Color.Transparent else Color(0xFF89CFF0)
 
     Column(
         modifier = Modifier
