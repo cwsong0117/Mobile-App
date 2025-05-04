@@ -66,11 +66,13 @@ import androidx.compose.runtime.mutableStateListOf
 import com.hermen.ass1.ui.theme.DataStoreManager
 import com.hermen.ass1.User.User
 import android.util.Log
+import androidx.compose.ui.graphics.ColorFilter
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LeaveApplication(navController: NavController, isDarkTheme: Boolean) {
-    val backgroundColor = if (isDarkTheme) Color.Transparent else Color(0xFFE5FFFF)
+    val backgroundColor = if (isDarkTheme) Color(0xFF121212) else Color(0xFFE6F4F1)
+    val textColor = if (isDarkTheme) Color.White else Color.Black
     val user = SessionManager.currentUser
     var leaveReason by rememberSaveable { mutableStateOf("") }
     val selectedDates = remember { mutableStateListOf<Date>() }
@@ -142,7 +144,7 @@ fun LeaveApplication(navController: NavController, isDarkTheme: Boolean) {
             .background(backgroundColor),
         contentAlignment = Alignment.TopCenter
     ) {
-        Column { BackButton(navController = navController, title = "Leave Application", isDarkTheme = false)
+        Column { BackButton(navController = navController, title = "Leave Application", isDarkTheme = isDarkTheme)
             Column(
                 modifier = Modifier
                     .fillMaxSize()
@@ -189,7 +191,7 @@ fun LeaveApplication(navController: NavController, isDarkTheme: Boolean) {
                     text = "Select Leave Dates",
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Bold,
-                    color = Color.Black,
+                    color = textColor,
                     modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)
                 )
 
@@ -308,7 +310,7 @@ fun LeaveApplication(navController: NavController, isDarkTheme: Boolean) {
                             }
                         }
                     } else {
-                        Text("No leave dates selected yet.", color = Color.Gray, fontSize = 14.sp)
+                        Text("No leave dates selected yet.", color = textColor, fontSize = 14.sp)
                         Spacer(modifier = Modifier.height(30.dp))
                     }
                 }
@@ -317,7 +319,7 @@ fun LeaveApplication(navController: NavController, isDarkTheme: Boolean) {
                     text = "Leave Type",
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Bold,
-                    color = Color.Black,
+                    color = textColor,
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(bottom = 4.dp)
@@ -334,12 +336,12 @@ fun LeaveApplication(navController: NavController, isDarkTheme: Boolean) {
                         readOnly = true,
                         value = selectedLeaveType,
                         onValueChange = {},
-                        placeholder = { Text("Select leave type") },
+                        placeholder = { Text("Select leave type", color = textColor) },
                         trailingIcon = {
                             ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
                         },
                         colors = TextFieldDefaults.textFieldColors( // ⬅️ 用 Material 3 的 colors
-                            containerColor = Color(0xFFEDE7F6), // 自定义颜色或用 Color.White
+                            containerColor = if (isDarkTheme) Color.DarkGray else Color(0xFFEDE7F6), // 自定义颜色或用 Color.White
                             focusedIndicatorColor = Color.Transparent,
                             unfocusedIndicatorColor = Color.Transparent
                         ),
@@ -372,7 +374,7 @@ fun LeaveApplication(navController: NavController, isDarkTheme: Boolean) {
                     text = "Reason",
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Bold,
-                    color = Color.Black,
+                    color = textColor,
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(bottom = 4.dp)
@@ -380,7 +382,7 @@ fun LeaveApplication(navController: NavController, isDarkTheme: Boolean) {
                 TextField(
                     value = leaveReason,
                     onValueChange = { leaveReason = it },
-                    placeholder = { Text("Please enter the reason for your leave") },
+                    placeholder = { Text("Please enter the reason for your leave", color = textColor) },
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(12.dp)),
@@ -394,7 +396,7 @@ fun LeaveApplication(navController: NavController, isDarkTheme: Boolean) {
                     text = "Evidence",
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Bold,
-                    color = Color.Black,
+                    color = textColor,
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(bottom = 4.dp)
@@ -411,6 +413,7 @@ fun LeaveApplication(navController: NavController, isDarkTheme: Boolean) {
                         painter = painterResource(id = R.drawable.img_2),
                         contentDescription = "Selected File",
                         contentScale = ContentScale.Crop,
+                        colorFilter = ColorFilter.tint(textColor),
                         modifier = Modifier
                             .size(30.dp)
                             .clip(RoundedCornerShape(8.dp))

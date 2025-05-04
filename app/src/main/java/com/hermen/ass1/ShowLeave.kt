@@ -52,16 +52,18 @@ import android.net.Uri
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import kotlinx.coroutines.tasks.await
+import androidx.compose.ui.graphics.ColorFilter
 
 @Composable
 fun ShowLeave(navController: NavController, isDarkTheme: Boolean) {
-    val backgroundColor = if (isDarkTheme) Color.Transparent else Color(0xFFE5FFFF)
     val firestore = FirebaseFirestore.getInstance()
     val leaveList = remember { mutableStateListOf<LeaveRequest>() }
     val scrollState = rememberScrollState()
     val user = SessionManager.currentUser
     val approveStatusMap = remember { mutableStateMapOf<LeaveRequest, String?>() }
     var leaveMessage by remember { mutableStateOf("") }
+    val backgroundColor = if (isDarkTheme) Color(0xFF121212) else Color(0xFFE6F4F1)
+    val textColor = if (isDarkTheme) Color.White else Color.Black
 
     // 获取数据
     LaunchedEffect(Unit) {
@@ -105,65 +107,67 @@ fun ShowLeave(navController: NavController, isDarkTheme: Boolean) {
             .background(backgroundColor),
         contentAlignment = Alignment.TopCenter
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .verticalScroll(scrollState)
-                .padding(horizontal = 16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Top
-        ) {
-            leaveList.forEach { leave ->
-                Box(
-                    modifier = Modifier
-                        .padding(8.dp)
-                        .background(Color.White)
-                        .padding(16.dp)
-                ) {
-                    Column {
-                        Text("Name: ${leave.name}")
-                        Text("Leave Type: ${leave.leaveType}")
-                        Text("Reason: ${leave.reason}")
-                        Text("Status: ${leave.status}")
-                        Text("Dates: ${leave.leaveDates.joinToString(", ")}")
+        Column { BackButton(navController = navController, title = "Show Leave", isDarkTheme = isDarkTheme)
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(scrollState)
+                    .padding(horizontal = 16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Top
+            ) {
+                leaveList.forEach { leave ->
+                    Box(
+                        modifier = Modifier
+                            .padding(8.dp)
+                            .background(backgroundColor)
+                            .padding(16.dp)
+                    ) {
+                        Column {
+                            Text("Name: ${leave.name}", color = textColor)
+                            Text("Leave Type: ${leave.leaveType}", color = textColor)
+                            Text("Reason: ${leave.reason}", color = textColor)
+                            Text("Status: ${leave.status}", color = textColor)
+                            Text("Dates: ${leave.leaveDates.joinToString(", ")}", color = textColor)
 
-                        AsyncImage(
-                            model = leave.evidenceUrl,
-                            contentDescription = "Leave Evidence Image",
-                            contentScale = ContentScale.Fit,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(200.dp)
-                                .padding(top = 8.dp),
-                            onError = {
-                                Log.e("Coil", "Image load failed: ${it.result.throwable}")
-                            }
-                        )
-
-                        Text(
-                            text = "Evidence: Click to open",
-                            color = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier
-                                .padding(top = 8.dp)
-                                .clickable {
-                                    val intent = Intent(Intent.ACTION_VIEW).apply {
-                                        data = Uri.parse(leave.evidenceUrl)
-                                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                                    }
-                                    context.startActivity(intent)
+                            AsyncImage(
+                                model = leave.evidenceUrl,
+                                contentDescription = "Leave Evidence Image",
+                                contentScale = ContentScale.Fit,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(200.dp)
+                                    .padding(top = 8.dp),
+                                onError = {
+                                    Log.e("Coil", "Image load failed: ${it.result.throwable}")
                                 }
-                        )
+                            )
 
-                        Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = "Evidence: Click to open",
+                                color = textColor,
+                                modifier = Modifier
+                                    .padding(top = 8.dp)
+                                    .clickable {
+                                        val intent = Intent(Intent.ACTION_VIEW).apply {
+                                            data = Uri.parse(leave.evidenceUrl)
+                                            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                        }
+                                        context.startActivity(intent)
+                                    }
+                            )
 
-                        val currentStatus = approveStatusMap[leave]
+                            Spacer(modifier = Modifier.height(8.dp))
 
+                            val currentStatus = approveStatusMap[leave]
+
+                        }
                     }
                 }
+
+                Spacer(modifier = Modifier.height(30.dp))
+
             }
-
-            Spacer(modifier = Modifier.height(30.dp))
-
         }
     }
 }
