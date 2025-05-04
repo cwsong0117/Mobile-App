@@ -64,7 +64,7 @@ fun RoomDetail(navController: NavController, roomName: String, isDarkTheme: Bool
     val userId = user.id
 
     val context = LocalContext.current
-    val backgroundColor = if (isDarkTheme) Color.Transparent else Color(0xFFE5FFFF)
+    val backgroundColor = if (isDarkTheme) Color(0xFF121212) else Color(0xFFE5FFFF)
     // Show the room details of the meeting room based on the meetingRoomId
     Box(
         modifier = Modifier
@@ -140,7 +140,7 @@ fun ApplyDetails(name:String, onNameChange: (String) -> Unit,
         }
 
         // call function to input the name
-        NameInput(name, onNameChange)
+        NameInput(name, onNameChange, isDarkTheme)
 
         //input field for date
         Row(
@@ -155,7 +155,7 @@ fun ApplyDetails(name:String, onNameChange: (String) -> Unit,
             )
         }
 
-        DateInput(date, onDateChange)
+        DateInput(date, onDateChange, isDarkTheme)
 
         //input field for start time
         Row(
@@ -176,7 +176,7 @@ fun ApplyDetails(name:String, onNameChange: (String) -> Unit,
 
         ) {
 
-            StartTimeInput(startTime, onStartTimeChange)
+            StartTimeInput(startTime, onStartTimeChange, isDarkTheme)
 
         }
 
@@ -199,7 +199,7 @@ fun ApplyDetails(name:String, onNameChange: (String) -> Unit,
 
         ) {
 
-            EndTimeInput(endTime, onEndTimeChange)
+            EndTimeInput(endTime, onEndTimeChange, isDarkTheme)
         }
 
         //input field for person
@@ -218,7 +218,8 @@ fun ApplyDetails(name:String, onNameChange: (String) -> Unit,
             modifier = Modifier
                 .fillMaxWidth(),
         ) {
-            PurposeInput(purpose, onPurposeChange,  customPurpose = customPurpose, onCustomPurposeChange = onCustomPurposeChange, isDarkTheme = isDarkTheme)
+            PurposeInput(purpose, onPurposeChange,  customPurpose = customPurpose,
+                onCustomPurposeChange = onCustomPurposeChange, isDarkTheme = isDarkTheme)
         }
         //submit button
         Box(
@@ -321,31 +322,39 @@ fun ApplyDetails(name:String, onNameChange: (String) -> Unit,
 }
 
 @Composable
-fun NameInput(name:String, onNameChange:(String) -> Unit) {
+fun NameInput(name: String, onNameChange: (String) -> Unit, isDarkTheme: Boolean) {
+    val backgroundColor = if (isDarkTheme) Color(0xFF1E1E1E) else Color.White
+    val textColor = if (isDarkTheme) Color.White else Color.Black
+    val placeholderColor = if (isDarkTheme) Color.LightGray else Color.Gray
 
     Row(
         modifier = Modifier
             .fillMaxWidth(),
         horizontalArrangement = Arrangement.Center
-    ){
-        TextField(
+    ) {
+        OutlinedTextField(
             value = name,
             onValueChange = onNameChange,
-            placeholder = { Text("ex: John", color = Color.Gray) },
-            colors = TextFieldDefaults.textFieldColors(
-                backgroundColor = Color.White, // Set the background color
-                textColor = Color.Black // Set text color
+            placeholder = {
+                Text("ex: John", color = placeholderColor)
+            },
+            colors = TextFieldDefaults.outlinedTextFieldColors(
+                backgroundColor = backgroundColor,
+                textColor = textColor,
+                focusedBorderColor = if (isDarkTheme) Color.White else Color.Black,
+                unfocusedBorderColor = if (isDarkTheme) Color.Gray else Color.LightGray,
+                cursorColor = textColor
             ),
             modifier = Modifier
                 .width(380.dp)
                 .padding(10.dp)
-                .background(Color.White, RoundedCornerShape(36.dp))
-                .clip(RoundedCornerShape(50.dp)),
-        )}
+                .clip(RoundedCornerShape(50.dp))
+        )
+    }
 }
 
 @Composable
-fun DateInput(date: String, onDateChange: (String) -> Unit) {
+fun DateInput(date: String, onDateChange: (String) -> Unit, isDarkTheme: Boolean) {
     val context = LocalContext.current
     val calendar = Calendar.getInstance()
     val dateFormat = SimpleDateFormat("dd-MM-yyyy", Locale.getDefault())
@@ -362,7 +371,6 @@ fun DateInput(date: String, onDateChange: (String) -> Unit) {
                 set(Calendar.MILLISECOND, 0)
             }
             val selectedDate = dateFormat.format(selectedCalendar.time)
-
             onDateChange(selectedDate)
         },
         calendar.get(Calendar.YEAR),
@@ -372,9 +380,12 @@ fun DateInput(date: String, onDateChange: (String) -> Unit) {
 
     datePickerDialog.datePicker.minDate = calendar.timeInMillis
 
+    val bgColor = if (isDarkTheme) Color(0xFF1E1E1E) else Color.White
+    val textColor = if (isDarkTheme) Color.White else Color.Black
+    val placeholderColor = if (isDarkTheme) Color.LightGray else Color.Gray
+
     Row(
-        modifier = Modifier
-            .fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.Center
     ) {
         BasicTextField(
@@ -384,28 +395,25 @@ fun DateInput(date: String, onDateChange: (String) -> Unit) {
             modifier = Modifier
                 .width(380.dp)
                 .padding(10.dp)
-                .background(Color.White, RoundedCornerShape(36.dp))
-                .padding(10.dp)
-                .height(40.dp),
+                .background(bgColor, RoundedCornerShape(36.dp))
+                .padding(horizontal = 16.dp, vertical = 10.dp)
+                .height(50.dp),
             decorationBox = { innerTextField ->
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(start = 10.dp)
+                    modifier = Modifier.fillMaxWidth()
                 ) {
                     if (date.isEmpty()) {
-                        Text(currentDate, color = Color.Gray)
+                        Text(text = currentDate, color = placeholderColor)
                     } else {
-                        innerTextField()
+                        Text(date, color = textColor)
                     }
-                    IconButton(onClick = {
-                        datePickerDialog.show()
-                    }) {
+                    IconButton(onClick = { datePickerDialog.show() }) {
                         Icon(
                             painter = painterResource(id = R.drawable.baseline_calendar_month_24),
-                            contentDescription = "Select Date"
+                            contentDescription = "Select Date",
+                            tint = textColor
                         )
                     }
                 }
@@ -415,7 +423,12 @@ fun DateInput(date: String, onDateChange: (String) -> Unit) {
 }
 
 @Composable
-fun StartTimeInput(startTime: String, onStartTimeChange:(String) -> Unit) {
+fun TimeInput(
+    time: String,
+    onTimeChange: (String) -> Unit,
+    iconId: Int,
+    isDarkTheme: Boolean
+) {
     val context = LocalContext.current
     val calendar = Calendar.getInstance()
     val currentTime = SimpleDateFormat("HH : mm", Locale.getDefault()).format(calendar.time)
@@ -424,102 +437,123 @@ fun StartTimeInput(startTime: String, onStartTimeChange:(String) -> Unit) {
         context,
         { _, hourOfDay, minute ->
             val formattedTime = String.format("%02d : %02d", hourOfDay, minute)
-            onStartTimeChange(formattedTime)
-            // Handle the selected time here
+            onTimeChange(formattedTime)
         },
         calendar.get(Calendar.HOUR_OF_DAY),
         calendar.get(Calendar.MINUTE),
         true
     )
-    BasicTextField(
-        value = startTime,
-        onValueChange = { },
-        readOnly = true,
-        modifier = Modifier
-            .width(380.dp)
-            .padding(10.dp)
-            .background(Color.White, RoundedCornerShape(36.dp))
-            .padding(10.dp)
-            .height(40.dp),
-        decorationBox = { innerTextField ->
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(start = 10.dp)
-            ) {
-                if (startTime.isEmpty()) {
-                    Text(currentTime, color = Color.Gray)
-                } else {
-                    innerTextField()
-                }
-                IconButton(onClick = {timePickerDialog.show() }) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.baseline_timer_24),
-                        contentDescription = "Select Start Time"
-                    )
+
+    val bgColor = if (isDarkTheme) Color(0xFF1E1E1E) else Color.White
+    val textColor = if (isDarkTheme) Color.White else Color.Black
+    val placeholderColor = if (isDarkTheme) Color.LightGray else Color.Gray
+
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.Center
+    ) {
+        BasicTextField(
+            value = time,
+            onValueChange = {},
+            readOnly = true,
+            modifier = Modifier
+                .width(380.dp)
+                .padding(10.dp)
+                .background(bgColor, RoundedCornerShape(36.dp))
+                .padding(horizontal = 16.dp, vertical = 10.dp)
+                .height(50.dp),
+            decorationBox = { innerTextField ->
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    if (time.isEmpty()) {
+                        Text(text = currentTime, color = placeholderColor)
+                    } else {
+                        Text(time, color = textColor)
+                    }
+                    IconButton(onClick = { timePickerDialog.show() }) {
+                        Icon(
+                            painter = painterResource(id = iconId),
+                            contentDescription = "Select Time",
+                            tint = textColor
+                        )
+                    }
                 }
             }
-        }
-    )
+        )
+    }
 }
 
 @Composable
-fun EndTimeInput(endTime: String, onEndTimeChange: (String) -> Unit) {
-    val context = LocalContext.current
-    val calendar = Calendar.getInstance()
-    val currentTime = SimpleDateFormat("HH : mm", Locale.getDefault()).format(calendar.time)
-
-    val timePickerDialog = TimePickerDialog(
-        context,
-        { _, hourOfDay, minute ->
-            val formattedTime = String.format("%02d : %02d", hourOfDay, minute)
-            onEndTimeChange(formattedTime)
-        },
-        calendar.get(Calendar.HOUR_OF_DAY),
-        calendar.get(Calendar.MINUTE),
-        true
-    )
-
-    BasicTextField(
-        value = endTime,
-        onValueChange = { },
-        readOnly = true,
-        modifier = Modifier
-            .width(380.dp)
-            .padding(10.dp)
-            .background(Color.White, RoundedCornerShape(36.dp))
-            .padding(10.dp)
-            .height(40.dp),
-        decorationBox = { innerTextField ->
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(start = 10.dp)
-            ) {
-                if (endTime.isEmpty()) {
-                    Text(currentTime, color = Color.Gray)
-                } else {
-                    innerTextField()
-                }
-                IconButton(onClick = { timePickerDialog.show() }) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.baseline_timer_24),
-                        contentDescription = "Select End Time"
-                    )
-                }
-            }
-        }
-    )
+fun StartTimeInput(startTime: String, onStartTimeChange: (String) -> Unit, isDarkTheme: Boolean) {
+    TimeInput(startTime, onStartTimeChange, R.drawable.baseline_timer_24, isDarkTheme)
 }
+
+@Composable
+fun EndTimeInput(endTime: String, onEndTimeChange: (String) -> Unit, isDarkTheme: Boolean) {
+    TimeInput(endTime, onEndTimeChange, R.drawable.baseline_timer_24, isDarkTheme)
+}
+
+//@Composable
+//fun EndTimeInput(endTime: String, onEndTimeChange: (String) -> Unit) {
+//    val context = LocalContext.current
+//    val calendar = Calendar.getInstance()
+//    val currentTime = SimpleDateFormat("HH : mm", Locale.getDefault()).format(calendar.time)
+//
+//    val timePickerDialog = TimePickerDialog(
+//        context,
+//        { _, hourOfDay, minute ->
+//            val formattedTime = String.format("%02d : %02d", hourOfDay, minute)
+//            onEndTimeChange(formattedTime)
+//        },
+//        calendar.get(Calendar.HOUR_OF_DAY),
+//        calendar.get(Calendar.MINUTE),
+//        true
+//    )
+//
+//    BasicTextField(
+//        value = endTime,
+//        onValueChange = { },
+//        readOnly = true,
+//        modifier = Modifier
+//            .width(380.dp)
+//            .padding(10.dp)
+//            .background(Color.White, RoundedCornerShape(36.dp))
+//            .padding(10.dp)
+//            .height(40.dp),
+//        decorationBox = { innerTextField ->
+//            Row(
+//                verticalAlignment = Alignment.CenterVertically,
+//                horizontalArrangement = Arrangement.SpaceBetween,
+//                modifier = Modifier
+//                    .fillMaxWidth()
+//                    .padding(start = 10.dp)
+//            ) {
+//                if (endTime.isEmpty()) {
+//                    Text(currentTime, color = Color.Gray)
+//                } else {
+//                    innerTextField()
+//                }
+//                IconButton(onClick = { timePickerDialog.show() }) {
+//                    Icon(
+//                        painter = painterResource(id = R.drawable.baseline_timer_24),
+//                        contentDescription = "Select End Time"
+//                    )
+//                }
+//            }
+//        }
+//    )
+//}
 
 @Composable
 fun PurposeInput(purpose: String, onPurposeChange: (String) -> Unit, customPurpose: String, onCustomPurposeChange: (String) -> Unit, isDarkTheme: Boolean) {
     val purposeList = listOf("Meeting", "Conference", "Training", "Discussion", "Interview", "Project Planning", "Other")
     var expanded by remember { mutableStateOf(false) }
+    val backgroundColor = if (isDarkTheme) Color(0xFF1E1E1E) else Color.White
+    val textColor = if (isDarkTheme) Color.White else Color.Black
+    val placeholderColor = if (isDarkTheme) Color.LightGray else Color.Gray
 
     Column(
         modifier = Modifier
@@ -537,9 +571,12 @@ fun PurposeInput(purpose: String, onPurposeChange: (String) -> Unit, customPurpo
                 readOnly = true,
                 placeholder = { Text("Select purpose", color = Color.Gray) },
                 colors = TextFieldDefaults.textFieldColors(
-                    backgroundColor = Color.White, // Set the background color
-                    textColor = Color.Black // Set text color
-                ),
+                    backgroundColor = backgroundColor,
+                    textColor = textColor,
+                    placeholderColor = placeholderColor,
+                    cursorColor = textColor
+                )
+                ,
                 modifier = Modifier
                     .width(380.dp)
                     .padding(10.dp)
@@ -593,9 +630,12 @@ fun PurposeInput(purpose: String, onPurposeChange: (String) -> Unit, customPurpo
                     onValueChange = onPurposeChange,
                     placeholder = { Text("Enter your reservation purpose",color = Color.Gray) },
                     colors = TextFieldDefaults.textFieldColors(
-                        backgroundColor = Color.White, // Set the background color
-                        textColor = Color.Black // Set text color
-                    ),
+                        backgroundColor = backgroundColor,
+                        textColor = textColor,
+                        placeholderColor = placeholderColor,
+                        cursorColor = textColor
+                    )
+                    ,
                     modifier = Modifier
                         .width(380.dp)
                         .padding(10.dp)

@@ -50,6 +50,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.OutlinedTextField
+import androidx.compose.material.TextFieldDefaults
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material3.Button
@@ -81,28 +82,38 @@ fun PaySlip(navController: NavController, isDarkTheme: Boolean) {
     val userId = user.id
 
     if (userId.startsWith("A")) {
-        val backgroundColor = if (isDarkTheme) Color.Transparent else Color(0xFFE5FFFF)
-        val viewButton = if (isDarkTheme) Color.Transparent else Color(0xFF89CFF0)
-        val manageButton = if (isDarkTheme) Color.Transparent else Color(0xFF89CFF0)
+        // Define color schemes for dark and light modes
+        val backgroundColor = if (isDarkTheme) Color(0xFF121212) else Color(0xFFE5FFFF)
+        val viewButtonColor = if (isDarkTheme) Color(0xFF333333) else Color(0xFF89CFF0)
+        val manageButtonColor = if (isDarkTheme) Color(0xFF1F1F1F) else Color.White
+        val manageTextColor = if (isDarkTheme) Color(0xFF89CFF0) else Color(0xFF89CFF0)
+        val textColor = if (isDarkTheme) Color.White else Color.Black
+
         Column {
             BackButton(navController, "Pay Slip Panel", isDarkTheme)
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(backgroundColor),
+                    .background(backgroundColor)
+                    .padding(horizontal = 24.dp),
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Text("Admin Dashboard", fontSize = 24.sp, fontWeight = FontWeight.Bold)
+                Text(
+                    text = "Admin Dashboard",
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = textColor
+                )
 
                 Spacer(modifier = Modifier.height(32.dp))
 
                 Button(
                     onClick = { navController.navigate("viewPayslip") },
                     modifier = Modifier.fillMaxWidth(0.6f),
-                    colors = ButtonDefaults.buttonColors(viewButton)
+                    colors = ButtonDefaults.buttonColors(containerColor = viewButtonColor)
                 ) {
-                    Text("View Payslips")
+                    Text("View Payslips", color = Color.White)
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
@@ -110,10 +121,10 @@ fun PaySlip(navController: NavController, isDarkTheme: Boolean) {
                 Button(
                     onClick = { navController.navigate("managePayslip") },
                     modifier = Modifier.fillMaxWidth(0.6f),
-                    colors = ButtonDefaults.buttonColors(Color.White),
-                    border = BorderStroke(2.dp, manageButton)
+                    colors = ButtonDefaults.buttonColors(containerColor = manageButtonColor),
+                    border = BorderStroke(2.dp, manageTextColor)
                 ) {
-                    Text("Manage Payslips", color = manageButton)
+                    Text("Manage Payslips", color = manageTextColor)
                 }
             }
         }
@@ -149,7 +160,7 @@ fun PaySlipHomeScreen(navController: NavController, isDarkTheme: Boolean, viewMo
             thickness = 1.dp
         )
         Row {
-            BackButton(navController = navController, title = "Pay Slips", isDarkTheme = false)
+            BackButton(navController = navController, title = "Pay Slips", isDarkTheme = isDarkTheme)
         }
         Row {
             FilterBar(
@@ -157,7 +168,6 @@ fun PaySlipHomeScreen(navController: NavController, isDarkTheme: Boolean, viewMo
                 onMonthSelected = { selectedMonth = it },
                 selectedYear = selectedYear ?: Year.now().value.toString(),
                 onYearSelected = { selectedYear = it },
-                isDarkTheme = isDarkTheme
             )
         }
 
@@ -210,8 +220,7 @@ fun PaySlipCard(navController: NavController, paySlip: PaySlipResource) {
 
 @Composable
 fun FilterBar(selectedMonth: String, onMonthSelected: (String) -> Unit,
-              selectedYear: String, onYearSelected: (String) -> Unit,
-              isDarkTheme: Boolean) {
+              selectedYear: String, onYearSelected: (String) -> Unit) {
     val months = listOf("All","January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December")
     val currentYear = Year.now().value.toInt()
     val years = (2020..currentYear).map { it.toString() }
@@ -444,7 +453,7 @@ fun sharePdf(context: Context, file: File) {
 fun PaySlipHomeScreenForAdmin(navController: NavController, isDarkTheme: Boolean) {
     //fetch the department from viewModel
     val viewModel: UserProfileViewModel = viewModel()
-    val psviewMdel: PaySlipViewModel = viewModel()
+    val psViewModel: PaySlipViewModel = viewModel()
 
     val departmentList = viewModel.departmentList
     val employeeList = viewModel.employeesInSelectedDepartment
@@ -453,15 +462,13 @@ fun PaySlipHomeScreenForAdmin(navController: NavController, isDarkTheme: Boolean
     var expandedEmp by remember { mutableStateOf(false) }
 
     val backgroundColor = if (isDarkTheme) Color.Black else Color(0xFFE5FFFF)
-    val button1 = if (isDarkTheme) Color.Transparent else Color(0xFF89CFF0)
-    val button2 = if (isDarkTheme) Color.Transparent else Color(0xFF89CFF0)
 
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(backgroundColor)
     ) {
-        BackButton(navController = navController, title = "Pay Slip Panel", isDarkTheme = false)
+        BackButton(navController = navController, title = "Pay Slip Panel", isDarkTheme = isDarkTheme)
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -535,8 +542,8 @@ fun PaySlipHomeScreenForAdmin(navController: NavController, isDarkTheme: Boolean
                             onClick = {
                                 viewModel.name = name
                                 viewModel.userId = userId
-                                psviewMdel.month = LocalDate.now().month.getDisplayName(TextStyle.FULL, Locale.ENGLISH)
-                                psviewMdel.year = Year.now().value.toString()
+                                psViewModel.month = LocalDate.now().month.getDisplayName(TextStyle.FULL, Locale.ENGLISH)
+                                psViewModel.year = Year.now().value.toString()
                                 expandedEmp = false
                             }
                         )
@@ -546,20 +553,18 @@ fun PaySlipHomeScreenForAdmin(navController: NavController, isDarkTheme: Boolean
         }
         Column {
             if (viewModel.department.isNotEmpty() && viewModel.name.isNotEmpty()) {
-                PaySlipEditorScreen(viewModel.userId, {}, isDarkTheme, navController, onSuccess = {},
-                    onError = {})
+                PaySlipEditorScreen(viewModel.userId, {}, isDarkTheme, onSuccess = {})
             }
         }
     }
 }
 
-
 @Composable
 fun PaySlipEditorScreen(
     employeeId: String, // selected from previous screen
     onSubmit: (paySlip: PaySlipResource) -> Unit,
-    isDarkTheme: Boolean, navController: NavController,
-    onSuccess: () -> Unit, onError: (Exception) -> Unit
+    isDarkTheme: Boolean,
+    onSuccess: () -> Unit,
 ) {
     val months = listOf("January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December")
     val currentYear = Year.now().value.toInt()
@@ -569,7 +574,12 @@ fun PaySlipEditorScreen(
 
     val viewModel : PaySlipViewModel = viewModel()
 
+    // Background and button colors based on theme
     val backgroundColor = if (isDarkTheme) Color.Black else Color(0xFFE5FFFF)
+    val textColor = if (isDarkTheme) Color.White else Color.Black
+    val borderColor = if (isDarkTheme) Color.White else Color.Black
+    val buttonColor = if (isDarkTheme) Color(0xFF333333) else Color(0xFF89CFF0)
+    val buttonTextColor = if (isDarkTheme) Color.White else Color.Black
 
     val scrollState = rememberScrollState()
     val context = LocalContext.current
@@ -596,7 +606,6 @@ fun PaySlipEditorScreen(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .fillMaxWidth()
                 .padding(start = 0.dp, bottom = 16.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
@@ -608,24 +617,24 @@ fun PaySlipEditorScreen(
                     .weight(1f)
                     .padding(end = 8.dp)
             ) {
-                Text(text = "Year", style = MaterialTheme.typography.labelMedium)
+                Text(text = "Year", style = MaterialTheme.typography.labelMedium, color = textColor)
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .border(1.dp, Color.Gray, RoundedCornerShape(4.dp))
+                        .border(1.dp, borderColor, RoundedCornerShape(4.dp))
                 ) {
                     TextButton(
                         onClick = { expandedYear = true },
                         modifier = Modifier
                             .fillMaxWidth(),
                         contentPadding = PaddingValues(0.dp)
-                    ){
-                        Text(text = viewModel.year, fontSize = 16.sp, color = Color.Black)
+                    ) {
+                        Text(text = viewModel.year, fontSize = 16.sp, color = textColor)
                     }
                     DropdownMenu(expanded = expandedYear, onDismissRequest = { expandedYear = false }) {
                         years.forEach { year ->
                             DropdownMenuItem(
-                                text = { Text(text = year) },
+                                text = { Text(text = year, color = textColor) },
                                 onClick = {
                                     viewModel.year = year
                                     expandedYear = false
@@ -646,12 +655,13 @@ fun PaySlipEditorScreen(
                 Text(
                     text = "Month",
                     style = MaterialTheme.typography.labelMedium,
+                    color = textColor,
                     modifier = Modifier.align(Alignment.Start)
                 )
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .border(1.dp, Color.Gray, RoundedCornerShape(4.dp))
+                        .border(1.dp, borderColor, RoundedCornerShape(4.dp))
                 ) {
                     TextButton(
                         onClick = { expandedMonth = true },
@@ -659,12 +669,12 @@ fun PaySlipEditorScreen(
                             .fillMaxWidth(),
                         contentPadding = PaddingValues(0.dp),
                     ) {
-                        Text(text = viewModel.month, fontSize = 16.sp, color = Color.Black)
+                        Text(text = viewModel.month, fontSize = 16.sp, color = textColor)
                     }
                     DropdownMenu(expanded = expandedMonth, onDismissRequest = { expandedMonth = false }) {
                         months.forEach { month ->
                             DropdownMenuItem(
-                                text = { Text(text = month) },
+                                text = { Text(text = month, color = textColor) },
                                 onClick = {
                                     viewModel.month = month
                                     viewModel.fetchRecordByMonth(userId = employeeId)
@@ -686,40 +696,64 @@ fun PaySlipEditorScreen(
         OutlinedTextField(
             value = viewModel.basicSalary,
             onValueChange = { viewModel.basicSalary = filterToDecimal(it) },
-            label = { Text("Basic Salary (RM)") },
-            modifier = Modifier.fillMaxWidth()
-                .padding(bottom = 12.dp),
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+            label = { Text("Basic Salary (RM)", color = textColor) },
+            modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+            colors = TextFieldDefaults.outlinedTextFieldColors(
+                textColor = textColor,
+                focusedBorderColor = borderColor,
+                unfocusedBorderColor = borderColor,
+                focusedLabelColor = borderColor,
+                unfocusedLabelColor = borderColor
+            )
         )
 
         OutlinedTextField(
             value = viewModel.allowance,
             onValueChange = { viewModel.allowance = filterToDecimal(it) },
-            label = { Text("Allowance (RM)") },
-            modifier = Modifier.fillMaxWidth()
-            .padding(bottom = 12.dp),
-        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+            label = { Text("Allowance (RM)", color = textColor) },
+            modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+            colors = TextFieldDefaults.outlinedTextFieldColors(
+                textColor = textColor,
+                focusedBorderColor = borderColor,
+                unfocusedBorderColor = borderColor,
+                focusedLabelColor = borderColor,
+                unfocusedLabelColor = borderColor
+            )
         )
 
         OutlinedTextField(
             value = viewModel.bonus,
             onValueChange = { viewModel.bonus = filterToDecimal(it) },
-            label = { Text("Bonus (RM)") },
-            modifier = Modifier.fillMaxWidth()
-                .padding(bottom = 12.dp),
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+            label = { Text("Bonus (RM)", color = textColor) },
+            modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+            colors = TextFieldDefaults.outlinedTextFieldColors(
+                textColor = textColor,
+                focusedBorderColor = borderColor,
+                unfocusedBorderColor = borderColor,
+                focusedLabelColor = borderColor,
+                unfocusedLabelColor = borderColor
+            )
         )
 
         OutlinedTextField(
             value = viewModel.overtimePay,
-            onValueChange = {viewModel.overtimePay = filterToDecimal(it)},
-            label = { Text("Overtime Pay (RM)") },
-            modifier = Modifier.fillMaxWidth()
-                .padding(bottom = 12.dp),
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+            onValueChange = { viewModel.overtimePay = filterToDecimal(it) },
+            label = { Text("Overtime Pay (RM)", color = textColor) },
+            modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+            colors = TextFieldDefaults.outlinedTextFieldColors(
+                textColor = textColor,
+                focusedBorderColor = borderColor,
+                unfocusedBorderColor = borderColor,
+                focusedLabelColor = borderColor,
+                unfocusedLabelColor = borderColor
+            )
         )
 
-        //display the gross income using details row
+        // Display gross income using details row
         Spacer(modifier = Modifier.height(8.dp))
         DetailRow("Gross Salary", calculation.grossSalary)
         Spacer(modifier = Modifier.height(8.dp))
@@ -727,28 +761,40 @@ fun PaySlipEditorScreen(
         OutlinedTextField(
             value = viewModel.incomeTax,
             onValueChange = { viewModel.incomeTax = filterToDecimal(it) },
-            label = { Text("Income Tax (RM)") },
-            modifier = Modifier.fillMaxWidth()
-                .padding(bottom = 12.dp),
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+            label = { Text("Income Tax (RM)", color = textColor) },
+            modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+            colors = TextFieldDefaults.outlinedTextFieldColors(
+                textColor = textColor,
+                focusedBorderColor = borderColor,
+                unfocusedBorderColor = borderColor,
+                focusedLabelColor = borderColor,
+                unfocusedLabelColor = borderColor
+            )
         )
 
         OutlinedTextField(
             value = viewModel.unpaidLeave,
             onValueChange = { viewModel.unpaidLeave = filterToDecimal(it) },
-            label = { Text("Unpaid Leave (RM)") },
-            modifier = Modifier.fillMaxWidth()
-                .padding(bottom = 12.dp),
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+            label = { Text("Unpaid Leave (RM)", color = textColor) },
+            modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+            colors = TextFieldDefaults.outlinedTextFieldColors(
+                textColor = textColor,
+                focusedBorderColor = borderColor,
+                unfocusedBorderColor = borderColor,
+                focusedLabelColor = borderColor,
+                unfocusedLabelColor = borderColor
+            )
         )
 
-        //display the gross income using details row
+        // Display total deduction using details row
         Spacer(modifier = Modifier.height(8.dp))
         DetailRow("Total Deduction", calculation.deduction)
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        //display the gross income using details row
+        // Display net salary using details row
         Spacer(modifier = Modifier.height(8.dp))
         DetailRow("Net Salary", calculation.netSalary)
         Spacer(modifier = Modifier.height(8.dp))
@@ -761,7 +807,7 @@ fun PaySlipEditorScreen(
                 val overtimePay = viewModel.overtimePay.toDoubleOrNull()?.roundToTwoDecimalPlaces() ?: 0.0
                 val incomeTax = viewModel.incomeTax.toDoubleOrNull()?.roundToTwoDecimalPlaces() ?: 0.0
                 val unpaidLeave = viewModel.unpaidLeave.toDoubleOrNull()?.roundToTwoDecimalPlaces() ?: 0.0
-                //submit to firebase
+                // Submit to Firebase
                 viewModel.submitPaySlip(
                     year = viewModel.year,
                     month = viewModel.month,
@@ -775,7 +821,6 @@ fun PaySlipEditorScreen(
                     onSuccess = {
                         Toast.makeText(context, "Pay Slip submitted successfully!", Toast.LENGTH_SHORT).show()
                         // Pop back stack after successful submission
-                        navController.popBackStack()
                         onSuccess()
 
                     },
@@ -797,7 +842,9 @@ fun PaySlipEditorScreen(
                     )
                 )
             },
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            colors = ButtonDefaults.buttonColors(buttonColor,
+                contentColor = buttonTextColor)
         ) {
             Text("Submit Pay Slip")
         }

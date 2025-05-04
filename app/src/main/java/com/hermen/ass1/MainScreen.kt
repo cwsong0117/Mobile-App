@@ -215,7 +215,7 @@ fun AppNavHost(
                 isDarkTheme = isDarkTheme
             )
         }
-        composable("paySlip") {
+        composable(AppScreen.PaySlip.name) {
             PaySlip(navController = navController, isDarkTheme = isDarkTheme)
         }
         composable("paySlipDetails/{month}/{year}") { backStackEntry ->
