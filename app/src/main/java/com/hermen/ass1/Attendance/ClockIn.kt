@@ -316,9 +316,13 @@ fun AddAttendanceScreen(viewModel: AttendanceViewModel = viewModel()) {
 //    val workplaceLat = 3.2154587237369303
 //    val workplaceLng = 101.72655709533397
 
-    //kajang location
-    val workplaceLat = 2.9935
-    val workplaceLng = 101.7870
+    //block d location
+    val workplaceLat = 3.2168656870732426
+    val workplaceLng = 101.72669224091015
+
+//    //kajang location
+//    val workplaceLat = 2.9935
+//    val workplaceLng = 101.7870
     val allowedRadius = 200f // meters
 
     val context = LocalContext.current

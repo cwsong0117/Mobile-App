@@ -269,7 +269,7 @@ fun Home(
             Spacer(modifier = Modifier.height(16.dp))
             AnnouncementSection(navController = navController, isDarkTheme = isDarkTheme)
             Spacer(modifier = Modifier.height(16.dp))
-            GotoAttendanceOverview(navController = navController)
+            GotoAttendanceOverview(navController = navController, isDarkTheme = isDarkTheme)
         }
 
         IconButton(
@@ -374,8 +374,12 @@ fun ApplicationSection(
 @Composable
 fun GotoAttendanceOverview(
     navController: NavController,
+    isDarkTheme: Boolean,
     viewModel: AttendanceViewModel = viewModel()
 ) {
+    val backgroundColor = if (isDarkTheme) Color.Black else Color(0xFFE5FFFF)
+    val textColor = if (isDarkTheme) Color.White else Color.Black
+
     val clockIn = viewModel.lastClockIn.value
     val clockOut = viewModel.latestClockOut.value
 
@@ -416,7 +420,6 @@ fun GotoAttendanceOverview(
         ){
             Text(
                 text = todayDate,
-                color = Color.White,
                 fontSize = 30.sp,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier
@@ -431,21 +434,21 @@ fun GotoAttendanceOverview(
                 Column{
                     Text(
                         text = "IN",
-                        color = Color.White,
                         fontSize = 30.sp,
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier.align(Alignment.CenterHorizontally)
                     )
                     Box(
                         modifier = Modifier
-                            .clip(RoundedCornerShape(32.dp))
-                            .background(Color.White)
+                            .clip(RoundedCornerShape(16.dp))
+                            .background(backgroundColor)
                     ) {
                         Text(
                             text = clockIn,
-                            color = Color.Black,
+                            color = textColor,
                             fontSize = 30.sp,
                             fontWeight = FontWeight.Bold,
+                            modifier = Modifier.padding(8.dp)
                         )
                     }
                 }
@@ -455,21 +458,21 @@ fun GotoAttendanceOverview(
                 Column{
                     Text(
                         text = "OUT",
-                        color = Color.White,
                         fontSize = 30.sp,
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier.align(Alignment.CenterHorizontally)
                     )
                     Box(
                         modifier = Modifier
-                            .clip(RoundedCornerShape(32.dp))
-                            .background(Color.White)
+                            .clip(RoundedCornerShape(16.dp))
+                            .background(backgroundColor)
                     ) {
                         Text(
                             text = clockOut,
-                            color = Color.Black,
+                            color = textColor,
                             fontSize = 30.sp,
                             fontWeight = FontWeight.Bold,
+                            modifier = Modifier.padding(8.dp)
                         )
                     }
                 }
