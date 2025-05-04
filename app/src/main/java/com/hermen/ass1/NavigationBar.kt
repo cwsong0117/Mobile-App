@@ -74,7 +74,7 @@ fun BackButton(navController: NavController, title: String, isDarkTheme: Boolean
 }
 
 @Composable
-fun BottomNavigationBar(navItems: List<NavItem>,navController: NavHostController, currentRoute: String?, isDarkTheme: Boolean) {
+fun BottomNavigationBar(navItems: List<NavItem>, navController: NavHostController, currentRoute: String?, isDarkTheme: Boolean) {
     val backgroundColor = if (isDarkTheme) Color.DarkGray else Color.White
     Box(
         Modifier
@@ -91,7 +91,18 @@ fun BottomNavigationBar(navItems: List<NavItem>,navController: NavHostController
             horizontalArrangement = Arrangement.SpaceEvenly
         ) {
             navItems.forEach { item ->
-                IconButton(onClick = { navController.navigate(item.route) }) {
+                IconButton(
+                    onClick = {
+                        // Don't navigate if we're already on this route
+                        if (!navController.currentDestination?.route.equals(item.route)) {
+                            navController.navigate(item.route) {
+                                // Clear entire back stack and only keep the destination we're navigating to
+                                popUpTo(0) { inclusive = true }
+                                launchSingleTop = true
+                            }
+                        }
+                    }
+                ) {
                     val isSelected = currentRoute == item.route
                     val iconModifier =
                         if (isSelected) Modifier.size(40.dp) else Modifier.size(35.dp)
@@ -130,13 +141,12 @@ fun FooterRail(
                 NavigationRailItem(
                     selected = isSelected,
                     onClick = {
-                        if (currentRoute != item.route) {
+                        // Don't navigate if we're already on this route
+                        if (!navController.currentDestination?.route.equals(item.route)) {
                             navController.navigate(item.route) {
+                                // Clear entire back stack and only keep the destination we're navigating to
+                                popUpTo(0) { inclusive = true }
                                 launchSingleTop = true
-                                popUpTo(navController.graph.startDestinationId) {
-                                    saveState = true
-                                }
-                                restoreState = true
                             }
                         }
                     },
@@ -206,13 +216,12 @@ fun DrawerContent(
                 },
                 selected = selected,
                 onClick = {
-                    if (currentRoute != item.route) {
+                    // Don't navigate if we're already on this route
+                    if (!navController.currentDestination?.route.equals(item.route)) {
                         navController.navigate(item.route) {
+                            // Clear entire back stack and only keep the destination we're navigating to
+                            popUpTo(0) { inclusive = true }
                             launchSingleTop = true
-                            popUpTo(navController.graph.startDestinationId) {
-                                saveState = true
-                            }
-                            restoreState = true
                         }
                     }
                 },

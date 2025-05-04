@@ -189,28 +189,20 @@ fun AppNavHost(
             LeaveApply(navController = navController, isDarkTheme = isDarkTheme)
         }
         composable(
-            route = "CreateOrEditAnnouncementScreen?announcementId={announcementId}&title={title}&content={content}&imageUrl={imageUrl}",
+            route = "CreateOrEditAnnouncementScreen?announcementId={announcementId}",
             arguments = listOf(
-                navArgument("announcementId") { type = NavType.StringType; nullable = true },
-                navArgument("title") { type = NavType.StringType; nullable = true },
-                navArgument("content") { type = NavType.StringType; nullable = true },
-                navArgument("imageUrl") { type = NavType.StringType; nullable = true }
+                navArgument("announcementId") {
+                    type = NavType.StringType
+                    nullable = true
+                    defaultValue = null
+                }
             )
         ) { backStackEntry ->
             val announcementId = backStackEntry.arguments?.getString("announcementId")
-            val title = backStackEntry.arguments?.getString("title")
-            val content = backStackEntry.arguments?.getString("content")
-            val imageUrl = backStackEntry.arguments?.getString("imageUrl")
-
-            Log.d("CreateOrEditAnnouncement", "announcementId: $announcementId, title: $title, content: $content, imageUrl: $imageUrl")
-
             CreateOrEditAnnouncement(
                 navController = navController,
                 announcementId = announcementId,
-                isDarkTheme = isDarkTheme,
-                title = title,
-                content = content,
-                imageUrl = imageUrl
+                isDarkTheme = isDarkTheme
             )
         }
     }
@@ -373,6 +365,11 @@ fun AnnouncementSection(
 ) {
     val announcements by viewModel.announcements.collectAsState()
 
+    // Add LaunchedEffect to refresh data when this composable enters composition
+    LaunchedEffect(Unit) {
+        viewModel.loadAnnouncements()
+    }
+
     Column(modifier = Modifier.fillMaxWidth()) {
         Text(
             text = "Announcement",
@@ -397,7 +394,7 @@ fun AnnouncementSection(
                 items(announcements) { announcement ->
                     AnnouncementCard(
                         title = announcement.title,
-                        imageUrl = announcement.imageUrl, // Pass imageUrl here
+                        imageUrl = announcement.imageUrl,
                         onClick = {
                             navController.navigate(AppScreen.AnnouncementOverview.name)
                         },

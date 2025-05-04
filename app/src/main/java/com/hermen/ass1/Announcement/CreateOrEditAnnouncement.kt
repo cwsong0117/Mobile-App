@@ -21,6 +21,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.AlertDialog
 import androidx.compose.material.Button
 import androidx.compose.material.ButtonDefaults
+import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.Divider
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
@@ -61,26 +62,43 @@ import java.nio.file.WatchEvent
 fun CreateOrEditAnnouncement(
     navController: NavHostController,
     announcementId: String? = null,
-    isDarkTheme: Boolean,
-    title: String? = null,
-    content: String? = null,
-    imageUrl: String? = null
+    isDarkTheme: Boolean
 ) {
     val viewModel: AnnouncementViewModel = viewModel()
-    Log.d("TEST DEBUG", "passed URL: ${imageUrl}")
 
-    // Track the original values
-    val originalTitle = remember { mutableStateOf(title) }
-    val originalContent = remember { mutableStateOf(content) }
-    val originalImageUri = remember { mutableStateOf(imageUrl) }
+    // State to track if data is loading
+    val isLoading = remember { mutableStateOf(true) }
+
+    // Track the original values for detecting changes
+    val originalTitle = remember { mutableStateOf("") }
+    val originalContent = remember { mutableStateOf("") }
+    val originalImageUrl = remember { mutableStateOf<String?>(null) }
+
+    // State for form fields
+    val savedTitle = rememberSaveable { mutableStateOf("") }
+    val savedContent = rememberSaveable { mutableStateOf("") }
 
     // Load announcement data if editing
     LaunchedEffect(announcementId) {
         if (!announcementId.isNullOrBlank()) {
-            viewModel.loadAnnouncement(announcementId)
+            isLoading.value = true
+            val announcement = AnnouncementRepository.getAnnouncementById(announcementId)
+            announcement?.let {
+                // Update all relevant states
+                savedTitle.value = it.title
+                savedContent.value = it.content
+                viewModel.title.value = it.title
+                viewModel.content.value = it.content
+                viewModel.imageUrl.value = it.imageUrl
+
+                // Store original values for change detection
+                originalTitle.value = it.title
+                originalContent.value = it.content
+                originalImageUrl.value = it.imageUrl
+            }
+            isLoading.value = false
         } else {
-            title?.let { viewModel.title.value = it }
-            content?.let { viewModel.content.value = it }
+            isLoading.value = false
         }
     }
 
@@ -90,21 +108,6 @@ fun CreateOrEditAnnouncement(
             navController.navigate(AppScreen.AnnouncementOverview.name){
                 popUpTo("CreateOrEditAnnouncement") { inclusive = true }
             }
-        }
-    }
-
-    val savedTitle = rememberSaveable { mutableStateOf(viewModel.title.value) }
-    val savedContent = rememberSaveable { mutableStateOf(viewModel.content.value) }
-
-    LaunchedEffect(viewModel.title.value) {
-        if (savedTitle.value.isBlank() && viewModel.title.value.isNotBlank()) {
-            savedTitle.value = viewModel.title.value
-        }
-    }
-
-    LaunchedEffect(viewModel.content.value) {
-        if (savedContent.value.isBlank() && viewModel.content.value.isNotBlank()) {
-            savedContent.value = viewModel.content.value
         }
     }
 
@@ -118,7 +121,7 @@ fun CreateOrEditAnnouncement(
     val uploadedState = remember { mutableStateOf(false) }
 
     val imageUri = rememberSaveable {
-        mutableStateOf<Uri?>(if (!uploadedState.value && imageUrl != null) Uri.parse(imageUrl) else null)
+        mutableStateOf<Uri?>(if (!uploadedState.value && viewModel.imageUrl.value != null) Uri.parse(viewModel.imageUrl.value) else null)
     }
 
     val launcher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
@@ -152,7 +155,8 @@ fun CreateOrEditAnnouncement(
     val showDialog = remember { mutableStateOf(false) }
     val isTitleChanged = savedTitle.value != originalTitle.value
     val isContentChanged = savedContent.value != originalContent.value
-    val isImageChanged = imageUri.value != Uri.parse(originalImageUri.value)
+    val isImageChanged = (imageUri.value != null && uploadedState.value) ||
+            (viewModel.imageUrl.value != originalImageUrl.value)
 
     val onBackPressed = {
         if (isTitleChanged || isContentChanged || isImageChanged) {
@@ -166,237 +170,266 @@ fun CreateOrEditAnnouncement(
         onBackPressed()
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(backgroundColor)
-            .verticalScroll(rememberScrollState())
-    ) {
+    if (isLoading.value) {
+        Box(modifier = Modifier.fillMaxSize()) {
+            CircularProgressIndicator(
+                modifier = Modifier.align(Alignment.Center),
+                color = if (isDarkTheme) Color(0xFF80CBC4) else Color(0xFF009688)
+            )
+        }
+    } else {
         Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .background(barColor)
+                .fillMaxSize()
+                .background(backgroundColor)
+                .verticalScroll(rememberScrollState())
         ) {
-            Row(
-                modifier = Modifier
-                    .height(56.dp)
-                    .fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Box(
-                    modifier = Modifier
-                        .padding(start = 8.dp, top = 8.dp)
-                        .height(36.dp)
-                ) {
-                    IconButton(onClick = onBackPressedUnit) { // Use the back press logic
-                        Icon(
-                            painter = painterResource(id = R.drawable.baseline_arrow_back_ios_new_24),
-                            contentDescription = "Back",
-                            tint = iconColor,
-                            modifier = Modifier.size(24.dp)
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.weight(1f))
-
-                Text(
-                    text = if (!announcementId.isNullOrBlank()) "Edit Announcement" else "New Announcement",
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = textColor
-                )
-
-                Spacer(modifier = Modifier.weight(1f))
-
-                Box(
-                    modifier = Modifier
-                        .padding(end = 8.dp, top = 8.dp)
-                        .height(36.dp)
-                        .background(saveButtonBackgroundColor, shape = RoundedCornerShape(8.dp))
-                ) {
-                    IconButton(
-                        onClick = {
-                            titleError.value = savedTitle.value.isBlank()
-                            contentError.value = savedContent.value.isBlank()
-
-                            if (!titleError.value && !contentError.value) {
-                                if (!announcementId.isNullOrEmpty()) {
-                                    viewModel.updateAnnouncement(announcementId, imageUri.value)
-                                    viewModel.uploadSuccessful.value = false
-                                } else {
-                                    viewModel.createAnnouncementWithCustomId(imageUri.value)
-                                }
-                            }
-                        },
-                        enabled = saveEnabled
-                    ) {
-                        Text(
-                            text = "Save",
-                            color = saveButtonTextColor,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-                }
-            }
-
-            Divider(color = Color.LightGray, thickness = 1.dp)
-        }
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        Column(modifier = Modifier.padding(horizontal = 16.dp)) {
-            Text("Title", color = textColor, fontWeight = FontWeight.Medium)
-            Spacer(modifier = Modifier.height(4.dp))
-            Column {
-                TextField(
-                    value = savedTitle.value,
-                    onValueChange = {
-                        savedTitle.value = it
-                        viewModel.title.value = it
-                        titleError.value = it.isBlank()
-                    },
-                    isError = titleError.value,
-                    colors = TextFieldDefaults.textFieldColors(
-                        backgroundColor = Color.Transparent,
-                        errorIndicatorColor = Color.Red
-                    ),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(Color.White, shape = RoundedCornerShape(16.dp))
-                        .padding(horizontal = 12.dp, vertical = 4.dp),
-                    maxLines = 3,
-                    placeholder = { Text("Enter title") }
-                )
-
-                if (titleError.value) {
-                    Text(
-                        text = "Title cannot be empty",
-                        color = Color.Red,
-                        fontSize = 12.sp,
-                        modifier = Modifier.padding(start = 12.dp, top = 4.dp)
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            Text("Content", color = textColor, fontWeight = FontWeight.Medium)
-            Spacer(modifier = Modifier.height(4.dp))
-            Column {
-                TextField(
-                    value = savedContent.value,
-                    onValueChange = {
-                        savedContent.value = it
-                        viewModel.content.value = it
-                        contentError.value = it.isBlank()
-                    },
-                    isError = contentError.value,
-                    colors = TextFieldDefaults.textFieldColors(
-                        backgroundColor = Color.Transparent,
-                        errorIndicatorColor = Color.Red
-                    ),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(200.dp)
-                        .background(Color.White, shape = RoundedCornerShape(16.dp))
-                        .padding(horizontal = 12.dp, vertical = 4.dp),
-                    maxLines = 10,
-                    placeholder = { Text("Enter content") }
-                )
-
-                if (contentError.value) {
-                    Text(
-                        text = "Content cannot be empty",
-                        color = Color.Red,
-                        fontSize = 12.sp,
-                        modifier = Modifier.padding(start = 12.dp, top = 4.dp)
-                    )
-                }
-            }
-            Log.d("Debug","image url: ${imageUri.value}")
-            if (imageUri.value != null) {
-                Spacer(modifier = Modifier.height(16.dp))
-                Text("Selected Image", color = textColor, fontWeight = FontWeight.Medium)
-                Spacer(modifier = Modifier.height(4.dp))
-                Image(
-                    painter = rememberAsyncImagePainter(imageUri.value),
-                    contentDescription = "Selected Image",
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(200.dp)
-                        .clip(RoundedCornerShape(12.dp)),
-                    contentScale = ContentScale.Crop
-                )
-            } else if (!imageUrl.isNullOrBlank()) {
-                Spacer(modifier = Modifier.height(16.dp))
-                Text("Existing Image", color = textColor, fontWeight = FontWeight.Medium)
-                Spacer(modifier = Modifier.height(4.dp))
-                Image(
-                    painter = rememberAsyncImagePainter(Uri.parse(imageUrl)),
-                    contentDescription = "Existing Image",
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(200.dp)
-                        .clip(RoundedCornerShape(12.dp)),
-                    contentScale = ContentScale.Crop
-                )
-            }
-
-            Spacer(modifier = Modifier.height(24.dp))
-            Button(
-                onClick = { launcher.launch("image/*") },
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(buttonBackground, shape = RoundedCornerShape(8.dp)),
-                colors = ButtonDefaults.buttonColors(backgroundColor = buttonBackground)
+                    .background(barColor)
             ) {
-                Text("Upload Image", color = buttonTextColor, fontWeight = FontWeight.Bold)
+                Row(
+                    modifier = Modifier
+                        .height(56.dp)
+                        .fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .padding(start = 8.dp, top = 8.dp)
+                            .height(36.dp)
+                    ) {
+                        IconButton(onClick = onBackPressedUnit) { // Use the back press logic
+                            Icon(
+                                painter = painterResource(id = R.drawable.baseline_arrow_back_ios_new_24),
+                                contentDescription = "Back",
+                                tint = iconColor,
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.weight(1f))
+
+                    Text(
+                        text = if (!announcementId.isNullOrBlank()) "Edit Announcement" else "New Announcement",
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = textColor
+                    )
+
+                    Spacer(modifier = Modifier.weight(1f))
+
+                    Box(
+                        modifier = Modifier
+                            .padding(end = 8.dp, top = 8.dp)
+                            .height(36.dp)
+                            .background(saveButtonBackgroundColor, shape = RoundedCornerShape(8.dp))
+                    ) {
+                        IconButton(
+                            onClick = {
+                                titleError.value = savedTitle.value.isBlank()
+                                contentError.value = savedContent.value.isBlank()
+
+                                if (!titleError.value && !contentError.value) {
+                                    // Update the ViewModel values before saving
+                                    viewModel.title.value = savedTitle.value
+                                    viewModel.content.value = savedContent.value
+
+                                    if (!announcementId.isNullOrEmpty()) {
+                                        viewModel.updateAnnouncement(announcementId, imageUri.value)
+                                        viewModel.uploadSuccessful.value = false
+                                    } else {
+                                        viewModel.createAnnouncementWithCustomId(imageUri.value)
+                                    }
+                                }
+                            },
+                            enabled = saveEnabled
+                        ) {
+                            Text(
+                                text = "Save",
+                                color = saveButtonTextColor,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+                }
+
+                Divider(color = Color.LightGray, thickness = 1.dp)
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            Column(modifier = Modifier.padding(horizontal = 16.dp)) {
+                Text("Title", color = textColor, fontWeight = FontWeight.Medium)
+                Spacer(modifier = Modifier.height(4.dp))
+                Column {
+                    TextField(
+                        value = savedTitle.value,
+                        onValueChange = {
+                            savedTitle.value = it
+                            titleError.value = it.isBlank()
+                        },
+                        isError = titleError.value,
+                        colors = TextFieldDefaults.textFieldColors(
+                            backgroundColor = if (isDarkTheme) Color.DarkGray else Color.White,
+                            textColor = if (isDarkTheme) Color.White else Color.Black,
+                            cursorColor = if (isDarkTheme) Color.White else Color.Black,
+                            placeholderColor = if (isDarkTheme) Color.LightGray else Color.Gray,
+                            errorIndicatorColor = Color.Red
+                        ),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(
+                                if (isDarkTheme) Color.DarkGray else Color.White,
+                                shape = RoundedCornerShape(16.dp)
+                            )
+                            .padding(horizontal = 12.dp, vertical = 4.dp),
+                        maxLines = 3,
+                        placeholder = { Text("Enter title", color = if (isDarkTheme) Color.LightGray else Color.Gray) }
+                    )
+
+                    if (titleError.value) {
+                        Text(
+                            text = "Title cannot be empty",
+                            color = Color.Red,
+                            fontSize = 12.sp,
+                            modifier = Modifier.padding(start = 12.dp, top = 4.dp)
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                Text("Content", color = textColor, fontWeight = FontWeight.Medium)
+                Spacer(modifier = Modifier.height(4.dp))
+                Column {
+                    TextField(
+                        value = savedContent.value,
+                        onValueChange = {
+                            savedContent.value = it
+                            contentError.value = it.isBlank()
+                        },
+                        isError = contentError.value,
+                        colors = TextFieldDefaults.textFieldColors(
+                            backgroundColor = if (isDarkTheme) Color.DarkGray else Color.White,
+                            textColor = if (isDarkTheme) Color.White else Color.Black,
+                            cursorColor = if (isDarkTheme) Color.White else Color.Black,
+                            placeholderColor = if (isDarkTheme) Color.LightGray else Color.Gray,
+                            errorIndicatorColor = Color.Red
+                        ),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(200.dp)
+                            .background(
+                                if (isDarkTheme) Color.DarkGray else Color.White,
+                                shape = RoundedCornerShape(16.dp)
+                            )
+                            .padding(horizontal = 12.dp, vertical = 4.dp),
+                        maxLines = 10,
+                        placeholder = { Text("Enter content", color = if (isDarkTheme) Color.LightGray else Color.Gray) }
+                    )
+
+                    if (contentError.value) {
+                        Text(
+                            text = "Content cannot be empty",
+                            color = Color.Red,
+                            fontSize = 12.sp,
+                            modifier = Modifier.padding(start = 12.dp, top = 4.dp)
+                        )
+                    }
+                }
+
+                // Display image if available
+                if (imageUri.value != null) {
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        text = if (uploadedState.value) "Selected Image" else "Existing Image",
+                        color = textColor,
+                        fontWeight = FontWeight.Medium
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Image(
+                        painter = rememberAsyncImagePainter(imageUri.value),
+                        contentDescription = "Image",
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(200.dp)
+                            .clip(RoundedCornerShape(12.dp)),
+                        contentScale = ContentScale.Crop
+                    )
+                } else if (viewModel.imageUrl.value != null) {
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text("Existing Image", color = textColor, fontWeight = FontWeight.Medium)
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Image(
+                        painter = rememberAsyncImagePainter(Uri.parse(viewModel.imageUrl.value!!)),
+                        contentDescription = "Existing Image",
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(200.dp)
+                            .clip(RoundedCornerShape(12.dp)),
+                        contentScale = ContentScale.Crop
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(24.dp))
+                Button(
+                    onClick = { launcher.launch("image/*") },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(buttonBackground, shape = RoundedCornerShape(8.dp)),
+                    colors = ButtonDefaults.buttonColors(backgroundColor = buttonBackground)
+                ) {
+                    Text("Upload Image", color = buttonTextColor, fontWeight = FontWeight.Bold)
+                }
             }
         }
-    }
-    if (showDialog.value) {
-        AlertDialog(
-            onDismissRequest = { showDialog.value = false },
-            title = {
-                Text(
-                    text = "Discard Changes?",
-                    color = if (isDarkTheme) Color.White else Color.Black
-                )
-            },
-            text = {
-                Text(
-                    text = "You have unsaved changes. Do you want to discard them?",
-                    color = if (isDarkTheme) Color.White else Color.Black
-                )
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        navController.popBackStack() // Discard changes and go back
-                        showDialog.value = false
-                    },
-                    modifier = Modifier.padding(16.dp)
-                ) {
+
+        if (showDialog.value) {
+            AlertDialog(
+                onDismissRequest = { showDialog.value = false },
+                title = {
                     Text(
-                        text = "Discard",
-                        color = if (isDarkTheme) Color(0xFFFF0000) else Color.Red
+                        text = "Discard Changes?",
+                        color = if (isDarkTheme) Color.White else Color.Black
                     )
-                }
-            },
-            dismissButton = {
-                TextButton(
-                    onClick = { showDialog.value = false },
-                    modifier = Modifier.padding(16.dp)
-                ) {
+                },
+                text = {
                     Text(
-                        text = "Cancel",
-                        color = if (isDarkTheme) Color(0xFFB2C5FF) else Color(0xFF495D92)
+                        text = "You have unsaved changes. Do you want to discard them?",
+                        color = if (isDarkTheme) Color.White else Color.Black
                     )
-                }
-            },
-            shape = RoundedCornerShape(16.dp),
-            backgroundColor = if (isDarkTheme) Color(0xFF232630) else Color.White
-        )
+                },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            navController.popBackStack() // Discard changes and go back
+                            showDialog.value = false
+                        },
+                        modifier = Modifier.padding(16.dp)
+                    ) {
+                        Text(
+                            text = "Discard",
+                            color = if (isDarkTheme) Color(0xFFFF0000) else Color.Red
+                        )
+                    }
+                },
+                dismissButton = {
+                    TextButton(
+                        onClick = { showDialog.value = false },
+                        modifier = Modifier.padding(16.dp)
+                    ) {
+                        Text(
+                            text = "Cancel",
+                            color = if (isDarkTheme) Color(0xFFB2C5FF) else Color(0xFF495D92)
+                        )
+                    }
+                },
+                shape = RoundedCornerShape(16.dp),
+                backgroundColor = if (isDarkTheme) Color(0xFF232630) else Color.White
+            )
+        }
     }
 }

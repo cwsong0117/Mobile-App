@@ -43,6 +43,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.style.TextAlign
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.hermen.ass1.BackButton
@@ -58,8 +59,6 @@ fun AnnouncementDetailScreen(
     val announcement = remember {
         Json.decodeFromString<Announcement>(json)
     }
-
-    val encodedImageUrl = URLEncoder.encode(announcement.imageUrl, "UTF-8")
 
     val decodedTitle = URLDecoder.decode(announcement.title, "UTF-8")
     val decodedContent = URLDecoder.decode(announcement.content, "UTF-8")
@@ -93,8 +92,9 @@ fun AnnouncementDetailScreen(
             if (SessionManager.currentUser?.id == announcement.employeeID) {
                 Button(
                     onClick = {
+                        // Only pass the announcementId instead of all the content
                         navController.navigate(
-                            "CreateOrEditAnnouncementScreen?announcementId=${announcement.id}&title=${decodedTitle}&content=${decodedContent}&imageUrl=${encodedImageUrl}"
+                            "CreateOrEditAnnouncementScreen?announcementId=${announcement.id}"
                         )
                     },
                     colors = ButtonDefaults.buttonColors(backgroundColor = saveButtonColor),
@@ -146,7 +146,8 @@ fun AnnouncementDetailScreen(
             Text(
                 text = decodedContent,
                 style = MaterialTheme.typography.bodyLarge,
-                color = textColor
+                color = textColor,
+                textAlign = TextAlign.Justify
             )
 
             Spacer(modifier = Modifier.height(32.dp)) // Optional space before the footer content
