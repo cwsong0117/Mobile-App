@@ -300,7 +300,6 @@ class AttendanceViewModel(application: Application) : AndroidViewModel(applicati
         return try {
             val dbSnapshot = db.collection("Attendance")
                 .whereEqualTo("employeeID", employeeID)
-                .whereEqualTo("status", "Clocked In")
                 .whereEqualTo("clockOutTime", null)
                 .get()
                 .await()
