@@ -34,7 +34,7 @@ import androidx.navigation.NavGraph.Companion.findStartDestination
 
 @Composable
 fun BackButton(navController: NavController, title: String, isDarkTheme: Boolean) {
-    val backgroundColor = if (isDarkTheme) Color.Transparent else Color.White
+    val backgroundColor = if (isDarkTheme) Color.Black else Color.White
     val textColor = if (isDarkTheme) Color.White else Color.Black
     val iconColor = if (isDarkTheme) Color.White else Color.Black
 
