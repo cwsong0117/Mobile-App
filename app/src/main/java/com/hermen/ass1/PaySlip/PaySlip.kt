@@ -691,7 +691,7 @@ fun PaySlipEditorScreen(
 
         OutlinedTextField(
             value = viewModel.allowance,
-            onValueChange = { viewModel.allowance = it },
+            onValueChange = { viewModel.allowance = filterToDecimal(it) },
             label = { Text("Allowance (RM)") },
             modifier = Modifier.fillMaxWidth()
             .padding(bottom = 12.dp),
@@ -700,7 +700,7 @@ fun PaySlipEditorScreen(
 
         OutlinedTextField(
             value = viewModel.bonus,
-            onValueChange = { viewModel.bonus = it },
+            onValueChange = { viewModel.bonus = filterToDecimal(it) },
             label = { Text("Bonus (RM)") },
             modifier = Modifier.fillMaxWidth()
                 .padding(bottom = 12.dp),
@@ -709,7 +709,7 @@ fun PaySlipEditorScreen(
 
         OutlinedTextField(
             value = viewModel.overtimePay,
-            onValueChange = {viewModel.overtimePay = it},
+            onValueChange = {viewModel.overtimePay = filterToDecimal(it)},
             label = { Text("Overtime Pay (RM)") },
             modifier = Modifier.fillMaxWidth()
                 .padding(bottom = 12.dp),
@@ -723,7 +723,7 @@ fun PaySlipEditorScreen(
 
         OutlinedTextField(
             value = viewModel.incomeTax,
-            onValueChange = { viewModel.incomeTax = it },
+            onValueChange = { viewModel.incomeTax = filterToDecimal(it) },
             label = { Text("Income Tax (RM)") },
             modifier = Modifier.fillMaxWidth()
                 .padding(bottom = 12.dp),
@@ -732,7 +732,7 @@ fun PaySlipEditorScreen(
 
         OutlinedTextField(
             value = viewModel.unpaidLeave,
-            onValueChange = { viewModel.unpaidLeave = it },
+            onValueChange = { viewModel.unpaidLeave = filterToDecimal(it) },
             label = { Text("Unpaid Leave (RM)") },
             modifier = Modifier.fillMaxWidth()
                 .padding(bottom = 12.dp),
