@@ -39,6 +39,8 @@ import java.io.IOException
 import java.util.Date
 import android.Manifest
 import android.content.pm.PackageManager
+import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.launch
 
 
 @Composable
@@ -202,8 +204,54 @@ class AttendanceViewModel(application: Application) : AndroidViewModel(applicati
             e.printStackTrace()
         }
     }
-
     //for fetching location
+
+    //for mainscreen attendance ui
+    private val _lastClockIn = mutableStateOf("--:--")
+    val lastClockIn: State<String> get() = _lastClockIn
+
+    private val _latestClockOut = mutableStateOf("--:--")
+    val latestClockOut: State<String> get() = _latestClockOut
+
+    fun loadTodayAttendance(employeeID: String) {
+        viewModelScope.launch {
+            val attendance = getLatestAttendanceToday(employeeID)
+            val formatter = SimpleDateFormat("HH:mm", Locale.getDefault()).apply {
+                timeZone = TimeZone.getTimeZone("Asia/Kuala_Lumpur")
+            }
+
+            _lastClockIn.value = attendance?.clockInTime?.toDate()?.let { formatter.format(it) } ?: "--:--"
+            _latestClockOut.value = attendance?.clockOutTime?.toDate()?.let { formatter.format(it) } ?: "--:--"
+        }
+    }
+
+    suspend fun getLatestAttendanceToday(employeeID: String): Attendance? {
+        return try {
+            val dbSnapshot = db.collection("Attendance")
+                .whereEqualTo("employeeID", employeeID)
+                .get()
+                .await()
+
+            val malaysiaTZ = TimeZone.getTimeZone("Asia/Kuala_Lumpur")
+            val today = Calendar.getInstance(malaysiaTZ)
+
+            dbSnapshot.documents
+                .mapNotNull { it.toObject(Attendance::class.java) }
+                .filter { attendance ->
+                    attendance.clockInTime?.toDate()?.let { clockInDate ->
+                        val clockInCalendar = Calendar.getInstance(malaysiaTZ).apply { time = clockInDate }
+                        clockInCalendar.get(Calendar.YEAR) == today.get(Calendar.YEAR) &&
+                                clockInCalendar.get(Calendar.MONTH) == today.get(Calendar.MONTH) &&
+                                clockInCalendar.get(Calendar.DAY_OF_MONTH) == today.get(Calendar.DAY_OF_MONTH)
+                    } ?: false
+                }
+                .maxByOrNull { it.clockInTime?.toDate()?.time ?: 0L }  // get the latest one today
+        } catch (e: Exception) {
+            null
+        }
+    }
+
+    //for mainscreen attendance ui
 
     fun getAttendance(onComplete: () -> Unit) {
         db.collection("Attendance")
