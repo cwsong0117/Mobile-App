@@ -360,7 +360,7 @@ fun ClockOutScreen(
                 message = "Clock-in record not found."
             }
         }) {
-            Text("Clock Out", color = textColor,)
+            Text("Clock Out")
         }
 
         Spacer(modifier = Modifier.height(16.dp))

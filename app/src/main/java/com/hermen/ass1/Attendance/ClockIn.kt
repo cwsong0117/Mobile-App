@@ -511,7 +511,7 @@ fun AddAttendanceScreen(
                         Toast.makeText(context, "Location not ready yet", Toast.LENGTH_SHORT).show()
                     }
                 }) {
-                    Text("Clock-IN", color = textColor)
+                    Text("Clock-IN")
                 }
             }
         }

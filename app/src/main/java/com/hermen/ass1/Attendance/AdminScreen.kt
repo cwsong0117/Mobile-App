@@ -63,6 +63,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import com.google.firebase.Timestamp
+import com.hermen.ass1.User.SessionManager
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -79,6 +80,8 @@ fun AdminScreen(
     val textColor = if (isDarkTheme) Color.White else Color.Black
 
     val isTablet = isTablet()
+
+    val currentUserId = SessionManager.currentUser?.id
 
     val attendanceList = viewModel.attendance
     var isLoading by remember { mutableStateOf(true) }
@@ -144,7 +147,7 @@ fun AdminScreen(
                             .weight(1f)
                             .padding(8.dp)
                     ) {
-                        groupedAttendance.keys.forEach { employeeID ->
+                        groupedAttendance.keys.filter { it != currentUserId }.forEach { employeeID ->
                             item {
                                 val userName = usersMap[employeeID]?.name ?: "Unknown User"
                                 val isSelected = employeeID == selectedEmployeeId
@@ -262,7 +265,7 @@ fun AdminScreen(
 
             }else{
                 LazyColumn(modifier = modifier.padding(8.dp)) {
-                    groupedAttendance.forEach { (employeeID, records) ->
+                    groupedAttendance.filterKeys { it != currentUserId }.forEach { (employeeID, records) ->
                         item {
                             val expanded = viewModel.isExpanded(employeeID)
                             val userName = usersMap[employeeID]?.name ?: "Unknown User"
@@ -516,7 +519,7 @@ fun EditDialog(
                     horizontalArrangement = Arrangement.End
                 ){
                     Button(onClick = onDismiss) {
-                        Text("Cancel" , color = textColor)
+                        Text("Cancel")
                     }
 
                     Spacer(Modifier.width(8.dp))
@@ -564,7 +567,7 @@ fun EditDialog(
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50))
 
                     ) {
-                        Text("Save Changes" , color = textColor)
+                        Text("Save Changes")
                     }
 
                 }
@@ -641,13 +644,13 @@ fun RemoveDialog(
                         }
                     }
                 }) {
-                    Text("Remove" , color = textColor)
+                    Text("Remove")
                 }
 
                 Spacer(Modifier.height(8.dp))
 
                 Button(onClick = onDismiss) {
-                    Text("Cancel" , color = textColor)
+                    Text("Cancel")
                 }
             }
         }
