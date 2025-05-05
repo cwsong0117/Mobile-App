@@ -17,11 +17,14 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -65,7 +68,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.core.content.FileProvider
+import androidx.media3.common.util.Log.e
 import com.hermen.ass1.AppScreen
 import com.hermen.ass1.R
 import com.hermen.ass1.User.SessionManager
@@ -465,7 +470,7 @@ fun PaySlipHomeScreenForAdmin(navController: NavController, isDarkTheme: Boolean
 
     Column(
         modifier = Modifier
-            .fillMaxSize()
+            .fillMaxHeight()
             .background(backgroundColor)
     ) {
         BackButton(navController = navController, title = "Pay Slip Panel", isDarkTheme = isDarkTheme)
@@ -494,8 +499,10 @@ fun PaySlipHomeScreenForAdmin(navController: NavController, isDarkTheme: Boolean
             DropdownMenu(
                 expanded = expandedDpt,
                 onDismissRequest = { expandedDpt = false },
-                modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp)
-            ) {
+                modifier = Modifier
+                    .width(378.dp)
+                    .padding(start = 16.dp, end = 16.dp)
+                ) {
                 departmentList.forEach { dp ->
                     DropdownMenuItem(
                         text = { Text(dp) },
@@ -514,8 +521,7 @@ fun PaySlipHomeScreenForAdmin(navController: NavController, isDarkTheme: Boolean
         Spacer(modifier = Modifier.height(16.dp))
         Column(
             modifier = Modifier
-            .fillMaxWidth()
-            .padding(16.dp),
+                .padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             if (viewModel.department.isNotEmpty()) {
@@ -534,7 +540,9 @@ fun PaySlipHomeScreenForAdmin(navController: NavController, isDarkTheme: Boolean
                 DropdownMenu(
                     expanded = expandedEmp,
                     onDismissRequest = { expandedEmp = false },
-                    modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp)
+                    modifier = Modifier
+                        .width(378.dp)
+                        .padding(start = 16.dp, end = 16.dp)
                 ) {
                     employeeList.forEach { (name, userId) ->
                         DropdownMenuItem(
@@ -820,7 +828,7 @@ fun PaySlipEditorScreen(
                     employeeId = employeeId,
                     onSuccess = {
                         Toast.makeText(context, "Pay Slip submitted successfully!", Toast.LENGTH_SHORT).show()
-                        // Pop back stack after successful submission
+                        viewModel.checkForExistingRecord(employeeId, viewModel.year, viewModel.month)
                         onSuccess()
 
                     },
@@ -847,6 +855,59 @@ fun PaySlipEditorScreen(
                 contentColor = buttonTextColor)
         ) {
             Text("Submit Pay Slip")
+        }
+
+        LaunchedEffect(employeeId, viewModel.year, viewModel.month) {
+            viewModel.checkForExistingRecord(employeeId, viewModel.year, viewModel.month)
+        }
+
+        val isRecordExists by viewModel.isRecordExistsFlow.collectAsState()
+
+        // UI Button Code
+        if (isRecordExists) {
+            // If record exists, allow deletion
+            Button(
+                onClick = {
+                    viewModel.deletePaySlip(
+                        onSuccess = {
+                            // Show a success message or refresh UI
+                            Toast.makeText(context, "Pay Slip deleted successfully!", Toast.LENGTH_SHORT).show()
+                            // Optionally, refresh the view after deletion
+                            viewModel.fetchRecordByMonth(employeeId)
+                            viewModel.checkForExistingRecord(employeeId, viewModel.year, viewModel.month)
+                        },
+                        onFailure = { e ->
+                            Log.e("UI", "Failed to delete payslip", e)
+                            // Handle failure
+                        }
+                    )
+                },
+                colors = ButtonDefaults.buttonColors(containerColor = Color.Red),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp)
+            ) {
+                Text("Delete Payslip", color = Color.White)
+            }
+        } else {
+            // If no record exists, show a disabled button with a message
+
+            Button(
+                onClick = {},
+                colors = ButtonDefaults.buttonColors(containerColor = Color.Gray),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp)
+            ) {
+                Text("No record to delete", color = Color.White)
+            }
+
+            // Optionally, show a text message below the button indicating there is no record
+            Text(
+                "No payslip record for this month.",
+                color = Color.Gray,
+                modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+            )
         }
     }
 }

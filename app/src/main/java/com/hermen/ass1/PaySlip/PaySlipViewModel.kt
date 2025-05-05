@@ -3,6 +3,7 @@ package com.hermen.ass1.PaySlip
 import android.util.Log
 import androidx.compose.runtime.*
 import androidx.lifecycle.ViewModel
+import androidx.privacysandbox.ads.adservices.adid.AdId
 import com.google.firebase.Firebase
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.Query
@@ -25,25 +26,6 @@ class PaySlipViewModel: ViewModel() {
     init {
         fetchRequestList()
     }
-
-//     fun fetchBasicSalary() {
-//        db.collection("PaySlip")
-//            .get()
-//            .addOnSuccessListener { snapshot ->
-//                val salaryMap = snapshot.documents.associate { doc ->
-//                    val userId = doc.getString("userId") ?: ""
-//                    val basicSalary = doc.getDouble("basicSalary") ?: 0.0
-//                    val salaryId = doc.getString("salaryId") ?: ""
-//                    userId to BasicSalaryResource(userId, basicSalary, salaryId)
-//                }
-//                basicSalaryMap = salaryMap
-//                fetchRequestList()
-//                Log.d("Firebase", "Loaded ${salaryMap.size} basic salaries")
-//            }
-//            .addOnFailureListener { error ->
-//                Log.e("Firebase", "Error fetching basic salaries", error)
-//            }
-//    }
 
     fun fetchRequestList() {
         db.collection("PaySlip")
@@ -394,7 +376,7 @@ class PaySlipViewModel: ViewModel() {
     private var lastLoadedUserId: String? = null
     private var lastLoadedMonth: String? = null
     private var lastLoadedYear: String? = null
-
+    var existingDocId by mutableStateOf<String?>(null)
 
     fun fetchRecordByMonth(userId: String) {
         if (
@@ -421,7 +403,6 @@ class PaySlipViewModel: ViewModel() {
                 } else {
                     resetFieldsToDefault()
                 }
-
                 lastLoadedUserId = userId
                 lastLoadedMonth = month
                 lastLoadedYear = year
@@ -431,6 +412,7 @@ class PaySlipViewModel: ViewModel() {
 
     private fun updateFieldsFromDocument(userId: String, document: DocumentSnapshot) {
         try {
+            existingDocId = document.id
             basicSalary = (document.getDouble("basicSalary") ?: 0.0).toString()
             allowance = (document.getDouble("allowance") ?: 0.0).toString()
             bonus = (document.getDouble("bonus") ?: 0.0).toString()
@@ -443,6 +425,7 @@ class PaySlipViewModel: ViewModel() {
                     "bonus=$bonus, overtimePay=$overtimePay, incomeTax=$incomeTax, " +
                     "unpaidLeave=$unpaidLeave, basicSalary=$basicSalary")
         } catch (e: Exception) {
+            Log.e("ViewModel", "Error updating fields", e)
         }
     }
 
@@ -454,6 +437,54 @@ class PaySlipViewModel: ViewModel() {
         incomeTax = "0.0"
         unpaidLeave = "0.0"
         Log.d("ViewModel", "Reset all fields to default values")
+    }
+
+    // ViewModel
+    private val _isRecordExists = MutableStateFlow(false)
+    val isRecordExistsFlow: StateFlow<Boolean> = _isRecordExists
+
+    // Firestore check function
+    fun checkForExistingRecord(userId: String, year: String, month: String) {
+        // Reset the state before querying
+        _isRecordExists.value = false
+
+        db.collection("PaySlip")
+            .whereEqualTo("year", year)
+            .whereEqualTo("month", month)
+            .whereEqualTo("userId", userId)
+            .get()
+            .addOnSuccessListener { documents ->
+                _isRecordExists.value = !documents.isEmpty()
+            }
+            .addOnFailureListener { e ->
+                Log.e("Firestore", "Error checking for record", e)
+                _isRecordExists.value = false
+            }
+    }
+
+    fun deletePaySlip(
+        onSuccess: () -> Unit,
+        onFailure: (Exception) -> Unit
+    ) {
+        existingDocId?.let { docId ->
+            db.collection("PaySlip")
+                .document(docId)
+                .delete()
+                .addOnSuccessListener {
+                    Log.d("Firebase", "PaySlip document $docId deleted successfully")
+                    resetFieldsToDefault()
+                    existingDocId = null
+                    onSuccess()
+                }
+                .addOnFailureListener { e ->
+                    Log.e("Firebase", "Error deleting document", e)
+                    onFailure(e)
+                }
+        } ?: run {
+            val e = Exception("No existing document ID found.")
+            Log.w("Firebase", e.message ?: "Unknown error")
+            onFailure(e)
+        }
     }
 
 }
