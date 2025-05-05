@@ -284,11 +284,13 @@ fun PaySlipDetailsScreen(navController: NavController, month: String, year: Stri
     val backgroundColor = if (isDarkTheme) Color.Black else Color(0xFFE5FFFF)
     val selectedSlip = paySlips.find { it.month == month && it.year == year }
     val context = LocalContext.current
+    val scrollable = rememberScrollState()
 
     if (selectedSlip != null) {
 
         Column(modifier = Modifier
             .background(backgroundColor)
+            .verticalScroll(scrollable)
             .fillMaxSize()) {
             Row{
                 val backgroundColor = if (isDarkTheme) Color.Transparent else Color.White
