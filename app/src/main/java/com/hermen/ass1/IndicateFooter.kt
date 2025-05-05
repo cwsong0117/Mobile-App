@@ -37,11 +37,17 @@ fun IndicateFooter(
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 
+    // Extract the base route without parameters
+    val currentBaseRoute = currentRoute?.substringBefore("/")?.substringBefore("?")
+
+    // Check if the current route is one of the main navigation items
+    val isMainRoute = NavItems.any { it.route == currentBaseRoute }
+
     when (navigationType) {
         NavigationType.BOTTOM_NAVIGATION -> {
             Scaffold(
                 bottomBar = {
-                    BottomNavigationBar(NavItems, navController, currentRoute,isDarkTheme)
+                    BottomNavigationBar(NavItems, navController, currentBaseRoute, isDarkTheme)
                 }
             ) {
                 Box(modifier = Modifier.padding(it)) {
@@ -52,7 +58,7 @@ fun IndicateFooter(
 
         NavigationType.NAVIGATION_RAIL -> {
             Row {
-                FooterRail(NavItems, navController, currentRoute, isDarkTheme)
+                FooterRail(NavItems, navController, currentBaseRoute, isDarkTheme)
                 content()
             }
         }
@@ -61,7 +67,7 @@ fun IndicateFooter(
             PermanentNavigationDrawer(
                 drawerContent = {
                     PermanentDrawerSheet(modifier = Modifier.width(220.dp)) {
-                        DrawerContent(NavItems, navController, currentRoute, isDarkTheme)
+                        DrawerContent(NavItems, navController, currentBaseRoute, isDarkTheme)
                     }
                 }
             ) {
@@ -70,3 +76,4 @@ fun IndicateFooter(
         }
     }
 }
+

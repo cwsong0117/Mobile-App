@@ -92,17 +92,16 @@ fun BottomNavigationBar(navItems: List<NavItem>, navController: NavHostControlle
                     onClick = {
                         // Don't navigate if we're already on this route
                         if (currentRoute != item.route) {
+                            // Clear back stack and navigate to top-level destination
                             navController.navigate(item.route) {
-                                // Pop up to the start destination of the graph to
-                                // avoid building up a large stack of destinations
-                                popUpTo(navController.graph.findStartDestination().id) {
-                                    saveState = true
+                                // Pop up to the root of the graph to avoid building up a large stack
+                                popUpTo(navController.graph.startDestinationId) {
+                                    inclusive = false
                                 }
-                                // Avoid multiple copies of the same destination when
-                                // reselecting the same item
+                                // Avoid multiple copies of the same destination
                                 launchSingleTop = true
-                                // Restore state when reselecting a previously selected item
-                                restoreState = true
+                                // Don't restore state when switching between top-level destinations
+                                restoreState = false
                             }
                         }
                     }
@@ -147,16 +146,16 @@ fun FooterRail(
                     onClick = {
                         // Don't navigate if we're already on this route
                         if (currentRoute != item.route) {
+                            // Clear back stack and navigate to top-level destination
                             navController.navigate(item.route) {
-                                // Pop up to the start destination of the graph to
-                                // avoid building up a large stack of destinations
-                                popUpTo(navController.graph.findStartDestination().id) {
-                                    saveState = true
+                                // Pop up to the root of the graph to avoid building up a large stack
+                                popUpTo(navController.graph.startDestinationId) {
+                                    inclusive = false
                                 }
                                 // Avoid multiple copies of the same destination
                                 launchSingleTop = true
-                                // Restore state when reselecting a previously selected item
-                                restoreState = true
+                                // Don't restore state when switching between top-level destinations
+                                restoreState = false
                             }
                         }
                     },
@@ -228,16 +227,16 @@ fun DrawerContent(
                 onClick = {
                     // Don't navigate if we're already on this route
                     if (currentRoute != item.route) {
+                        // Clear back stack and navigate to top-level destination
                         navController.navigate(item.route) {
-                            // Pop up to the start destination of the graph to
-                            // avoid building up a large stack of destinations
-                            popUpTo(navController.graph.findStartDestination().id) {
-                                saveState = true
+                            // Pop up to the root of the graph to avoid building up a large stack
+                            popUpTo(navController.graph.startDestinationId) {
+                                inclusive = false
                             }
                             // Avoid multiple copies of the same destination
                             launchSingleTop = true
-                            // Restore state when reselecting a previously selected item
-                            restoreState = true
+                            // Don't restore state when switching between top-level destinations
+                            restoreState = false
                         }
                     }
                 },
