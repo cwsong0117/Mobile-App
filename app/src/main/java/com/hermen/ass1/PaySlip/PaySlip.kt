@@ -882,12 +882,16 @@ fun PaySlipEditorScreen(
                         }
                     )
                 },
-                colors = ButtonDefaults.buttonColors(containerColor = Color.Red),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = if (isDarkTheme) Color.Gray else Color.Red,
+                    contentColor = if (isDarkTheme) Color.Red else Color.White),
+                border = if (isDarkTheme) BorderStroke(1.dp, Color.Red) else null,
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(vertical = 8.dp)
             ) {
-                Text("Delete Payslip", color = Color.White)
+                Text("Delete Payslip",
+                    color = if (isDarkTheme) Color.Red else Color.White)
             }
         } else {
             // If no record exists, show a disabled button with a message
