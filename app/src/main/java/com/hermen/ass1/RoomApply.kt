@@ -54,6 +54,8 @@ import android.graphics.Color.BLACK
 import android.graphics.Color.WHITE
 import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
@@ -410,6 +412,7 @@ fun StatusDetails(navController: NavController, applyId: String, viewModel: Room
     val isAdmin = userId.startsWith("A") == true
     var isQrCodeVisible by remember { mutableStateOf(true) }
     val background = if (isDarkTheme) Color.Transparent else Color(0xFFE5FFFF)
+    val scrollable = rememberScrollState()
 
     Box(
         modifier = Modifier
@@ -418,7 +421,9 @@ fun StatusDetails(navController: NavController, applyId: String, viewModel: Room
     ) {
         Column(
             modifier = Modifier
-                .fillMaxSize()
+                .fillMaxSize(),
+            //make it scroll
+
         ) {
             BackButton(navController = navController, title = "Request From: ${selectedRequest?.name ?: "Unknown!"}", isDarkTheme = isDarkTheme)
 
@@ -429,7 +434,12 @@ fun StatusDetails(navController: NavController, applyId: String, viewModel: Room
                     .padding(16.dp)
             ) {
                 selectedRequest?.let {
-                    Column {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .verticalScroll(scrollable)
+                            .padding(16.dp)
+                    ) {
                         Row{
                             Text(text = "Request For: ",
                                 fontSize = 24.sp)
